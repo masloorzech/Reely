@@ -4,9 +4,14 @@ data class Movie(
     val id: Int,
     val title: String,
     val overview: String,
-    val posterPath: String?,
+    val posterPaths: PosterPaths?,
     val releaseDate: String?,
     val ratings: Map<Int, Double> = emptyMap()
+)
+
+data class PosterPaths(
+    val localPosterPath: String?,
+    val remotePosterPath: String?,
 )
 
 fun Movie.averageRatingRounded(): Double? {

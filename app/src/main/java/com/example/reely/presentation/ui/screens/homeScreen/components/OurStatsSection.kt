@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import coil3.compose.AsyncImage
+import com.example.reely.presentation.ui.components.SmallSectionHeader
 import java.io.File
 
 @Composable
@@ -35,18 +36,7 @@ fun OurStatsSection(){
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Text(
-                text = "Wasze statystyki",
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Spacer(Modifier.weight(1f))
-
-        }
+        SmallSectionHeader("Wasze statystyki")
 
         Spacer(modifier = Modifier.height(8.dp))
 

@@ -27,6 +27,7 @@ import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Clapperboard
 import com.composables.icons.lucide.Lucide
 import com.example.reely.domain.model.Movie
+import com.example.reely.presentation.ui.components.MoviePoster
 import com.example.reely.presentation.ui.components.RatingResults
 import java.io.File
 
@@ -84,7 +85,7 @@ fun MovieCard(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
+    ) {
 
         Text(
             text = movie.title,
@@ -92,55 +93,16 @@ fun MovieCard(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .width(100.dp)
-                .height(150.dp)
-                .clip(
-                    RoundedCornerShape(8.dp)
-                )
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                )
-        ){
-            if (movie.posterPath != null){
-                AsyncImage(
-                    model = File(movie.posterPath),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }else{
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        imageVector = Lucide.Clapperboard,
-                        contentDescription = "",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    )
-                    Text(
-                        text = movie.title,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        maxLines = 1
+        MoviePoster(
+            movie = movie,
+            content = {
+                if (movie.ratings.isNotEmpty()) {
+                    RatingResults(
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        movie = movie
                     )
                 }
-
             }
-
-            if (movie.ratings.isNotEmpty()) {
-                RatingResults(
-                    modifier = Modifier.align(Alignment.BottomCenter),
-                    movie = movie
-                )
-            }
-
-        }
-
-
+        )
     }
-
 }
