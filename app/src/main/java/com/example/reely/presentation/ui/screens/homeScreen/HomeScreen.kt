@@ -80,8 +80,6 @@ val lastSeenPreview = listOf(
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    firstAvatarPath: String? = null,
-    secondAvatarPath: String? = null,
 ) {
     Box(
         modifier = modifier
@@ -111,6 +109,8 @@ fun HomeScreen(
 
             OurStatsSection()
 
+            //CalendarSection()
+
 
         }
 
@@ -126,9 +126,6 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     ReelyTheme {
-        HomeScreen(
-            firstAvatarPath = null,
-            secondAvatarPath = null
-        )
+        HomeScreen()
     }
 }
