@@ -37,7 +37,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Bookmark
 import com.composables.icons.lucide.Clapperboard
 import com.composables.icons.lucide.Grid2x2
+import com.composables.icons.lucide.Grid3x2
 import com.composables.icons.lucide.Grip
+import com.composables.icons.lucide.List
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TvMinimalPlay
 import com.example.reely.domain.model.Movie
@@ -84,10 +86,20 @@ enum class MovieSortOption(
     OLDEST("Najstarsze"),
     TITLE_ASC("Alfabetycznie")
 }
-
+enum class MovieDisplayStyle(
+    val icon: ImageVector
+){
+    GRID(
+        Lucide.Grid3x2
+    ),
+    LIST(
+        Lucide.List
+    )
+}
 data class ListScreenUiState(
     val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
     val selectedTab: MovieListTab = MovieListTab.WATCHED,
+    val displayStyle: MovieDisplayStyle = MovieDisplayStyle.GRID,
     val moviesList: List<Movie> = emptyList(),
     val isLoading: Boolean = false
 )
@@ -149,8 +161,8 @@ fun ListScreen(
                 )
                 Spacer(Modifier.weight(1f))
                 ReelyIconButton(
-                    onClick = {},
-                    icon = Lucide.Grid2x2
+                    onClick = {vm.toggleDisplayStyle()},
+                    icon = state.displayStyle.icon
                 )
             }
 
@@ -196,6 +208,27 @@ class ListScreenViewModel @Inject constructor(
                 it.copy(
                     isLoading = true
                 )
+            }
+        }
+    }
+
+    fun toggleDisplayStyle(){
+
+        when (_state.value.displayStyle) {
+            MovieDisplayStyle.GRID -> {
+                _state.update {
+                    it.copy(
+                        displayStyle = MovieDisplayStyle.LIST
+                    )
+                }
+            }
+
+            MovieDisplayStyle.LIST -> {
+                _state.update {
+                    it.copy(
+                        displayStyle = MovieDisplayStyle.GRID
+                    )
+                }
             }
         }
     }
