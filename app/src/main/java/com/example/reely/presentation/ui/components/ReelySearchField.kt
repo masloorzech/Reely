@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.ArrowRight
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Search
 import com.example.reely.presentation.theme.InputBackground
 import com.example.reely.presentation.theme.InputBorder
 import com.example.reely.presentation.theme.InputFocused
@@ -67,6 +69,15 @@ fun ReelySearchField(
                     .padding(start = 16.dp, end = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+                Icon(
+                    imageVector = Lucide.Search,
+                    contentDescription = "Szukaj",
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(Modifier.width(2.dp))
+
                 Box(
                     modifier = Modifier.weight(1f),
                     contentAlignment = Alignment.CenterStart

@@ -1,4 +1,4 @@
-package com.example.reely.presentation.ui.screens.homeScreen.components
+package com.example.reely.presentation.ui.screens.home.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

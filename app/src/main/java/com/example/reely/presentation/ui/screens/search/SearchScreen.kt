@@ -90,6 +90,7 @@ fun SearchScreen(
 @Composable
 fun SearchScreenPreview(){
     ReelyTheme {
-        SearchScreen()
+        SearchScreen(
+        )
     }
 }

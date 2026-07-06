@@ -152,3 +152,20 @@ fun MoviePosterSkeleton(
         content = content
     )
 }
+
+@Composable
+fun MoviePosterEmpty(
+    content: @Composable  BoxScope.() -> Unit = {}
+){
+
+    Box(
+        modifier = Modifier
+            .width(100.dp)
+            .height(150.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(
+                color = MaterialTheme.colorScheme.surfaceContainer
+            ),
+        content = content
+    )
+}

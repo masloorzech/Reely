@@ -1,4 +1,4 @@
-package com.example.reely.presentation.ui.screens.homeScreen
+package com.example.reely.presentation.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,12 +14,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.reely.domain.model.Movie
 import com.example.reely.presentation.theme.ReelyTheme
-import com.example.reely.presentation.ui.screens.homeScreen.components.HelloSection
-import com.example.reely.presentation.ui.screens.homeScreen.components.LastSeenSection
-import com.example.reely.presentation.ui.screens.homeScreen.components.OurStatsSection
-import com.example.reely.presentation.ui.screens.homeScreen.components.RandomFilmCard
+import com.example.reely.presentation.ui.screens.home.components.HelloSection
+import com.example.reely.presentation.ui.screens.home.components.LastSeenSection
+import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
+import com.example.reely.presentation.ui.screens.home.components.RandomFilmCard
 
 @Composable
 fun HomeScreen(
