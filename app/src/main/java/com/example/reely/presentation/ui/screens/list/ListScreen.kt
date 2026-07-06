@@ -3,32 +3,44 @@ package com.example.reely.presentation.ui.screens.list
 import android.media.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Bookmark
 import com.composables.icons.lucide.Clapperboard
 import com.composables.icons.lucide.Grid2x2
 import com.composables.icons.lucide.Grip
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.TvMinimalPlay
+import com.example.reely.domain.model.Movie
 import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.components.ReelyIconButton
 import com.example.reely.presentation.ui.components.SmallSectionHeader
@@ -36,6 +48,12 @@ import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyMenuButton
 import com.example.reely.presentation.ui.components.ReelySearchField
 import com.example.reely.presentation.ui.components.ReelyTab
+import com.example.reely.presentation.ui.screens.search.components.MovieGrid
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
 enum class MovieListTab(
@@ -67,20 +85,23 @@ enum class MovieSortOption(
     TITLE_ASC("Alfabetycznie")
 }
 
+data class ListScreenUiState(
+    val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
+    val selectedTab: MovieListTab = MovieListTab.WATCHED,
+    val moviesList: List<Movie> = emptyList(),
+    val isLoading: Boolean = false
+)
+
 @Composable
 fun ListScreen(
-    modifier : Modifier = Modifier
+    modifier : Modifier = Modifier,
+    vm : ListScreenViewModel = viewModel()
 ) {
 
-    var selectedSort by rememberSaveable {
-        mutableStateOf(MovieSortOption.RATING_DESC)
-    }
-
-    var selectedTab by rememberSaveable {
-        mutableStateOf(MovieListTab.WATCHED)
-    }
+    val state = vm.state.collectAsState().value
 
     var searchText by remember { mutableStateOf("") }
+
 
     Box(
         modifier = modifier
@@ -91,7 +112,6 @@ fun ListScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
         )
         {
 
@@ -102,18 +122,30 @@ fun ListScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             ReelyListTabs(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it as MovieListTab }
+                selectedTab = state.selectedTab,
+                onTabSelected = {
+                    vm.switchTab(it as MovieListTab)
+                }
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ReelySearchField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                placeholder = "Wyszukaj film w sekcji ${state.selectedTab.tabTitle.lowercase()}...",
+                onSearchClick = {
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row() {
                 ReelyMenuButton(
-                    selectedOption = selectedSort,
+                    selectedOption = state.selectedSort,
                     options = MovieSortOption.entries,
                     optionLabel = { it.title },
-                    onOptionSelected = { selectedSort = it }
+                    onOptionSelected = { vm.switchSort(it)}
                 )
                 Spacer(Modifier.weight(1f))
                 ReelyIconButton(
@@ -122,21 +154,68 @@ fun ListScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            //Lista
-
-            ReelySearchField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                placeholder = "Wyszukaj film w sekcji ${selectedTab.tabTitle.lowercase()}...",
-                onSearchClick = {
-                }
+            MovieGrid(
+                movies = state.moviesList,
+                isLoading = state.isLoading
             )
 
-            //Button navigacji do szukaj :D
+        }
+        Row(
+            modifier = Modifier
+                .height(64.dp)
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            MaterialTheme.colorScheme.background,
+                        )
+                    ),
+                ),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ){}
+    }
+}
+
+class ListScreenViewModel @Inject constructor(
+
+): ViewModel(){
+
+    private var _state = MutableStateFlow(ListScreenUiState())
+    val state = _state.asStateFlow()
+
+    init {
+        loadMovies()
+    }
+
+    fun loadMovies(){
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isLoading = true
+                )
+            }
         }
     }
+
+    fun switchTab(tab: MovieListTab){
+        _state.update {
+            it.copy(
+                selectedTab = tab
+            )
+        }
+    }
+
+    fun switchSort(sortType: MovieSortOption){
+        _state.update {
+            it.copy(
+                selectedSort = sortType
+            )
+        }
+    }
+
 }
 
 @Preview
