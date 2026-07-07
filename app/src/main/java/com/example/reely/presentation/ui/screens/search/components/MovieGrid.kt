@@ -25,10 +25,6 @@ fun MovieGrid(
     onMovieClick: (Movie) -> Unit = {}
 ){
 
-    SmallSectionHeader("Popularne teraz")
-
-    Spacer(modifier = Modifier.height(8.dp))
-
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
         contentPadding = PaddingValues(0.dp),

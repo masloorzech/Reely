@@ -20,9 +20,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
+private enum class SearchSectionNameDefaults(
+    val sectionName: String
+){
+    POPULAR_NOW("Popularne teraz"),
+    SEARCH_RESULT("Wyniki wyszukiwania");
+
+}
 data class SearchUiState(
     val movies: List<Movie> = emptyList(),
     val searchQuery: String = "",
+    val searchSectionName : String = SearchSectionNameDefaults.POPULAR_NOW.sectionName,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -50,19 +59,24 @@ class SearchScreenViewModel @Inject constructor(
     }
 
 
-    fun search(){
+    fun search() {
+        val query = _state.value.searchQuery.trim()
+
+        if (query.isBlank()) {
+            loadPopularMovies()
+            return
+        }
 
         viewModelScope.launch {
-
-            val lastSavedQuery = _state.value.searchQuery
-
             _state.update {
                 it.copy(
-                    isLoading = true
+                    isLoading = true,
+                    error = null,
+                    searchSectionName = SearchSectionNameDefaults.SEARCH_RESULT.sectionName
                 )
             }
 
-            searchMovieUseCase(lastSavedQuery)
+            searchMovieUseCase(query)
                 .onSuccess { movies ->
                     _state.update {
                         it.copy(
@@ -79,25 +93,28 @@ class SearchScreenViewModel @Inject constructor(
                         )
                     }
                 }
-
-
         }
     }
 
-    fun onQueryChange(value: String){
+    fun onQueryChange(value: String) {
         _state.update {
             it.copy(
                 searchQuery = value
             )
         }
+
+        if (value.isBlank()) {
+            loadPopularMovies()
+        }
     }
 
-    fun loadPopularMovies(){
-
+    fun loadPopularMovies() {
         viewModelScope.launch {
             _state.update {
                 it.copy(
-                    isLoading = true
+                    isLoading = true,
+                    error = null,
+                    searchSectionName = SearchSectionNameDefaults.POPULAR_NOW.sectionName
                 )
             }
 
@@ -120,7 +137,6 @@ class SearchScreenViewModel @Inject constructor(
                     error.message?.let { Log.d("Error", it) }
                 }
         }
-
     }
 
     fun onMovieSelected(movie: Movie) {

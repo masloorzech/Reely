@@ -25,8 +25,8 @@ import kotlin.math.floor
 @Composable
 fun StarRating(
     modifier: Modifier = Modifier,
-    score: Double?
-) {
+    score: Double?,
+    starColor: Color? = null, ) {
 
     if (score == null) {
         return
@@ -50,7 +50,7 @@ fun StarRating(
             Icon(
                 imageVector = Icons.Filled.StarRate,
                 contentDescription = "",
-                tint = ratingMood.color,
+                tint = starColor?: ratingMood.color,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -69,7 +69,7 @@ fun StarRating(
                 Icon(
                     imageVector = Icons.Filled.StarRate,
                     contentDescription = null,
-                    tint = ratingMood.color,
+                    tint = starColor?: ratingMood.color,
                     modifier = Modifier
                         .size(32.dp)
                         .drawWithContent {

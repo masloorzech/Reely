@@ -14,6 +14,23 @@ data class Movie(
     val genres: List<String> = emptyList(),
     val userStates: Map<UserId, MovieUserState> = emptyMap()
 )
+
+sealed interface MovieUserState {
+    data object NotWatched : MovieUserState
+    data object InWatchlist : MovieUserState
+
+    data class Watched(
+        val watchedAt: String? = null,
+        val rating: Double? = null
+    ) : MovieUserState {
+        init {
+            require(rating == null || rating in 0.0..10.0) {
+                "Rating must be between 0.0 and 10.0"
+            }
+        }
+    }
+}
+
 @JvmInline
 value class UserId(val value: Int)
 data class PublicRating(
@@ -25,6 +42,7 @@ data class PosterPaths(
     val localPosterPath: String?,
     val remotePosterPath: String?,
 )
+
 fun Movie.userState(userId: UserId): MovieUserState {
     return userStates[userId] ?: MovieUserState.NotWatched
 }
@@ -56,21 +74,6 @@ fun Movie.getAvailablePosterPath() : String?{
 
 fun Movie.isInWatchlistBy(userId: UserId): Boolean {
     return userState(userId) is MovieUserState.InWatchlist
-}
-sealed interface MovieUserState {
-    data object NotWatched : MovieUserState
-    data object InWatchlist : MovieUserState
-
-    data class Watched(
-        val watchedAt: String? = null,
-        val rating: Double? = null
-    ) : MovieUserState {
-        init {
-            require(rating == null || rating in 0.0..10.0) {
-                "Rating must be between 0.0 and 10.0"
-            }
-        }
-    }
 }
 
 fun Movie.runtimeText(): String? {

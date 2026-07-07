@@ -54,6 +54,7 @@ import javax.inject.Inject
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.toRoute
+import com.example.reely.domain.model.PublicRating
 import com.example.reely.domain.model.genresText
 import com.example.reely.domain.model.getAvailablePosterPath
 import com.example.reely.domain.model.runtimeText
@@ -92,7 +93,21 @@ fun MovieDetailsScreen(
                 duration = state.movie?.runtimeText(),
                 genres = state.movie?.genresText()
             )
+
+            if (state.movie!=null){
+                NotWatchedMovieScreen(
+                    description = state.movie.overview,
+                    averageRating = state.movie.publicRating?.average,
+                    userCount = state.movie.publicRating?.voteCount
+                )
+            }
+
+
+
+
         }
+
+
     }
 
     Row(
@@ -154,6 +169,53 @@ class MovieDetailsScreenViewModel @Inject constructor(
     }
 
 
+}
+
+@Composable
+fun NotWatchedMovieScreen(
+    description: String?,
+    averageRating: Double?,
+    userCount: Int?
+
+){
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState())
+
+    ) {
+
+        Spacer(Modifier.height(16.dp))
+
+        StarRating(score = averageRating)
+
+        Text(
+            text = String.format(
+                Locale.US,
+                "Globalne oceny: %.1f · %,d ocen",
+                averageRating,
+                userCount
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        SmallSectionHeader("O filmie:")
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = description.toString(),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+            lineHeight = 20.sp
+        )
+
+    }
 }
 
 @Composable

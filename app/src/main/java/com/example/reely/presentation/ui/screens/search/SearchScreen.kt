@@ -15,20 +15,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.components.ReelySearchField
+import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.components.TopBar
 import com.example.reely.presentation.ui.screens.search.components.MovieGrid
 import com.example.reely.presentation.ui.screens.search.components.RecentSearchesSection
@@ -89,6 +84,10 @@ fun SearchScreen(
             )
 
             Spacer(modifier.height(32.dp))
+
+            SmallSectionHeader(state.searchSectionName)
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             MovieGrid(
                 movies = state.movies,
