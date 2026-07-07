@@ -54,35 +54,32 @@ fun StarRating(
                 modifier = Modifier.size(32.dp)
             )
         }
-        Box(
-            Modifier.size(32.dp)
-        ) {
-            if (hasPartialStar) {
-                Box(
+
+        if (hasPartialStar) {
+            Box(
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.StarRate,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     modifier = Modifier.size(32.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.StarRate,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
-                        modifier = Modifier.size(32.dp)
-                    )
+                )
 
-                    Icon(
-                        imageVector = Icons.Filled.StarRate,
-                        contentDescription = null,
-                        tint = ratingMood.color,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .drawWithContent {
-                                val contentScope = this
+                Icon(
+                    imageVector = Icons.Filled.StarRate,
+                    contentDescription = null,
+                    tint = ratingMood.color,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .drawWithContent {
+                            val contentScope = this
 
-                                clipRect(right = size.width * fraction) {
-                                    contentScope.drawContent()
-                                }
+                            clipRect(right = size.width * fraction) {
+                                contentScope.drawContent()
                             }
-                    )
-                }
+                        }
+                )
             }
         }
 

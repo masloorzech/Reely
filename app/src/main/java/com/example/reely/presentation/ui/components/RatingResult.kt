@@ -19,7 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.averageRatingRounded
+import com.example.reely.domain.model.ourAverageRatingRounded
 import java.util.Locale
 
 
@@ -30,7 +30,7 @@ fun RatingResults(
     style: TextStyle = MaterialTheme.typography.titleSmall,
 ) {
 
-    val averageRating = movie.averageRatingRounded()
+    val averageRating = movie.ourAverageRatingRounded()
 
     val mood = RatingMood.fromScore(averageRating)
 

@@ -22,7 +22,7 @@ import com.example.reely.presentation.ui.components.SmallSectionHeader
 fun MovieGrid(
     movies : List<Movie> = emptyList(),
     isLoading: Boolean = false,
-    onMovieClick: (String) -> Unit = {}
+    onMovieClick: (Movie) -> Unit = {}
 ){
 
     SmallSectionHeader("Popularne teraz")
@@ -41,7 +41,10 @@ fun MovieGrid(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
-                    MoviePoster(movie = movie)
+                    MoviePoster(
+                        movie = movie,
+                        onClick = onMovieClick
+                    )
                 }
             }
         } else {

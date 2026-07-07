@@ -1,5 +1,7 @@
 package com.example.reely.di
 
+import com.example.reely.data.local.MoviesLocalDataSource
+import com.example.reely.data.local.room.RoomMoviesLocalDataSource
 import com.example.reely.data.remote.MoviesRemoteDataSource
 import com.example.reely.data.remote.tmdb.TmdbMoviesRemoteDataSource
 import com.example.reely.data.repository.MoviesRepositoryImpl
@@ -25,4 +27,14 @@ abstract class MoviesModule {
     abstract fun bindMoviesRepository(
         impl: MoviesRepositoryImpl
     ): MoviesRepository
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    abstract class LocalDataSourceModule {
+
+        @Binds
+        abstract fun bindMoviesLocalDataSource(
+            impl: RoomMoviesLocalDataSource
+        ): MoviesLocalDataSource
+    }
 }

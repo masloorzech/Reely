@@ -31,22 +31,49 @@ import androidx.compose.ui.unit.dp
 import com.example.reely.R
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Lucide
-import com.example.reely.domain.model.averageRatingRounded
-import com.example.reely.presentation.theme.ReelyTheme
+import com.example.reely.domain.model.Movie
+import com.example.reely.domain.model.ourAverageRatingRounded
+import com.example.reely.domain.usecase.LoadMovieDataUseCase
 import com.example.reely.presentation.ui.components.RatingResults
 import com.example.reely.presentation.ui.components.ReelyIconButton
 import com.example.reely.presentation.ui.components.SmallSectionHeader
-import com.example.reely.presentation.ui.components.ratedMockMovie
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
+import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.util.Locale
+import javax.inject.Inject
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
+import com.example.reely.domain.model.genresText
+import com.example.reely.domain.model.getAvailablePosterPath
+import com.example.reely.domain.model.runtimeText
+import com.example.reely.presentation.navigation.MovieDetailsRoute
+import dagger.hilt.android.lifecycle.HiltViewModel
+
+
+data class MovieDetailsScreenState(
+    val movie: Movie? = null,
+    val isLoading: Boolean = false,
+    val error: String? = null
+)
 
 @Composable
 fun MovieDetailsScreen(
-    movieId: Int,
-    onBack : () -> Unit = {}
+    onBack : () -> Unit = {},
+    viewModel: MovieDetailsScreenViewModel = viewModel()
 ) {
+
+    val state = viewModel.state.collectAsState().value
 
     Box(
         modifier = Modifier
@@ -57,11 +84,14 @@ fun MovieDetailsScreen(
     ) {
         Column {
 
-            PosterHeader()
-
-            WatchedMovieScreen()
-
-
+            PosterHeader(
+                isLoading = state.isLoading,
+                posterPath = state.movie?.getAvailablePosterPath(),
+                title = state.movie?.title,
+                releaseDate = state.movie?.releaseDate,
+                duration = state.movie?.runtimeText(),
+                genres = state.movie?.genresText()
+            )
         }
     }
 
@@ -79,8 +109,58 @@ fun MovieDetailsScreen(
 
 }
 
+@HiltViewModel
+class MovieDetailsScreenViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val loadMovieDataUseCase: LoadMovieDataUseCase
+): ViewModel(){
+
+    private val route = savedStateHandle.toRoute<MovieDetailsRoute>()
+    private val _state = MutableStateFlow(MovieDetailsScreenState())
+    val state = _state.asStateFlow()
+
+
+    init{
+        loadMovieDetails(route.movieId)
+    }
+
+    fun loadMovieDetails(movieId: Int){
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    isLoading = true
+                )
+            }
+
+            loadMovieDataUseCase(movieId)
+                .onSuccess { movie ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            movie = movie
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = error.message + "\n" + error.cause
+                        )
+                    }
+                }
+
+        }
+    }
+
+
+}
+
 @Composable
-fun WatchedMovieScreen() {
+fun WatchedMovieScreen(
+    movie : Movie
+) {
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,16 +184,31 @@ fun WatchedMovieScreen() {
             ) {
 
                 StarRating(
-                    score = ratedMockMovie.averageRatingRounded()
+                    score = movie.ourAverageRatingRounded()
                 )
                 Spacer(
                     Modifier.width(8.dp)
                 )
+
                 RatingResults(
-                    movie = ratedMockMovie,
+                    movie = movie,
                     style = MaterialTheme.typography.labelLarge
                 )
-
+                if (movie.publicRating != null) {
+                    Row {
+                        Text(
+                            text = String.format(
+                                Locale.US,
+                                "Globalne oceny: %.1f · %,d ocen",
+                                movie.publicRating.average,
+                                movie.publicRating.voteCount
+                            ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                        )
+                        Spacer(Modifier.weight(1f))
+                    }
+                }
             }
 
         }
@@ -127,10 +222,11 @@ fun WatchedMovieScreen() {
         Spacer(Modifier.height(16.dp))
 
         Text(
-            text = "Obejrzany · 4 lipca 2024",
+            text = "Obejrzany · przez",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
+
 
         Spacer(Modifier.height(16.dp))
 
@@ -143,70 +239,6 @@ fun WatchedMovieScreen() {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             lineHeight = 20.sp
-        )
-
-    }
-}
-@Composable
-fun PosterHeader(){
-    Box(
-        modifier = Modifier.height(360.dp)
-    ){
-        Image(
-            painter = painterResource(R.drawable.preview_image),
-            contentDescription = "",
-            contentScale = ContentScale.Crop,
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(128.dp)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.background,
-                        )
-                    ),
-                )
-                .align(Alignment.BottomCenter)
-        ){
-            Column(
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
-            ) {
-
-                Text(
-                    "Joker",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Spacer(
-                    modifier = Modifier.width(4.dp)
-                )
-
-                Text(
-                    "2020 · 2h 29m · Dramat, Sci-Fi",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-
-            }
-
-        }
-    }
-}
-
-@Composable
-@Preview
-fun MovieDetailsScreenPreview(){
-    ReelyTheme {
-
-        MovieDetailsScreen(
-            movieId = 1
         )
 
     }

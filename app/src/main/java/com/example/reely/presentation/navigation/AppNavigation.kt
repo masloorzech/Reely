@@ -10,8 +10,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.reely.presentation.ui.screens.home.HomeScreen
 import com.example.reely.presentation.ui.screens.list.ListScreen
+import com.example.reely.presentation.ui.screens.movies.MovieDetailsScreen
 import com.example.reely.presentation.ui.screens.search.SearchScreen
 
 @Composable
@@ -21,20 +23,31 @@ fun AppNavigation(
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    val showBottomBar = currentDestination?.route in listOf(
+        HomeScreenRoute::class.qualifiedName,
+        SearchScreenRoute::class.qualifiedName,
+        ListScreenRoute::class.qualifiedName,
+        StatisticsScreenRoute::class.qualifiedName,
+        ProfileScreenRoute::class.qualifiedName
+    )
 
     Scaffold(
         modifier = modifier,
         bottomBar = {
-            BottomNavigationBar(
-                navController = navController,
-                items = listOf(
-                    HomeScreenDestination,
-                    SearchScreenDestination,
-                    ListScreenDestination,
-                    StatisticsScreenDestination,
-                    ProfileScreenDestination
-                ),
-            )
+            if (showBottomBar) {
+                BottomNavigationBar(
+                    navController = navController,
+                    items = listOf(
+                        HomeScreenDestination,
+                        SearchScreenDestination,
+                        ListScreenDestination,
+                        StatisticsScreenDestination,
+                        ProfileScreenDestination
+                    ),
+                )
+            }
         }
     ){ innerPadding ->
 
@@ -52,7 +65,10 @@ fun AppNavigation(
 
             composable<SearchScreenRoute>{
                 SearchScreen(
-                    viewModel = hiltViewModel()
+                    viewModel = hiltViewModel(),
+                    onMovieClick = { movieId ->
+                        navController.navigate(MovieDetailsRoute(movieId))
+                    }
                 )
             }
 
@@ -60,9 +76,13 @@ fun AppNavigation(
                 ListScreen()
             }
 
-            composable<MovieDetailsRoute>{ movieId ->
-
-
+            composable<MovieDetailsRoute> {
+                MovieDetailsScreen(
+                    viewModel = hiltViewModel(),
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
             }
 
         }

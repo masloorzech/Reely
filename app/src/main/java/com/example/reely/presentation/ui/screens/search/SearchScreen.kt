@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,8 +36,19 @@ import com.example.reely.presentation.ui.screens.search.components.RecentSearche
 @Composable
 fun SearchScreen(
     modifier : Modifier = Modifier,
+    onMovieClick : (Int) -> Unit,
     viewModel: SearchScreenViewModel = viewModel()
 ) {
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is SearchEvent.NavigateToMovieDetails -> {
+                    onMovieClick(event.movieId)
+                }
+            }
+        }
+    }
 
     val state = viewModel.state.collectAsState().value
 
@@ -80,7 +92,8 @@ fun SearchScreen(
 
             MovieGrid(
                 movies = state.movies,
-                isLoading = state.isLoading || state.error!=null
+                isLoading = state.isLoading || state.error!=null,
+                onMovieClick = viewModel::onMovieSelected
             )
 
         }
@@ -110,17 +123,5 @@ fun SearchScreen(
                 )
             }
         }
-    }
-}
-
-
-
-
-@Preview
-@Composable
-fun SearchScreenPreview(){
-    ReelyTheme {
-        SearchScreen(
-        )
     }
 }

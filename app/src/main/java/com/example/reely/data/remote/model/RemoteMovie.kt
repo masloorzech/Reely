@@ -3,6 +3,7 @@ package com.example.reely.data.remote.model
 import com.example.reely.data.remote.tmdb.toTmdbPosterUrl
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.PosterPaths
+import com.example.reely.domain.model.PublicRating
 
 data class RemoteMovie(
     val id: Int,
@@ -28,5 +29,11 @@ fun RemoteMovie.toDomain(): Movie {
             remotePosterPath = posterPath?.toTmdbPosterUrl()
         ),
         releaseDate = releaseDate,
+        runtime = runtime,
+        genres = genres,
+        publicRating = PublicRating(
+            average = rating,
+            voteCount = voteCount
+        )
     )
 }

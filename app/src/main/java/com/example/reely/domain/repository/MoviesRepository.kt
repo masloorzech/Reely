@@ -11,4 +11,6 @@ interface MoviesRepository {
     suspend fun getPopularMovies(): Result<List<Movie>>
     suspend fun getMovieDetails(id: Int): Result<Movie>
 
+    suspend fun saveMovieData(movie: Movie): Result<Unit>
+
 }

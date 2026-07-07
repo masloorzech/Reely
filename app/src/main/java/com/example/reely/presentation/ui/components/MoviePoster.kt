@@ -41,7 +41,7 @@ import java.io.File
 fun MoviePoster(
     movie: Movie,
     content: @Composable  BoxScope.() -> Unit = {},
-    onClick : (Int) -> Unit = {}
+    onClick : (Movie) -> Unit = {}
 ){
 
     val posterModel = remember(movie.posterPaths) {
@@ -72,7 +72,7 @@ fun MoviePoster(
             .clickable(
                 onClick = {
                     Log.d("Result", movie.id.toString())
-                    onClick(movie.id)
+                    onClick(movie)
                 }
             )
     ) {
