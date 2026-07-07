@@ -8,6 +8,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -39,7 +40,8 @@ import java.io.File
 @Composable
 fun MoviePoster(
     movie: Movie,
-    content: @Composable  BoxScope.() -> Unit = {}
+    content: @Composable  BoxScope.() -> Unit = {},
+    onClick : (Int) -> Unit = {}
 ){
 
     val posterModel = remember(movie.posterPaths) {
@@ -66,6 +68,12 @@ fun MoviePoster(
             )
             .background(
                 color = MaterialTheme.colorScheme.surfaceContainer,
+            )
+            .clickable(
+                onClick = {
+                    Log.d("Result", movie.id.toString())
+                    onClick(movie.id)
+                }
             )
     ) {
         if (posterModel != null) {

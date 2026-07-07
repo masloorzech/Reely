@@ -76,7 +76,7 @@ fun ReelySearchField(
                     tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
                     modifier = Modifier.size(16.dp)
                 )
-                Spacer(Modifier.width(2.dp))
+                Spacer(Modifier.width(4.dp))
 
                 Box(
                     modifier = Modifier.weight(1f),

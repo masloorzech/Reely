@@ -40,8 +40,6 @@ fun SearchScreen(
 
     val state = viewModel.state.collectAsState().value
 
-    var searchText by remember { mutableStateOf("") }
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -60,11 +58,10 @@ fun SearchScreen(
             Spacer(modifier.height(16.dp))
 
             ReelySearchField(
-                value = searchText,
-                onValueChange = { searchText = it },
+                value = state.searchQuery,
+                onValueChange = viewModel::onQueryChange,
                 placeholder = "Szukaj filmu...",
-                onSearchClick = {
-                }
+                onSearchClick = viewModel::search
             )
 
             Spacer(modifier.height(16.dp))
@@ -77,7 +74,6 @@ fun SearchScreen(
                     "Sparkle",
                     "Dash"
                 )
-
             )
 
             Spacer(modifier.height(32.dp))

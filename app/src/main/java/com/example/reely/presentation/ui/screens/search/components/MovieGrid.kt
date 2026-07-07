@@ -21,7 +21,8 @@ import com.example.reely.presentation.ui.components.SmallSectionHeader
 @Composable
 fun MovieGrid(
     movies : List<Movie> = emptyList(),
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    onMovieClick: (String) -> Unit = {}
 ){
 
     SmallSectionHeader("Popularne teraz")

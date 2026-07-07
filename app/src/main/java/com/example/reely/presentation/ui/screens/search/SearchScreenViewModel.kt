@@ -1,10 +1,15 @@
 package com.example.reely.presentation.ui.screens.search
 
 import android.util.Log
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.usecase.GetPopularMoviesUseCase
+import com.example.reely.domain.usecase.SearchMovieUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,20 +19,66 @@ import javax.inject.Inject
 
 data class SearchUiState(
     val movies: List<Movie> = emptyList(),
+    val searchQuery: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
 )
 
 @HiltViewModel
 class SearchScreenViewModel @Inject constructor(
-    val getPopularMoviesUseCase: GetPopularMoviesUseCase
+    val getPopularMoviesUseCase: GetPopularMoviesUseCase,
+    val searchMovieUseCase: SearchMovieUseCase
 )  : ViewModel(){
 
     private var _state = MutableStateFlow(SearchUiState())
     val state = _state.asStateFlow()
 
+
     init {
         loadPopularMovies()
+    }
+
+
+    fun search(){
+
+        viewModelScope.launch {
+
+            val lastSavedQuery = _state.value.searchQuery
+
+            _state.update {
+                it.copy(
+                    isLoading = true
+                )
+            }
+
+            searchMovieUseCase(lastSavedQuery)
+                .onSuccess { movies ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            movies = movies
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            error = error.message
+                        )
+                    }
+
+                }
+
+
+        }
+    }
+
+    fun onQueryChange(value: String){
+        _state.update {
+            it.copy(
+                searchQuery = value
+            )
+        }
     }
 
     fun loadPopularMovies(){

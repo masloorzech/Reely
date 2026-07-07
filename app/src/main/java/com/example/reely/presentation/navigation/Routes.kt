@@ -16,3 +16,8 @@ data object StatisticsScreenRoute
 
 @Serializable
 data object ProfileScreenRoute
+
+@Serializable
+data class MovieDetailsRoute(
+    val movieId: Int
+)

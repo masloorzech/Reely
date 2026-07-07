@@ -50,6 +50,7 @@ import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyMenuButton
 import com.example.reely.presentation.ui.components.ReelySearchField
 import com.example.reely.presentation.ui.components.ReelyTab
+import com.example.reely.presentation.ui.screens.list.components.MovieList
 import com.example.reely.presentation.ui.screens.search.components.MovieGrid
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -99,7 +100,7 @@ enum class MovieDisplayStyle(
 data class ListScreenUiState(
     val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
     val selectedTab: MovieListTab = MovieListTab.WATCHED,
-    val displayStyle: MovieDisplayStyle = MovieDisplayStyle.GRID,
+    val displayStyle: MovieDisplayStyle = MovieDisplayStyle.LIST,
     val moviesList: List<Movie> = emptyList(),
     val isLoading: Boolean = false
 )
@@ -165,11 +166,22 @@ fun ListScreen(
                     icon = state.displayStyle.icon
                 )
             }
+            when (state.displayStyle){
+                MovieDisplayStyle.GRID -> {
+                    MovieGrid(
+                        movies = state.moviesList,
+                        isLoading = state.isLoading
+                    )
+                }
+                MovieDisplayStyle.LIST -> {
+                    MovieList(
+                        movies = state.moviesList,
+                        isLoading = state.isLoading
+                    )
+                }
 
-            MovieGrid(
-                movies = state.moviesList,
-                isLoading = state.isLoading
-            )
+            }
+
 
         }
         Row(

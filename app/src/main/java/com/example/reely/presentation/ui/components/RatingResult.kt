@@ -16,26 +16,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.averageRatingRounded
 import java.util.Locale
 
 
-private data class RatingMood(
-    val icon: String,
-    val color: Color,
-)
-
 @Composable
 fun RatingResults(
+    modifier: Modifier = Modifier,
     movie: Movie,
-    modifier: Modifier = Modifier
+    style: TextStyle = MaterialTheme.typography.titleSmall,
 ) {
 
     val averageRating = movie.averageRatingRounded()
 
-    val mood = ratingMood(averageRating)
+    val mood = RatingMood.fromScore(averageRating)
 
     Column(
         modifier = modifier.padding(bottom = 4.dp),
@@ -45,64 +42,71 @@ fun RatingResults(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = mood.icon,
-                style = MaterialTheme.typography.titleSmall
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
                 text = String.format(Locale.US, "%.1f", averageRating),
-                style = MaterialTheme.typography.titleSmall,
+                style = style,
                 color = mood.color
             )
         }
     }
 }
 
-@Composable
-private fun ratingMood(score: Double?): RatingMood {
-    if (score == null) {
-        val color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
+enum class RatingMood(
+    val minScore: Double?,
+    val color: Color,
+) {
+    Unrated(
+        minScore = null,
+        color = Color(0xFF94A3B8),
+    ),
 
-        return RatingMood(
-            icon = "—",
-            color = color,
-        )
-    }
+    Dead(
+        minScore = 0.0,
+        color = Color(0xFFEF4444),
+    ),
 
-    return when {
-        score >= 9.0 -> RatingMood(
-            icon = "🔥",
-            color = Color(0xFFFFB86B),
-        )
+    Sad(
+        minScore = 3.0,
+        color = Color(0xFFF97316),
+    ),
 
-        score >= 8.0 -> RatingMood(
-            icon = "💜",
-            color = Color(0xFFA78BFA),
-        )
+    Neutral(
+        minScore = 5.0,
+        color = Color(0xFFEAB308),
+    ),
 
-        score >= 7.0 -> RatingMood(
-            icon = "⭐",
-            color = Color(0xFFFFD166),
-        )
+    Okay(
+        minScore = 6.0,
+        color = Color(0xFFA3E635),
+    ),
 
-        score >= 6.0 -> RatingMood(
-            icon = "✅",
-            color = Color(0xFF4ADE80),
-        )
+    Good(
+        minScore = 7.0,
+        color = Color(0xFF22C55E),
+    ),
 
-        score >= 5.0 -> RatingMood(
-            icon = "😐",
-            color = Color(0xFFCBD5E1),
-        )
+    Great(
+        minScore = 8.0,
+        color = Color(0xFF38BDF8),
+    ),
 
-        score >= 3.0 -> RatingMood(
-            icon = "🥲",
-            color = Color(0xFFFF8A65),
-        )
+    Fire(
+        minScore = 9.0,
+        color = Color(0xFFA78BFA),
+    );
 
-        else -> RatingMood(
-            icon = "💀",
-            color = Color(0xFFFF6B6B),
-        )
+    companion object {
+        fun fromScore(score: Double?): RatingMood {
+            if (score == null) return Unrated
+
+            return when {
+                score >= Fire.minScore!! -> Fire
+                score >= Great.minScore!! -> Great
+                score >= Good.minScore!! -> Good
+                score >= Okay.minScore!! -> Okay
+                score >= Neutral.minScore!! -> Neutral
+                score >= Sad.minScore!! -> Sad
+                else -> Dead
+            }
+        }
     }
 }

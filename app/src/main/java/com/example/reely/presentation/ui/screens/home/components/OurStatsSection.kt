@@ -32,11 +32,15 @@ import com.example.reely.presentation.ui.components.SmallSectionHeader
 import java.io.File
 
 @Composable
-fun OurStatsSection(){
+fun OurStatsSection(
+    textOverride : String? = "Wasze statystyki"
+){
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        SmallSectionHeader("Wasze statystyki")
+        if (!textOverride.isNullOrEmpty()) {
+            SmallSectionHeader(textOverride)
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -96,7 +100,7 @@ fun SmallStatsCard(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(64.dp)
+                .size(32.dp)
                 .clip(CircleShape)
                 .background(
                     color = tint

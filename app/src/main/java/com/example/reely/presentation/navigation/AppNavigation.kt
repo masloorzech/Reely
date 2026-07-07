@@ -60,6 +60,11 @@ fun AppNavigation(
                 ListScreen()
             }
 
+            composable<MovieDetailsRoute>{ movieId ->
+
+
+            }
+
         }
 
     }
