@@ -30,7 +30,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserId
-import com.example.reely.presentation.ui.components.RatingMood
 import com.example.reely.presentation.ui.components.ReelyButton
 import kotlin.collections.forEach
 import kotlin.collections.set
@@ -121,7 +120,6 @@ fun MarkAsWatchedDialog(
                                 key = { user -> user.id.toString() }
                             ) { user ->
                                 val rating = ratings[user.id] ?: 7
-                                val mood = RatingMood.fromScore(rating.toDouble())
 
                                 Column(
                                     modifier = Modifier
@@ -144,7 +142,7 @@ fun MarkAsWatchedDialog(
                                         Text(
                                             text = "$rating/10",
                                             style = MaterialTheme.typography.titleMedium,
-                                            color = mood.color
+                                            color = MaterialTheme.colorScheme.tertiary
                                         )
                                     }
 

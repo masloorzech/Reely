@@ -21,7 +21,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.reely.presentation.ui.components.RatingMood
 
 @Composable
 fun RatingStars(
@@ -31,7 +30,7 @@ fun RatingStars(
     onRatingChange: (Int) -> Unit
 ) {
     val safeRating = rating.coerceIn(0, 10)
-    val mood = RatingMood.fromScore(safeRating.toDouble())
+
 
     Row(
         modifier = modifier
@@ -45,7 +44,7 @@ fun RatingStars(
 
             val tint by animateColorAsState(
                 targetValue = if (selected) {
-                    mood.color
+                    MaterialTheme.colorScheme.tertiary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.28f)
                 },

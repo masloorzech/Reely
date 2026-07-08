@@ -76,7 +76,7 @@ private fun ReelyTabItem(
 ) {
     val textColor by animateColorAsState(
         targetValue = if (selected) {
-            MaterialTheme.colorScheme.primary
+            MaterialTheme.colorScheme.onBackground
         } else {
             MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
         },

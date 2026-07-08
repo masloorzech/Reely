@@ -72,7 +72,6 @@ import com.example.reely.domain.model.getAvailablePosterPath
 import com.example.reely.domain.model.getAvaliable
 import com.example.reely.domain.model.ourAverageRatingRounded
 import com.example.reely.domain.model.runtimeText
-import com.example.reely.presentation.ui.components.RatingMood
 import com.example.reely.presentation.ui.components.RatingResults
 import com.example.reely.presentation.ui.components.ReelyButton
 import com.example.reely.presentation.ui.components.ReelyIconButton
@@ -83,10 +82,8 @@ import com.example.reely.presentation.ui.formatWatchedDate
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
 import com.example.reely.presentation.ui.screens.movies.components.MarkAsWatchedDialog
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
-import com.example.reely.presentation.ui.screens.movies.components.RatingStars
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
 import java.util.Locale
-import kotlin.math.roundToInt
 
 private enum class WatchProviderTab(
     val type: ProviderSectionType,
@@ -404,7 +401,6 @@ private fun WatchedTopSection(
             val user = usersById[userData.key]
             val watchedAt = userData.value.watchedAt
             val rating = userData.value.rating
-            val mood = RatingMood.fromScore(rating)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -432,7 +428,7 @@ private fun WatchedTopSection(
                     Text(
                         text = String.format(Locale.US, "%.1f", rating),
                         style = MaterialTheme.typography.labelLarge,
-                        color = mood.color
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }

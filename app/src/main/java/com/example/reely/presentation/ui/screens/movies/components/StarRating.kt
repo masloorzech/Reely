@@ -19,7 +19,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.unit.dp
-import com.example.reely.presentation.ui.components.RatingMood
 import kotlin.math.floor
 
 @Composable
@@ -41,7 +40,6 @@ fun StarRating(
     val hasPartialStar = fraction > 0f
     val emptyStars = maxStars - fullStars - if (hasPartialStar) 1 else 0
 
-    val ratingMood = RatingMood.fromScore(score)
 
     Row(
         modifier = modifier.padding(bottom = 8.dp)
@@ -50,7 +48,7 @@ fun StarRating(
             Icon(
                 imageVector = Icons.Filled.StarRate,
                 contentDescription = "",
-                tint = starColor?: ratingMood.color,
+                tint = starColor?: MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.size(32.dp)
             )
         }
@@ -69,7 +67,7 @@ fun StarRating(
                 Icon(
                     imageVector = Icons.Filled.StarRate,
                     contentDescription = null,
-                    tint = starColor?: ratingMood.color,
+                    tint = starColor?: MaterialTheme.colorScheme.tertiary,
                     modifier = Modifier
                         .size(32.dp)
                         .drawWithContent {

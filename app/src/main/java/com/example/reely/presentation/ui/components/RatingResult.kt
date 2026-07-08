@@ -31,8 +31,6 @@ fun RatingResults(
 
     val averageRating = 9.0
 
-    val mood = RatingMood.fromScore(averageRating)
-
     Column(
         modifier = modifier.padding(bottom = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -43,69 +41,8 @@ fun RatingResults(
             Text(
                 text = String.format(Locale.US, "%.1f", averageRating),
                 style = style,
-                color = mood.color
+                color = MaterialTheme.colorScheme.tertiary
             )
-        }
-    }
-}
-
-enum class RatingMood(
-    val minScore: Double?,
-    val color: Color,
-) {
-    Unrated(
-        minScore = null,
-        color = Color(0xFF94A3B8),
-    ),
-
-    Dead(
-        minScore = 0.0,
-        color = Color(0xFFEF4444),
-    ),
-
-    Sad(
-        minScore = 3.0,
-        color = Color(0xFFF97316),
-    ),
-
-    Neutral(
-        minScore = 5.0,
-        color = Color(0xFFEAB308),
-    ),
-
-    Okay(
-        minScore = 6.0,
-        color = Color(0xFFA3E635),
-    ),
-
-    Good(
-        minScore = 7.0,
-        color = Color(0xFF22C55E),
-    ),
-
-    Great(
-        minScore = 8.0,
-        color = Color(0xFF38BDF8),
-    ),
-
-    Fire(
-        minScore = 9.0,
-        color = Color(0xFFA78BFA),
-    );
-
-    companion object {
-        fun fromScore(score: Double?): RatingMood {
-            if (score == null) return Unrated
-
-            return when {
-                score >= Fire.minScore!! -> Fire
-                score >= Great.minScore!! -> Great
-                score >= Good.minScore!! -> Good
-                score >= Okay.minScore!! -> Okay
-                score >= Neutral.minScore!! -> Neutral
-                score >= Sad.minScore!! -> Sad
-                else -> Dead
-            }
         }
     }
 }
