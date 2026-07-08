@@ -15,12 +15,22 @@ interface MovieDao {
     @Query("SELECT * FROM movies WHERE id = :movieId")
     suspend fun getMovie(movieId: Int): MovieEntity?
 
-    @Query("SELECT * FROM movie_user_states WHERE movieId = :movieId")
-    suspend fun getUserStatesForMovie(movieId: Int): List<MovieUserStateEntity>
+    @Query("SELECT * FROM movie_user_states WHERE movieId IN (:movieIds)")
+    suspend fun getUserStatesForMovies(movieIds: List<Int>): List<MovieUserStateEntity>
 
     @Upsert
     suspend fun upsertUserState(state: MovieUserStateEntity)
 
     @Query("DELETE FROM movie_user_states WHERE movieId = :movieId AND userId = :userId")
     suspend fun deleteUserState(movieId: Int, userId: Int)
+
+    @Query(
+        """
+        SELECT * FROM movies
+        WHERE id IN (
+            SELECT DISTINCT movieId FROM movie_user_states
+        )
+        """
+    )
+    suspend fun getUserMovieEntities(): List<MovieEntity>
 }

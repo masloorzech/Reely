@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import coil3.compose.AsyncImage
+import com.example.reely.domain.model.UserId
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import java.io.File
 
@@ -50,7 +51,7 @@ fun OurStatsSection(
 
             SmallStatsCard(
                 user = User(
-                    id = 1,
+                    id = UserId(1),
                     nickname = "Antek",
                     avatarPath = null
                 ),
@@ -65,7 +66,7 @@ fun OurStatsSection(
 
             SmallStatsCard(
                 user = User(
-                    id = 2,
+                    id = UserId(2),
                     nickname = "Daria",
                     avatarPath = null
                 ),

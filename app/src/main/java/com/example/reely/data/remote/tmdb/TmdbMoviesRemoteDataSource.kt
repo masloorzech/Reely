@@ -2,6 +2,9 @@ package com.example.reely.data.remote.tmdb
 
 import com.example.reely.data.remote.MoviesRemoteDataSource
 import com.example.reely.data.remote.model.RemoteMovie
+import com.example.reely.data.remote.model.RemoteMovieCredits
+import com.example.reely.data.remote.model.RemoteMovieWatchProviders
+import com.example.reely.data.remote.tmdb.mapper.toRemote
 import com.example.reely.data.remote.tmdb.mapper.toRemoteMovie
 import javax.inject.Inject
 
@@ -24,5 +27,14 @@ class TmdbMoviesRemoteDataSource @Inject constructor(
     override suspend fun getMovieDetails(id: Int): RemoteMovie {
         return api.getMovieDetails(id)
             .toRemoteMovie()
+    }
+
+    override suspend fun getMovieCastMembers(movieId: Int): RemoteMovieCredits  {
+        return api.getMovieCredits(movieId).toRemote()
+
+    }
+
+    override suspend fun getMovieProviders(movieId: Int): RemoteMovieWatchProviders {
+        return api.getMovieWatchProviders(movieId = movieId).toRemote()
     }
 }

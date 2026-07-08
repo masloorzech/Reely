@@ -19,6 +19,25 @@ data class RemoteMovie(
     val genres: List<String> = emptyList()
 )
 
+data class RemoteMovieWatchProviders(
+    val movieId: Int,
+    val countryCode: String = "PL",
+    val link: String? = null,
+    val flatrate: List<RemoteWatchProvider> = emptyList(),
+    val rent: List<RemoteWatchProvider> = emptyList(),
+    val buy: List<RemoteWatchProvider> = emptyList(),
+    val ads: List<RemoteWatchProvider> = emptyList(),
+    val free: List<RemoteWatchProvider> = emptyList()
+)
+
+data class RemoteWatchProvider(
+    val providerId: Int,
+    val providerName: String,
+    val logoPath: String?,
+    val displayPriority: Int?
+)
+
+
 fun RemoteMovie.toDomain(): Movie {
     return Movie(
         id = id,

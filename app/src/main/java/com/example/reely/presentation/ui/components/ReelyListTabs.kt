@@ -34,15 +34,16 @@ import com.example.reely.presentation.theme.InputBorder
 import com.example.reely.presentation.ui.screens.list.MovieListTab
 
 interface ReelyTab {
-    val tabTitle: String
+    val tabTitle: String?
     val tabIcon: ImageVector?
 }
 @Composable
-fun ReelyListTabs(
-    selectedTab: ReelyTab,
-    onTabSelected: (ReelyTab) -> Unit,
+fun <T> ReelyListTabs(
+    tabs: List<T>,
+    selectedTab: T,
+    onTabSelected: (T) -> Unit,
     modifier: Modifier = Modifier
-) {
+) where T : ReelyTab {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -53,7 +54,7 @@ fun ReelyListTabs(
             ),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        MovieListTab.entries.forEach { tab ->
+        tabs.forEach { tab ->
             ReelyTabItem(
                 title = tab.tabTitle,
                 icon = tab.tabIcon,
@@ -67,7 +68,7 @@ fun ReelyListTabs(
 
 @Composable
 private fun ReelyTabItem(
-    title: String,
+    title: String?,
     icon: ImageVector?,
     selected: Boolean,
     onClick: () -> Unit,
@@ -83,9 +84,10 @@ private fun ReelyTabItem(
     )
 
     val shape = RoundedCornerShape(32.dp)
-    val color = if (selected){
+
+    val backgroundColor = if (selected) {
         InputBorder
-    }else{
+    } else {
         Color.Transparent
     }
 
@@ -94,11 +96,11 @@ private fun ReelyTabItem(
             .height(32.dp)
             .padding(vertical = 4.dp, horizontal = 4.dp)
             .shadow(
-                elevation = 4.dp,
+                elevation = if (selected) 4.dp else 0.dp,
                 shape = shape
             )
             .background(
-                color = color,
+                color = backgroundColor,
                 shape = shape
             )
             .clip(shape)
@@ -106,7 +108,7 @@ private fun ReelyTabItem(
                 role = Role.Tab,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(
-                    bounded = true,
+                    bounded = true
                 ),
                 onClick = onClick
             ),
@@ -115,23 +117,30 @@ private fun ReelyTabItem(
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-
-            if (icon!= null){
+            if (icon != null) {
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
                     modifier = Modifier
-                        .padding(end = 2.dp)
+                        .then(
+                            if (title != null) {
+                                Modifier.padding(end = 4.dp)
+                            } else {
+                                Modifier
+                            }
+                        )
                         .size(16.dp),
                     tint = textColor
                 )
             }
 
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = textColor
-            )
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = textColor
+                )
+            }
         }
     }
 }

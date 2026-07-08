@@ -1,6 +1,8 @@
 package com.example.reely.data.remote.tmdb
 
+import com.example.reely.data.remote.tmdb.dto.TmdbMovieCreditsDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMovieDetailsDto
+import com.example.reely.data.remote.tmdb.dto.TmdbMovieWatchProvidersDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMoviesResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -27,4 +29,16 @@ interface TmdbApi {
         @Path("movie_id") movieId: Int,
         @Query("language") language: String = "pl-PL"
     ): TmdbMovieDetailsDto
+
+    @GET("movie/{movie_id}/credits")
+    suspend fun getMovieCredits(
+        @Path("movie_id") movieId: Int,
+        @Query("language") language: String = "pl-PL"
+    ): TmdbMovieCreditsDto
+
+    @GET("movie/{movie_id}/watch/providers")
+    suspend fun getMovieWatchProviders(
+        @Path("movie_id") movieId: Int
+    ): TmdbMovieWatchProvidersDto
+
 }

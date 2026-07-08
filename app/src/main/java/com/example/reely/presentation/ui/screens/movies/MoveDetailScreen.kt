@@ -1,196 +1,381 @@
 package com.example.reely.presentation.ui.screens.movies
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.example.reely.R
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil3.compose.AsyncImage
 import com.composables.icons.lucide.ArrowLeft
+import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Gift
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Megaphone
+import com.composables.icons.lucide.ShoppingCart
+import com.composables.icons.lucide.Tv
+import com.composables.icons.lucide.TvMinimalPlay
+import com.composables.icons.lucide.X
 import com.example.reely.domain.model.Movie
+import com.example.reely.domain.model.WatchProvider
+import com.example.reely.domain.model.genresText
+import com.example.reely.domain.model.getAvailablePosterPath
+import com.example.reely.domain.model.getAvaliable
 import com.example.reely.domain.model.ourAverageRatingRounded
-import com.example.reely.domain.usecase.LoadMovieDataUseCase
+import com.example.reely.domain.model.runtimeText
 import com.example.reely.presentation.ui.components.RatingResults
+import com.example.reely.presentation.ui.components.ReelyButton
 import com.example.reely.presentation.ui.components.ReelyIconButton
+import com.example.reely.presentation.ui.components.ReelyListTabs
+import com.example.reely.presentation.ui.components.ReelyTab
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import com.example.reely.presentation.ui.screens.movies.model.MovieDetailsUiMode
+import com.example.reely.presentation.ui.screens.movies.model.detailsUiMode
 import java.util.Locale
-import javax.inject.Inject
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.SavedStateHandle
-import androidx.navigation.toRoute
-import com.example.reely.domain.model.PublicRating
-import com.example.reely.domain.model.genresText
-import com.example.reely.domain.model.getAvailablePosterPath
-import com.example.reely.domain.model.runtimeText
-import com.example.reely.presentation.navigation.MovieDetailsRoute
-import dagger.hilt.android.lifecycle.HiltViewModel
 
+private enum class WatchProviderTab(
+    val type: ProviderSectionType,
+    override val tabTitle: String?,
+    override val tabIcon: ImageVector?
+) : ReelyTab {
 
-data class MovieDetailsScreenState(
-    val movie: Movie? = null,
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
+    FLATRATE(ProviderSectionType.FLATRATE, null, Lucide.Tv),
+    BUY(ProviderSectionType.BUY, null, Lucide.ShoppingCart),
+    RENT(ProviderSectionType.RENT, null, Lucide.Clock),
+    FREE(ProviderSectionType.FREE, null, Lucide.Gift),
+    ADS(ProviderSectionType.ADS, null, Lucide.Megaphone);
+
+    companion object {
+        fun fromType(type: ProviderSectionType): WatchProviderTab {
+            return entries.first { it.type == type }
+        }
+    }
+}
 
 @Composable
 fun MovieDetailsScreen(
-    onBack : () -> Unit = {},
-    viewModel: MovieDetailsScreenViewModel = viewModel()
+    onBack: () -> Unit = {},
+    viewModel: MovieDetailsScreenViewModel = hiltViewModel()
 ) {
-
     val state = viewModel.state.collectAsState().value
+    val movie = state.movie
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                color = MaterialTheme.colorScheme.background
-            )
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column {
-
             PosterHeader(
-                isLoading = state.isLoading,
-                posterPath = state.movie?.getAvailablePosterPath(),
-                title = state.movie?.title,
-                releaseDate = state.movie?.releaseDate,
-                duration = state.movie?.runtimeText(),
-                genres = state.movie?.genresText()
+                isLoading = state.isMovieLoading,
+                posterPath = movie?.getAvailablePosterPath(),
+                title = movie?.title,
+                releaseDate = movie?.releaseDate,
+                duration = movie?.runtimeText(),
+                genres = movie?.genresText()
             )
 
-            if (state.movie!=null){
-                NotWatchedMovieScreen(
-                    description = state.movie.overview,
-                    averageRating = state.movie.publicRating?.average,
-                    userCount = state.movie.publicRating?.voteCount
-                )
-            }
+            Spacer(Modifier.height(8.dp))
 
+            if (movie != null) {
+                MovieDetailsContent(
+                    movie = movie,
+                    isMovieProvidersLoading = state.isMovieProvidersLoading,
+                    availableProviderSections = state.availableProviderSections,
+                    selectedProviderSection = state.selectedProviderSection,
+                    selectedProviders = state.selectedProviders,
+                    onProviderSectionSelected = viewModel::changeProvidersType
+                ) {
+                    when (movie.detailsUiMode()) {
+                        MovieDetailsUiMode.NotWatched -> {
+                            NotWatchedTopSection(
+                                movie = movie,
+                                onAddToWatchlistClick = viewModel::addToWatchlist
+                            )
+                        }
 
+                        MovieDetailsUiMode.InWatchlist -> {
+                            WatchlistTopSection(
+                                movie = movie,
+                                onMarkAsWatchedClick = viewModel::markAsWatched,
+                                onRemoveFromWatchlistClick = viewModel::removeFromWatchlist
+                            )
+                        }
 
-
-        }
-
-
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        ReelyIconButton(
-            icon = Lucide.ArrowLeft,
-            onClick = onBack
-        )
-    }
-
-
-}
-
-@HiltViewModel
-class MovieDetailsScreenViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
-    private val loadMovieDataUseCase: LoadMovieDataUseCase
-): ViewModel(){
-
-    private val route = savedStateHandle.toRoute<MovieDetailsRoute>()
-    private val _state = MutableStateFlow(MovieDetailsScreenState())
-    val state = _state.asStateFlow()
-
-
-    init{
-        loadMovieDetails(route.movieId)
-    }
-
-    fun loadMovieDetails(movieId: Int){
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true
-                )
-            }
-
-            loadMovieDataUseCase(movieId)
-                .onSuccess { movie ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            movie = movie
-                        )
+                        MovieDetailsUiMode.Watched -> {
+                            WatchedTopSection(
+                                movie = movie
+                            )
+                        }
                     }
                 }
-                .onFailure { error ->
-                    _state.update {
-                        it.copy(
-                            isLoading = false,
-                            error = error.message + "\n" + error.cause
-                        )
-                    }
-                }
+            }
+        }
 
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            ReelyIconButton(
+                icon = Lucide.ArrowLeft,
+                onClick = onBack
+            )
         }
     }
-
-
 }
 
 @Composable
-fun NotWatchedMovieScreen(
-    description: String?,
+private fun MovieDetailsContent(
+    movie: Movie,
+    isMovieProvidersLoading: Boolean,
+    availableProviderSections: List<ProviderSectionType>,
+    selectedProviderSection: ProviderSectionType,
+    selectedProviders: List<WatchProvider>,
+    onProviderSectionSelected: (ProviderSectionType) -> Unit,
+    topSection: @Composable ColumnScope.() -> Unit
+) {
+    val verticalScroll = rememberScrollState()
+    val density = LocalDensity.current
+
+    val showTopGradient by remember {
+        derivedStateOf {
+            verticalScroll.value > with(density) { 8.dp.roundToPx() }
+        }
+    }
+
+    Box {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .verticalScroll(verticalScroll)
+        ) {
+            topSection()
+
+            Spacer(Modifier.height(16.dp))
+
+            WatchProvidersSection(
+                isLoading = isMovieProvidersLoading,
+                sections = availableProviderSections,
+                selectedSection = selectedProviderSection,
+                selectedProviders = selectedProviders,
+                onSectionSelected = onProviderSectionSelected
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            MovieDescriptionSection(
+                description = movie.overview
+            )
+
+            Spacer(Modifier.height(32.dp))
+        }
+
+        MovieDetailsTopGradient(
+            visible = showTopGradient,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
+    }
+}
+
+@Composable
+private fun MovieDetailsTopGradient(
+    visible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 200)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 200)),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier
+                .height(64.dp)
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            Color.Transparent
+                        )
+                    )
+                )
+        ) {}
+    }
+}
+
+@Composable
+private fun NotWatchedTopSection(
+    movie: Movie,
+    onAddToWatchlistClick: () -> Unit
+) {
+    GlobalRatingSection(
+        averageRating = movie.publicRating?.average,
+        userCount = movie.publicRating?.voteCount
+    )
+
+    Spacer(Modifier.height(16.dp))
+
+    Row {
+        ReelyButton(
+            leadingIcon = {
+                Icon(
+                    imageVector = Lucide.TvMinimalPlay,
+                    tint = Color.White,
+                    contentDescription = null
+                )
+            },
+            text = "Dodaj do listy",
+            onClick = onAddToWatchlistClick
+        )
+    }
+}
+
+@Composable
+private fun WatchlistTopSection(
+    movie: Movie,
+    onMarkAsWatchedClick: () -> Unit,
+    onRemoveFromWatchlistClick: () -> Unit
+) {
+    GlobalRatingSection(
+        averageRating = movie.publicRating?.average,
+        userCount = movie.publicRating?.voteCount
+    )
+
+    Spacer(Modifier.height(16.dp))
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        ReelyButton(
+            leadingIcon = {
+                Icon(
+                    imageVector = Lucide.TvMinimalPlay,
+                    tint = Color.White,
+                    contentDescription = null
+                )
+            },
+            text = "Obejrzany",
+            onClick = onMarkAsWatchedClick
+        )
+
+        ReelyButton(
+            text = "Usuń z listy",
+            overrideContainerColor = MaterialTheme.colorScheme.surface,
+            leadingIcon = {
+                Icon(
+                    imageVector = Lucide.X,
+                    tint = Color.White,
+                    contentDescription = null
+                )
+            },
+            onClick = onRemoveFromWatchlistClick
+        )
+    }
+}
+
+@Composable
+private fun WatchedTopSection(
+    movie: Movie
+) {
+    Column(
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        StarRating(
+            score = movie.ourAverageRatingRounded()
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        RatingResults(
+            movie = movie,
+            style = MaterialTheme.typography.labelLarge
+        )
+
+        movie.publicRating?.let { publicRating ->
+            if (publicRating.average != null && publicRating.voteCount != null) {
+                Spacer(Modifier.height(8.dp))
+
+                Text(
+                    text = String.format(
+                        Locale.US,
+                        "Globalne oceny: %.1f · %,d ocen",
+                        publicRating.average,
+                        publicRating.voteCount
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+
+    Spacer(Modifier.height(8.dp))
+
+    OurStatsSection(
+        textOverride = null
+    )
+
+    Spacer(Modifier.height(16.dp))
+
+    Text(
+        text = "Obejrzany · przez",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+    )
+}
+
+@Composable
+private fun GlobalRatingSection(
     averageRating: Double?,
     userCount: Int?
+) {
+    StarRating(score = averageRating)
 
-){
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState())
-
-    ) {
-
-        Spacer(Modifier.height(16.dp))
-
-        StarRating(score = averageRating)
-
+    if (averageRating != null && userCount != null) {
         Text(
             text = String.format(
                 Locale.US,
@@ -201,107 +386,111 @@ fun NotWatchedMovieScreen(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
-
-        Spacer(Modifier.height(16.dp))
-
-        SmallSectionHeader("O filmie:")
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = description.toString(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            lineHeight = 20.sp
-        )
-
     }
 }
 
 @Composable
-fun WatchedMovieScreen(
-    movie : Movie
+fun WatchProvidersSection(
+    isLoading: Boolean,
+    sections: List<ProviderSectionType>,
+    selectedSection: ProviderSectionType,
+    selectedProviders: List<WatchProvider>,
+    onSectionSelected: (ProviderSectionType) -> Unit
 ) {
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .verticalScroll(rememberScrollState())
-
-    ) {
-
-        Spacer(
-            Modifier.height(16.dp)
+    if (isLoading) {
+        SmallSectionHeader(
+            sectionName = "Ładowanie dostępności..."
         )
+        return
+    }
 
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+    if (sections.isEmpty()) {
+        SmallSectionHeader(
+            sectionName = "Brak informacji o dostępności w Polsce"
+        )
+        return
+    }
 
-            Column(
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth()
+    val tabs = sections.map { WatchProviderTab.fromType(it) }
+
+    val selectedTab = tabs.firstOrNull { it.type == selectedSection }
+        ?: tabs.first()
+
+    SmallSectionHeader(
+        sectionName = "Dostępne w Polsce ${selectedTab.type.text}"
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    ReelyListTabs(
+        tabs = tabs,
+        selectedTab = selectedTab,
+        onTabSelected = { tab ->
+            onSectionSelected(tab.type)
+        }
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    LazyRow(
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        selectedProviders.forEach { provider ->
+            item(
+                key = provider.providerId
             ) {
-
-                StarRating(
-                    score = movie.ourAverageRatingRounded()
-                )
-                Spacer(
-                    Modifier.width(8.dp)
-                )
-
-                RatingResults(
-                    movie = movie,
-                    style = MaterialTheme.typography.labelLarge
-                )
-                if (movie.publicRating != null) {
-                    Row {
-                        Text(
-                            text = String.format(
-                                Locale.US,
-                                "Globalne oceny: %.1f · %,d ocen",
-                                movie.publicRating.average,
-                                movie.publicRating.voteCount
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                Column(
+                    modifier = Modifier.width(68.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surface),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(
+                            model = provider.logoPaths?.getAvaliable(),
+                            contentDescription = provider.providerName,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(5.dp)
+                                .clip(RoundedCornerShape(9.dp)),
+                            contentScale = ContentScale.Fit
                         )
-                        Spacer(Modifier.weight(1f))
                     }
+
+                    Spacer(Modifier.height(4.dp))
+
+                    Text(
+                        text = provider.providerName,
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 12.sp
+                    )
                 }
             }
-
         }
-
-        Spacer(Modifier.height(8.dp))
-
-        OurStatsSection(
-            textOverride = null
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = "Obejrzany · przez",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-        )
-
-
-        Spacer(Modifier.height(16.dp))
-
-        SmallSectionHeader("O filmie:")
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = "Historia jednego z cieszących się najgorszą sławą superprzestępców uniwersum DC — Jokera. Przedstawiony przez Phillipsa obraz śledzi losy kultowego czarnego charakteru, człowieka zepchniętego na margines. To nie tylko kontrowersyjne studium postaci, ale także opowieść ku przestrodze w szerszym kontekście.",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-            lineHeight = 20.sp
-        )
-
     }
+}
+
+@Composable
+fun MovieDescriptionSection(
+    description: String?
+) {
+    SmallSectionHeader("O filmie:")
+
+    Spacer(Modifier.height(8.dp))
+
+    Text(
+        text = description.takeUnless { it.isNullOrBlank() } ?: "Brak opisu.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+        lineHeight = 20.sp
+    )
 }

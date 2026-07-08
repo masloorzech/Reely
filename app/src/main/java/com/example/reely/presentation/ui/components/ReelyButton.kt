@@ -32,6 +32,7 @@ fun ReelyButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    overrideContainerColor: Color = MaterialTheme.colorScheme.primary,
     leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     val shape = RoundedCornerShape(8.dp)
@@ -41,7 +42,7 @@ fun ReelyButton(
             .defaultMinSize(minHeight = 32.dp)
             .clip(shape)
             .background(
-                color = MaterialTheme.colorScheme.primary,
+                color = overrideContainerColor,
                 shape = shape
             )
             .clickable(

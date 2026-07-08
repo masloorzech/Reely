@@ -45,6 +45,22 @@ fun LocalMovieUserState.toDomain(): MovieUserState {
     }
 }
 
+fun MovieUserState.toLocalOrNull(): LocalMovieUserState? {
+    return when (this) {
+        MovieUserState.NotWatched -> null
+
+        MovieUserState.InWatchlist -> LocalMovieUserState(
+            status = LocalMovieStatus.WATCHLIST
+        )
+
+        is MovieUserState.Watched -> LocalMovieUserState(
+            status = LocalMovieStatus.WATCHED,
+            watchedAt = watchedAt,
+            rating = rating
+        )
+    }
+}
+
 fun Movie.toLocal(): LocalMovie {
     return LocalMovie(
         id = id,

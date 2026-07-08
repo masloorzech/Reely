@@ -73,7 +73,11 @@ fun AppNavigation(
             }
 
             composable<ListScreenRoute>{
-                ListScreen()
+                ListScreen(
+                    onMovieClick = { movieId ->
+                        navController.navigate(MovieDetailsRoute(movieId))
+                    }
+                )
             }
 
             composable<MovieDetailsRoute> {

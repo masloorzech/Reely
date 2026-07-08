@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -89,7 +90,7 @@ enum class MovieSortOption(
 }
 enum class MovieDisplayStyle(
     val icon: ImageVector
-){
+) {
     GRID(
         Lucide.Grid3x2
     ),
@@ -97,24 +98,15 @@ enum class MovieDisplayStyle(
         Lucide.List
     )
 }
-data class ListScreenUiState(
-    val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
-    val selectedTab: MovieListTab = MovieListTab.WATCHED,
-    val displayStyle: MovieDisplayStyle = MovieDisplayStyle.LIST,
-    val moviesList: List<Movie> = emptyList(),
-    val isLoading: Boolean = false
-)
 
 @Composable
 fun ListScreen(
     modifier : Modifier = Modifier,
-    vm : ListScreenViewModel = viewModel()
+    vm : ListScreenViewModel = hiltViewModel(),
+    onMovieClick: (movieId: Int) -> Unit = {}
 ) {
 
     val state = vm.state.collectAsState().value
-
-    var searchText by remember { mutableStateOf("") }
-
 
     Box(
         modifier = modifier
@@ -135,17 +127,16 @@ fun ListScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             ReelyListTabs(
+                tabs = MovieListTab.entries,
                 selectedTab = state.selectedTab,
-                onTabSelected = {
-                    vm.switchTab(it as MovieListTab)
-                }
+                onTabSelected = vm::switchTab
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             ReelySearchField(
-                value = searchText,
-                onValueChange = { searchText = it },
+                value = state.searchQuery,
+                onValueChange = vm::changeSearchQuery,
                 placeholder = "Wyszukaj film w sekcji ${state.selectedTab.tabTitle.lowercase()}...",
                 onSearchClick = {
                 }
@@ -166,11 +157,17 @@ fun ListScreen(
                     icon = state.displayStyle.icon
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             when (state.displayStyle){
                 MovieDisplayStyle.GRID -> {
                     MovieGrid(
                         movies = state.moviesList,
-                        isLoading = state.isLoading
+                        isLoading = state.isLoading,
+                        onMovieClick = { movie ->
+                            onMovieClick(movie.id)
+                        }
                     )
                 }
                 MovieDisplayStyle.LIST -> {
@@ -200,73 +197,5 @@ fun ListScreen(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ){}
-    }
-}
-
-class ListScreenViewModel @Inject constructor(
-
-): ViewModel(){
-
-    private var _state = MutableStateFlow(ListScreenUiState())
-    val state = _state.asStateFlow()
-
-    init {
-        loadMovies()
-    }
-
-    fun loadMovies(){
-        viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true
-                )
-            }
-        }
-    }
-
-    fun toggleDisplayStyle(){
-
-        when (_state.value.displayStyle) {
-            MovieDisplayStyle.GRID -> {
-                _state.update {
-                    it.copy(
-                        displayStyle = MovieDisplayStyle.LIST
-                    )
-                }
-            }
-
-            MovieDisplayStyle.LIST -> {
-                _state.update {
-                    it.copy(
-                        displayStyle = MovieDisplayStyle.GRID
-                    )
-                }
-            }
-        }
-    }
-
-    fun switchTab(tab: MovieListTab){
-        _state.update {
-            it.copy(
-                selectedTab = tab
-            )
-        }
-    }
-
-    fun switchSort(sortType: MovieSortOption){
-        _state.update {
-            it.copy(
-                selectedSort = sortType
-            )
-        }
-    }
-
-}
-
-@Preview
-@Composable
-fun ListScreenPreview(){
-    ReelyTheme {
-        ListScreen()
     }
 }

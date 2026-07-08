@@ -8,3 +8,11 @@ object TmdbImageConfig {
 fun String.toTmdbPosterUrl(): String {
     return "${TmdbImageConfig.IMAGE_BASE_URL}${TmdbImageConfig.POSTER_SIZE}$this"
 }
+
+fun String.toTmdbLogoUrl(size: String = "w154"): String {
+    return "${TmdbImageConfig.IMAGE_BASE_URL}/$size$this"
+}
+
+fun String.toTmdbProfileUrl(size: String = "w300"): String {
+    return "${TmdbImageConfig.IMAGE_BASE_URL}/$size$this"
+}

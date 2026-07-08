@@ -1,6 +1,8 @@
 package com.example.reely.domain.repository
 
 import com.example.reely.domain.model.Movie
+import com.example.reely.domain.model.MovieCredits
+import com.example.reely.domain.model.MovieWatchProviders
 
 interface MoviesRepository {
 
@@ -13,4 +15,11 @@ interface MoviesRepository {
 
     suspend fun saveMovieData(movie: Movie): Result<Unit>
 
+    suspend fun getMovieCast(movieId: Int): Result<MovieCredits>
+
+    suspend fun getMovieWatchProviders(movieId: Int): Result<MovieWatchProviders>
+
+    suspend fun addMovieToWatchlist(movie: Movie): Result<Unit>
+
+    suspend fun getUserMovies(): Result<List<Movie>>
 }

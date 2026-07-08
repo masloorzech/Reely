@@ -31,8 +31,6 @@ sealed interface MovieUserState {
     }
 }
 
-@JvmInline
-value class UserId(val value: Int)
 data class PublicRating(
     val average: Double?,
     val voteCount: Int?
@@ -72,8 +70,8 @@ fun Movie.getAvailablePosterPath() : String?{
     return posterPaths?.localPosterPath?:posterPaths?.remotePosterPath
 }
 
-fun Movie.isInWatchlistBy(userId: UserId): Boolean {
-    return userState(userId) is MovieUserState.InWatchlist
+fun Movie.isInWatchlist(): Boolean {
+    return userState(SHARED_WATCHLIST_USER_ID) is MovieUserState.InWatchlist
 }
 
 fun Movie.runtimeText(): String? {

@@ -109,13 +109,12 @@ fun MovieMainData(
         )
 
         Text(
-            "$releaseDate · $duration · $genres",
+            "$releaseDate · $duration \n$genres",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
 
     }
-
 }
 
 @Composable
