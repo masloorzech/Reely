@@ -18,8 +18,11 @@ import com.example.reely.domain.usecase.GetMovieProvidersUseCase
 import com.example.reely.domain.usecase.LoadMovieDataUseCase
 import com.example.reely.domain.usecase.MarkMovieAsWatchedUseCase
 import com.example.reely.domain.usecase.ObserveUsersUseCase
+import com.example.reely.domain.usecase.RemoveMovieFromWatchedUseCase
 import com.example.reely.domain.usecase.RemoveMovieFromWatchlistUseCase
+import com.example.reely.domain.usecase.UpdateMovieWatchesUseCase
 import com.example.reely.presentation.navigation.MovieDetailsRoute
+import com.example.reely.presentation.ui.model.UserRatingItems
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -85,6 +88,16 @@ data class MovieDetailsScreenState(
         get() = movieProviders
             ?.let { selectedProviderSection.providersFrom(it) }
             .orEmpty()
+
+    val userRatingItems: List<UserRatingItems>
+        get() = users.map { user ->
+            val watch = movie?.userWatches?.get(user.id)
+
+            UserRatingItems(
+                user = user,
+                watchedMovies = watch
+            )
+        }
 }
 
 @HiltViewModel
@@ -96,13 +109,17 @@ class MovieDetailsScreenViewModel @Inject constructor(
     private val addMovieToWatchlistUseCase: AddMovieToWatchlistUseCase,
     private val markMovieAsWatchedUseCase: MarkMovieAsWatchedUseCase,
     private val removeMovieFromWatchlistUseCase: RemoveMovieFromWatchlistUseCase,
-    private val observeUsersUseCase: ObserveUsersUseCase
+    private val observeUsersUseCase: ObserveUsersUseCase,
+    private val updateMovieWatchesUseCase: UpdateMovieWatchesUseCase,
+    private val removeMovieFromWatchedUseCase: RemoveMovieFromWatchedUseCase
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<MovieDetailsRoute>()
 
     private val _state = MutableStateFlow(MovieDetailsScreenState())
     val state = _state.asStateFlow()
+
+
 
     init {
         val movieId = route.movieId
@@ -296,19 +313,33 @@ class MovieDetailsScreenViewModel @Inject constructor(
                 )
             }
 
-            val watchedAt = LocalDate.now().toString()
+            val fallbackWatchedAt = movie.userWatches.values
+                .mapNotNull { it.watchedAt }
+                .maxOrNull()
+                ?: LocalDate.now().toString()
 
             val userWatches = ratings.mapValues { entry ->
+                val existingWatch = movie.userWatches[entry.key]
+
                 UserMovieWatch(
-                    watchedAt = watchedAt,
+                    watchedAt = existingWatch?.watchedAt ?: fallbackWatchedAt,
                     rating = entry.value
                 )
             }
 
-            markMovieAsWatchedUseCase(
-                movie = movie,
-                userWatches = userWatches
-            ).onSuccess {
+            val result = if (movie.userWatches.isEmpty()) {
+                markMovieAsWatchedUseCase(
+                    movie = movie,
+                    userWatches = userWatches
+                )
+            } else {
+                updateMovieWatchesUseCase(
+                    movieId = movie.id,
+                    userWatches = userWatches
+                )
+            }
+
+            result.onSuccess {
                 _state.update {
                     it.copy(
                         isRatingDialogVisible = false,
@@ -321,7 +352,7 @@ class MovieDetailsScreenViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         isMarkingAsWatched = false,
-                        error = "Błąd podczas oznaczania filmu jako obejrzany\n${error.message}"
+                        error = "Błąd podczas zapisywania ocen\n${error.message}"
                     )
                 }
             }
@@ -337,6 +368,7 @@ class MovieDetailsScreenViewModel @Inject constructor(
                     reloadMovieDetails(movie.id)
                 }
                 .onFailure { error ->
+                    Log.e("ERROR", error.message.toString())
                     _state.update {
                         it.copy(
                             error = "Błąd podczas usuwania z watchlisty\n${error.message}"
@@ -345,4 +377,31 @@ class MovieDetailsScreenViewModel @Inject constructor(
                 }
         }
     }
+
+    fun removeFromWatched() {
+        viewModelScope.launch {
+            val movie = _state.value.movie ?: return@launch
+
+            _state.update {
+                it.copy(
+                    isMovieLoading = true,
+                    error = null
+                )
+            }
+
+            removeMovieFromWatchedUseCase(movie.id)
+                .onSuccess {
+                    reloadMovieDetails(movie.id)
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            isMovieLoading = false,
+                            error = "Błąd podczas usuwania filmu z obejrzanych\n${error.message}"
+                        )
+                    }
+                }
+        }
+    }
+
 }

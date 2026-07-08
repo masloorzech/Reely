@@ -76,4 +76,8 @@ interface MovieDao {
         """
     )
     suspend fun getUserMovieEntities(): List<MovieEntity>
+
+    @Query("DELETE FROM movie_user_watches WHERE movieId = :movieId")
+    suspend fun deleteUserWatchesForMovie(movieId: Int)
+    
 }

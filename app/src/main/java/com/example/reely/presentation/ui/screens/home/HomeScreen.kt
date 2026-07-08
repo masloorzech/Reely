@@ -54,10 +54,11 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OurStatsSection()
+            OurStatsSection(
+                userRatingItems = null
+            )
 
             //CalendarSection()
-
 
         }
 

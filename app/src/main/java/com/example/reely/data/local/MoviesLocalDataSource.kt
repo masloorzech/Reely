@@ -32,4 +32,6 @@ interface MoviesLocalDataSource {
         movieId: Int,
         userId: Int
     )
+
+    suspend fun deleteUserWatchesForMovie(movieId: Int)
 }

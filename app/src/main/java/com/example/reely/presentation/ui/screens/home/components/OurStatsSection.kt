@@ -1,6 +1,7 @@
 package com.example.reely.presentation.ui.screens.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,14 +31,15 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import coil3.compose.AsyncImage
-import com.example.reely.domain.model.UserId
 import com.example.reely.presentation.ui.components.SmallSectionHeader
+import com.example.reely.presentation.ui.model.UserRatingItems
 import java.io.File
 
 @Composable
 fun OurStatsSection(
-    textOverride : String? = "Wasze statystyki"
-){
+    textOverride: String? = "Wasze statystyki",
+    userRatingItems: List<UserRatingItems>?
+) {
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -45,47 +49,39 @@ fun OurStatsSection(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth()
-        ){
-
-            SmallStatsCard(
-                user = User(
-                    id = UserId(1),
-                    nickname = "Antek",
-                    avatarPath = null
-                ),
-                averageRating = 9.2f,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.weight(1f)
+        if (userRatingItems != null) {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(
+                    items = userRatingItems,
+                    key = { it.user.id.value }
+                ) { userStats ->
+                    SmallStatsCard(
+                        user = userStats.user,
+                        averageRating = userStats.watchedMovies?.rating,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.width(156.dp)
+                    )
+                }
+            }
+        } else {
+            Text(
+                text = "TODO",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
             )
-
-            Spacer(
-                modifier = Modifier.width(8.dp)
-            )
-
-            SmallStatsCard(
-                user = User(
-                    id = UserId(2),
-                    nickname = "Daria",
-                    avatarPath = null
-                ),
-                averageRating = 8.1f,
-                tint = MaterialTheme.colorScheme.secondary,
-                modifier = Modifier.weight(1f)
-            )
-
         }
-
     }
-
 }
+
 
 @Composable
 fun SmallStatsCard(
     modifier: Modifier = Modifier,
     user: User,
-    averageRating: Float,
+    averageRating: Double?,
     tint: Color
 ){
     Row(

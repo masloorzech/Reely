@@ -31,4 +31,12 @@ interface MoviesRepository {
         movie: Movie,
         userWatches: Map<UserId, UserMovieWatch>
     ): Result<Unit>
+
+    suspend fun updateMovieWatches(
+        movieId: Int,
+        userWatches: Map<UserId, UserMovieWatch>
+    ): Result<Unit>
+
+    suspend fun removeMovieFromWatched(movieId: Int): Result<Unit>
+
 }

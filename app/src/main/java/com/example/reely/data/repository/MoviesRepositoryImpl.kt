@@ -114,4 +114,25 @@ class MoviesRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateMovieWatches(
+        movieId: Int,
+        userWatches: Map<UserId, UserMovieWatch>
+    ): Result<Unit> {
+        return runCatching {
+            userWatches.forEach { entry ->
+                localDataSource.upsertUserWatch(
+                    movieId = movieId,
+                    userId = entry.key.value,
+                    userWatch = entry.value.toLocal()
+                )
+            }
+        }
+    }
+
+    override suspend fun removeMovieFromWatched(movieId: Int): Result<Unit> {
+        return runCatching {
+            localDataSource.deleteUserWatchesForMovie(movieId)
+        }
+    }
+
 }

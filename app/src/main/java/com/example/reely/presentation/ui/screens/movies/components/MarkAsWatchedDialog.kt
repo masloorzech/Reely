@@ -37,14 +37,17 @@ import kotlin.collections.set
 @Composable
 fun MarkAsWatchedDialog(
     users: List<User>,
+    initialRatings: Map<UserId, Double?>,
     isLoading: Boolean,
     onDismiss: () -> Unit,
     onConfirm: (Map<UserId, Double?>) -> Unit
 ) {
-    val ratings = remember(users) {
+    val ratings = remember(users, initialRatings) {
         mutableStateMapOf<UserId, Int>().apply {
             users.forEach { user ->
-                this[user.id] = 7
+                this[user.id] = initialRatings[user.id]
+                    ?.toInt()
+                    ?: 5
             }
         }
     }

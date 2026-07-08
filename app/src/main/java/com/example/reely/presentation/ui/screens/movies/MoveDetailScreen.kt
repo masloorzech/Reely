@@ -14,29 +14,21 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +42,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.ArrowLeft
@@ -60,16 +50,16 @@ import com.composables.icons.lucide.Gift
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Megaphone
 import com.composables.icons.lucide.ShoppingCart
+import com.composables.icons.lucide.Trash
 import com.composables.icons.lucide.Tv
 import com.composables.icons.lucide.TvMinimalPlay
-import com.composables.icons.lucide.X
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.User
-import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.model.genresText
 import com.example.reely.domain.model.getAvailablePosterPath
 import com.example.reely.domain.model.getAvaliable
+import com.example.reely.domain.model.isWatched
 import com.example.reely.domain.model.ourAverageRatingRounded
 import com.example.reely.domain.model.runtimeText
 import com.example.reely.presentation.ui.components.RatingResults
@@ -79,6 +69,7 @@ import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyTab
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.formatWatchedDate
+import com.example.reely.presentation.ui.model.UserRatingItems
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
 import com.example.reely.presentation.ui.screens.movies.components.MarkAsWatchedDialog
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
@@ -139,10 +130,11 @@ fun MovieDetailsScreen(
                     onProviderSectionSelected = viewModel::changeProvidersType
                 ) {
                     when {
-                        movie.userWatches.isNotEmpty() -> {
+                        movie.isWatched() -> {
                             WatchedTopSection(
                                 movie = movie,
-                                users = state.users
+                                users = state.users,
+                                userRatingItems = state.userRatingItems
                             )
                         }
 
@@ -150,7 +142,6 @@ fun MovieDetailsScreen(
                             WatchlistTopSection(
                                 movie = movie,
                                 onMarkAsWatchedClick = viewModel::showRatingDialog,
-                                onRemoveFromWatchlistClick = viewModel::removeFromWatchlist
                             )
                         }
 
@@ -175,11 +166,55 @@ fun MovieDetailsScreen(
                 icon = Lucide.ArrowLeft,
                 onClick = onBack
             )
+            Spacer(
+                Modifier.weight(1f)
+            )
+            if (movie!=null) {
+                when {
+                    movie.isWatched() -> {
+                        ReelyButton(
+                            text = "Usuń z obejrzanych",
+                            onClick = {
+                                viewModel.removeFromWatched()
+                            },
+                            overrideContainerColor = MaterialTheme.colorScheme.surface,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Lucide.Trash,
+                                    contentDescription = "Bin",
+                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        )
+                    }
+                    movie.isInWatchlist -> {
+                        ReelyButton(
+                            text = "Usuń z listy",
+                            onClick = {
+                                viewModel.removeFromWatchlist()
+                            },
+                            overrideContainerColor = MaterialTheme.colorScheme.surface,
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Lucide.Trash,
+                                    contentDescription = "Bin",
+                                    tint = MaterialTheme.colorScheme.onBackground,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        )
+                    }
+                }
+            }
         }
 
         if (state.isRatingDialogVisible) {
             MarkAsWatchedDialog(
                 users = state.users,
+                initialRatings = movie?.userWatches
+                    ?.mapValues { entry -> entry.value.rating }
+                    .orEmpty(),
                 isLoading = state.isMarkingAsWatched,
                 onDismiss = viewModel::hideRatingDialog,
                 onConfirm = viewModel::markAsWatched
@@ -300,7 +335,6 @@ private fun NotWatchedTopSection(
 private fun WatchlistTopSection(
     movie: Movie,
     onMarkAsWatchedClick: () -> Unit,
-    onRemoveFromWatchlistClick: () -> Unit
 ) {
     GlobalRatingSection(
         averageRating = movie.publicRating?.average,
@@ -309,42 +343,25 @@ private fun WatchlistTopSection(
 
     Spacer(Modifier.height(16.dp))
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        ReelyButton(
-            leadingIcon = {
-                Icon(
-                    imageVector = Lucide.TvMinimalPlay,
-                    tint = Color.White,
-                    contentDescription = null
-                )
-            },
-            text = "Obejrzany",
-            onClick = onMarkAsWatchedClick
-        )
+    ReelyButton(
+        leadingIcon = {
+            Icon(
+                imageVector = Lucide.TvMinimalPlay,
+                tint = Color.White,
+                contentDescription = null
+            )
+        },
+        text = "Obejrzany",
+        onClick = onMarkAsWatchedClick
+    )
 
-        Spacer(modifier = Modifier.weight(1f))
-
-        ReelyButton(
-            text = "Usuń z listy",
-            overrideContainerColor = MaterialTheme.colorScheme.surface,
-            leadingIcon = {
-                Icon(
-                    imageVector = Lucide.X,
-                    tint = Color.White,
-                    contentDescription = null
-                )
-            },
-            onClick = onRemoveFromWatchlistClick
-        )
-    }
 }
 
 @Composable
 private fun WatchedTopSection(
     movie: Movie,
-    users: List<User>
+    users: List<User>,
+    userRatingItems: List<UserRatingItems>
 ) {
     val usersById = users.associateBy { user ->
         user.id
@@ -356,16 +373,23 @@ private fun WatchedTopSection(
         modifier = Modifier.fillMaxWidth()
     ) {
         if (movie.userWatches.isNotEmpty()) {
-            StarRating(
-                score = movie.ourAverageRatingRounded()
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
 
-            Spacer(Modifier.height(8.dp))
+                RatingResults(
+                    movie = movie,
+                    style = MaterialTheme.typography.labelLarge
+                )
 
-            RatingResults(
-                movie = movie,
-                style = MaterialTheme.typography.labelLarge
-            )
+                Spacer(Modifier.width(8.dp))
+
+
+                StarRating(
+                    score = movie.ourAverageRatingRounded()
+                )
+
+            }
         }
 
         movie.publicRating?.let { publicRating ->
@@ -389,7 +413,8 @@ private fun WatchedTopSection(
     Spacer(Modifier.height(8.dp))
 
     OurStatsSection(
-        textOverride = null
+        textOverride = "Wasze oceny",
+        userRatingItems = userRatingItems
     )
 
     Spacer(Modifier.height(16.dp))
@@ -467,7 +492,20 @@ fun WatchProvidersSection(
 ) {
 
     if (sections.isEmpty()) {
+        SmallSectionHeader(
+            sectionName = "Dostępność w Polsce:"
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            text = "Niestety ten film nie jest dostępny w Polsce, może następnym razem",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+        )
+
         return
+
     }
 
     val tabs = sections.map { WatchProviderTab.fromType(it) }
@@ -514,8 +552,7 @@ fun WatchProvidersSection(
                             contentDescription = provider.providerName,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(5.dp)
-                                .clip(RoundedCornerShape(9.dp)),
+                                .clip(RoundedCornerShape(12.dp)),
                             contentScale = ContentScale.Fit
                         )
                     }

@@ -118,4 +118,10 @@ class RoomMoviesLocalDataSource @Inject constructor(
             userId = userId
         )
     }
+
+    override suspend fun deleteUserWatchesForMovie(movieId: Int) {
+        movieDao.deleteUserWatchesForMovie(movieId)
+    }
+
+
 }

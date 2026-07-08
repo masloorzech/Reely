@@ -56,6 +56,7 @@ fun Movie.isWatched(): Boolean {
     return userWatches.isNotEmpty()
 }
 
+
 fun Movie.ourAverageRatingRounded(): Double? {
     val ratings = userWatches.values
         .mapNotNull { userWatch ->
