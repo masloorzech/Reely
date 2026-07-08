@@ -12,17 +12,16 @@ data class LocalMovie(
     val voteCount: Int?,
     val popularity: Double?,
     val runtime: Int? = null,
-    val genres: List<String> = emptyList(),
-    val userStates: Map<Int, LocalMovieUserState> = emptyMap()
+    val genres: List<String> = emptyList()
 )
 
-data class LocalMovieUserState(
-    val status: LocalMovieStatus,
+data class LocalMovieUserWatch(
     val watchedAt: String? = null,
     val rating: Double? = null
 )
 
-enum class LocalMovieStatus {
-    WATCHLIST,
-    WATCHED
-}
+data class LocalMovieWithUserData(
+    val movie: LocalMovie,
+    val isInWatchlist: Boolean,
+    val userWatches: Map<Int, LocalMovieUserWatch>
+)

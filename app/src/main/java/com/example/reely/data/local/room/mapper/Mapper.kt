@@ -1,10 +1,11 @@
 package com.example.reely.data.local.room.mapper
 
+
+
 import com.example.reely.data.local.model.LocalMovie
-import com.example.reely.data.local.model.LocalMovieStatus
-import com.example.reely.data.local.model.LocalMovieUserState
+import com.example.reely.data.local.model.LocalMovieUserWatch
 import com.example.reely.data.local.room.entity.MovieEntity
-import com.example.reely.data.local.room.entity.MovieUserStateEntity
+import com.example.reely.data.local.room.entity.MovieUserWatchEntity
 
 fun LocalMovie.toEntity(): MovieEntity {
     return MovieEntity(
@@ -22,9 +23,7 @@ fun LocalMovie.toEntity(): MovieEntity {
     )
 }
 
-fun MovieEntity.toLocalMovie(
-    userStates: List<MovieUserStateEntity> = emptyList()
-): LocalMovie {
+fun MovieEntity.toLocalMovie(): LocalMovie {
     return LocalMovie(
         id = id,
         title = title,
@@ -37,41 +36,24 @@ fun MovieEntity.toLocalMovie(
         voteCount = voteCount,
         popularity = popularity,
         runtime = runtime,
-        genres = emptyList(),
-        userStates = userStates
-            .mapNotNull { entity ->
-                val localUserState = entity.toLocalUserStateOrNull()
-
-                if (localUserState != null) {
-                    entity.userId to localUserState
-                } else {
-                    null
-                }
-            }
-            .toMap()
+        genres = emptyList()
     )
 }
 
-fun LocalMovieUserState.toEntity(
+fun LocalMovieUserWatch.toEntity(
     movieId: Int,
     userId: Int
-): MovieUserStateEntity {
-    return MovieUserStateEntity(
+): MovieUserWatchEntity {
+    return MovieUserWatchEntity(
         movieId = movieId,
         userId = userId,
-        status = status.name,
         watchedAt = watchedAt,
         rating = rating
     )
 }
 
-private fun MovieUserStateEntity.toLocalUserStateOrNull(): LocalMovieUserState? {
-    val localStatus = runCatching {
-        LocalMovieStatus.valueOf(status)
-    }.getOrNull() ?: return null
-
-    return LocalMovieUserState(
-        status = localStatus,
+fun MovieUserWatchEntity.toLocalUserWatch(): LocalMovieUserWatch {
+    return LocalMovieUserWatch(
         watchedAt = watchedAt,
         rating = rating
     )

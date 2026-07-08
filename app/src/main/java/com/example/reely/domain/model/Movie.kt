@@ -12,24 +12,14 @@ data class Movie(
     val publicRating: PublicRating?,
     val runtime: Int? = null,
     val genres: List<String> = emptyList(),
-    val userStates: Map<UserId, MovieUserState> = emptyMap()
+    val isInWatchlist: Boolean = false,
+    val userWatches: Map<UserId, UserMovieWatch> = emptyMap()
+)
+data class UserMovieWatch(
+    val watchedAt: String? = null,
+    val rating: Double? = null
 )
 
-sealed interface MovieUserState {
-    data object NotWatched : MovieUserState
-    data object InWatchlist : MovieUserState
-
-    data class Watched(
-        val watchedAt: String? = null,
-        val rating: Double? = null
-    ) : MovieUserState {
-        init {
-            require(rating == null || rating in 0.0..10.0) {
-                "Rating must be between 0.0 and 10.0"
-            }
-        }
-    }
-}
 
 data class PublicRating(
     val average: Double?,
@@ -41,38 +31,11 @@ data class PosterPaths(
     val remotePosterPath: String?,
 )
 
-fun Movie.userState(userId: UserId): MovieUserState {
-    return userStates[userId] ?: MovieUserState.NotWatched
-}
-
-fun Movie.userRating(userId: UserId): Double? {
-    return when (val state = userState(userId)) {
-        is MovieUserState.Watched -> state.rating
-        else -> null
-    }
-}
-
-fun Movie.ourAverageRatingRounded(): Double? {
-    val ratings = userStates.values
-        .filterIsInstance<MovieUserState.Watched>()
-        .mapNotNull { it.rating }
-
-    if (ratings.isEmpty()) return null
-
-    return round(ratings.average() * 10) / 10
-}
-
-fun Movie.isWatchedBy(userId: UserId): Boolean {
-    return userState(userId) is MovieUserState.Watched
-}
 
 fun Movie.getAvailablePosterPath() : String?{
     return posterPaths?.localPosterPath?:posterPaths?.remotePosterPath
 }
 
-fun Movie.isInWatchlist(): Boolean {
-    return userState(SHARED_WATCHLIST_USER_ID) is MovieUserState.InWatchlist
-}
 
 fun Movie.runtimeText(): String? {
     val runtime = runtime ?: return null
