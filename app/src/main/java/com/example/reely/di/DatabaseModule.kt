@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.reely.data.local.room.ReelyDatabase
 import com.example.reely.data.local.room.dao.MovieDao
+import com.example.reely.data.local.room.dao.UserDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,13 +25,24 @@ object DatabaseModule {
             context,
             ReelyDatabase::class.java,
             "reely_database"
-        ).build()
+        )
+            .fallbackToDestructiveMigration(true)
+            .build()
     }
 
     @Provides
+    @Singleton
     fun provideMovieDao(
         database: ReelyDatabase
     ): MovieDao {
         return database.movieDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserDao(
+        database: ReelyDatabase
+    ): UserDao {
+        return database.userDao()
     }
 }

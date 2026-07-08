@@ -3,6 +3,8 @@ package com.example.reely.domain.repository
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieWatchProviders
+import com.example.reely.domain.model.UserId
+import com.example.reely.domain.model.UserMovieWatch
 
 interface MoviesRepository {
 
@@ -22,4 +24,11 @@ interface MoviesRepository {
     suspend fun addMovieToWatchlist(movie: Movie): Result<Unit>
 
     suspend fun getUserMovies(): Result<List<Movie>>
+
+    suspend fun removeMovieFromWatchlist(movieId: Int): Result<Unit>
+
+    suspend fun markMovieAsWatched(
+        movie: Movie,
+        userWatches: Map<UserId, UserMovieWatch>
+    ): Result<Unit>
 }

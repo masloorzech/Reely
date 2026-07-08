@@ -1,0 +1,21 @@
+package com.example.reely.data.local
+
+
+import com.example.reely.data.local.model.LocalUser
+import kotlinx.coroutines.flow.Flow
+
+interface UsersLocalDataSource {
+
+    fun observeUsers(): Flow<List<LocalUser>>
+
+    suspend fun getUsers(): List<LocalUser>
+
+    suspend fun getMainUser(): LocalUser?
+
+    suspend fun addUser(
+        nickname: String,
+        avatarPath: String? = null
+    ): LocalUser
+
+    suspend fun deleteUser(userId: Int)
+}

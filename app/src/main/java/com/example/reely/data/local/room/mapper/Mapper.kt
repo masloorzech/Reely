@@ -4,8 +4,10 @@ package com.example.reely.data.local.room.mapper
 
 import com.example.reely.data.local.model.LocalMovie
 import com.example.reely.data.local.model.LocalMovieUserWatch
+import com.example.reely.data.local.model.LocalUser
 import com.example.reely.data.local.room.entity.MovieEntity
 import com.example.reely.data.local.room.entity.MovieUserWatchEntity
+import com.example.reely.data.local.room.entity.UserEntity
 
 fun LocalMovie.toEntity(): MovieEntity {
     return MovieEntity(
@@ -56,5 +58,21 @@ fun MovieUserWatchEntity.toLocalUserWatch(): LocalMovieUserWatch {
     return LocalMovieUserWatch(
         watchedAt = watchedAt,
         rating = rating
+    )
+}
+
+fun UserEntity.toLocalUser(): LocalUser {
+    return LocalUser(
+        id = id,
+        nickname = nickname,
+        avatarPath = avatarPath
+    )
+}
+
+fun LocalUser.toEntity(): UserEntity {
+    return UserEntity(
+        id = id,
+        nickname = nickname,
+        avatarPath = avatarPath
     )
 }

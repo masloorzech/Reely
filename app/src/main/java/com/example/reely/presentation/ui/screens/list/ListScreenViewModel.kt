@@ -3,8 +3,8 @@ package com.example.reely.presentation.ui.screens.list
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.MovieUserState
-import com.example.reely.domain.model.isInWatchlist
+import com.example.reely.domain.model.isWatched
+import com.example.reely.domain.model.latestWatchedAt
 import com.example.reely.domain.model.ourAverageRatingRounded
 import com.example.reely.domain.usecase.GetUserMoviesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 data class ListScreenUiState(
     val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
-    val selectedTab: MovieListTab = MovieListTab.WATCHED,
+    val selectedTab: MovieListTab = MovieListTab.WATCHLIST,
     val displayStyle: MovieDisplayStyle = MovieDisplayStyle.LIST,
     val searchQuery: String = "",
     val moviesList: List<Movie> = emptyList(),
@@ -127,18 +127,13 @@ class ListScreenViewModel @Inject constructor(
 private fun List<Movie>.filterByTab(tab: MovieListTab): List<Movie> {
     return when (tab) {
         MovieListTab.WATCHED -> filter { movie ->
-            movie.userStates.values.any { it is MovieUserState.Watched }
+            movie.isWatched()
         }
 
         MovieListTab.WATCHLIST -> filter { movie ->
-            movie.isInWatchlist()
+            movie.isInWatchlist && !movie.isWatched()
         }
 
-        MovieListTab.FAVOURITE -> filter {
-            // Na razie nie masz Favourite w MovieUserState,
-            // więc zostawiamy pustą listę.
-            false
-        }
     }
 }
 
@@ -154,27 +149,32 @@ private fun List<Movie>.filterBySearch(query: String): List<Movie> {
 
 private fun List<Movie>.sortByOption(sort: MovieSortOption): List<Movie> {
     return when (sort) {
-        MovieSortOption.RATING_DESC -> sortedByDescending { movie ->
-            movie.ourAverageRatingRounded() ?: 0.0
-        }
+        MovieSortOption.RATING_DESC -> sortedWith(
+            compareByDescending<Movie> { movie ->
+                movie.ourAverageRatingRounded() ?: movie.publicRating?.average ?: 0.0
+            }.thenBy { movie ->
+                movie.title.lowercase()
+            }
+        )
 
-        MovieSortOption.NEWEST -> sortedByDescending { movie ->
-            movie.latestWatchedAt() ?: movie.releaseDate.orEmpty()
-        }
+        MovieSortOption.NEWEST -> sortedWith(
+            compareByDescending<Movie> { movie ->
+                movie.latestWatchedAt() ?: movie.releaseDate.orEmpty()
+            }.thenBy { movie ->
+                movie.title.lowercase()
+            }
+        )
 
-        MovieSortOption.OLDEST -> sortedBy { movie ->
-            movie.latestWatchedAt() ?: movie.releaseDate.orEmpty()
-        }
+        MovieSortOption.OLDEST -> sortedWith(
+            compareBy<Movie> { movie ->
+                movie.latestWatchedAt() ?: movie.releaseDate.orEmpty()
+            }.thenBy { movie ->
+                movie.title.lowercase()
+            }
+        )
 
         MovieSortOption.TITLE_ASC -> sortedBy { movie ->
             movie.title.lowercase()
         }
     }
-}
-
-private fun Movie.latestWatchedAt(): String? {
-    return userStates.values
-        .filterIsInstance<MovieUserState.Watched>()
-        .mapNotNull { it.watchedAt }
-        .maxOrNull()
 }

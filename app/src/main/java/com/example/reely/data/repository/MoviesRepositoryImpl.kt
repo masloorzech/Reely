@@ -3,25 +3,21 @@ package com.example.reely.data.repository
 import com.example.reely.data.local.MoviesLocalDataSource
 import com.example.reely.data.local.mapper.toDomain
 import com.example.reely.data.local.mapper.toLocal
-import com.example.reely.data.local.mapper.toLocalOrNull
-import com.example.reely.data.local.model.LocalMovieUserState
 import com.example.reely.data.remote.MoviesRemoteDataSource
 import com.example.reely.data.remote.mapper.toDomain
 import com.example.reely.data.remote.model.toDomain
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.MovieCredits
-import com.example.reely.domain.model.MovieUserState
 import com.example.reely.domain.model.MovieWatchProviders
-import com.example.reely.domain.model.SHARED_WATCHLIST_USER_ID
 import com.example.reely.domain.model.UserId
+import com.example.reely.domain.model.UserMovieWatch
 import com.example.reely.domain.repository.MoviesRepository
 import javax.inject.Inject
 
 class MoviesRepositoryImpl @Inject constructor(
     private val remoteDataSource: MoviesRemoteDataSource,
     private val localDataSource: MoviesLocalDataSource,
-) : MoviesRepository{
-
+) : MoviesRepository {
 
     override suspend fun getPopularMovies(): Result<List<Movie>> {
         return runCatching {
@@ -42,34 +38,35 @@ class MoviesRepositoryImpl @Inject constructor(
             val remoteMovie = remoteDataSource.getMovieDetails(id)
                 .toDomain()
 
-            val localMovie = localDataSource.getMovieData(id)
+            val localMovieWithUserData = localDataSource.getMovieWithUserData(id)
 
-            remoteMovie.copy(
-                userStates = localMovie
-                    ?.userStates
-                    ?.mapKeys { entry -> UserId(entry.key) }
-                    ?.mapValues { entry -> entry.value.toDomain() }
-                    .orEmpty()
-            )
+            if (localMovieWithUserData == null) {
+                remoteMovie
+            } else {
+                remoteMovie.copy(
+                    isInWatchlist = localMovieWithUserData.isInWatchlist,
+                    userWatches = localMovieWithUserData.userWatches
+                        .mapKeys { entry ->
+                            com.example.reely.domain.model.UserId(entry.key)
+                        }
+                        .mapValues { entry ->
+                            entry.value.toDomain()
+                        }
+                )
+            }
         }
     }
 
     override suspend fun saveMovieData(movie: Movie): Result<Unit> {
         return runCatching {
-            val localMovie = localDataSource.getMovieData(movie.id)
-
-            if (localMovie == null) {
-                localDataSource.saveMovieData(movie.toLocal())
-            }
+            localDataSource.saveMovieData(movie.toLocal())
         }
     }
 
     override suspend fun getMovieCast(movieId: Int): Result<MovieCredits> {
-
         return runCatching {
             remoteDataSource.getMovieCastMembers(movieId).toDomain()
         }
-
     }
 
     override suspend fun getMovieWatchProviders(movieId: Int): Result<MovieWatchProviders> {
@@ -80,14 +77,14 @@ class MoviesRepositoryImpl @Inject constructor(
 
     override suspend fun addMovieToWatchlist(movie: Movie): Result<Unit> {
         return runCatching {
-            val localState = MovieUserState.InWatchlist.toLocalOrNull()
-                ?: return@runCatching
+            localDataSource.saveMovieData(movie.toLocal())
+            localDataSource.addToWatchlist(movieId = movie.id)
+        }
+    }
 
-            localDataSource.changeMovieUserState(
-                movieId = movie.id,
-                userId = SHARED_WATCHLIST_USER_ID.value,
-                movieUserState = localState
-            )
+    override suspend fun removeMovieFromWatchlist(movieId: Int): Result<Unit> {
+        return runCatching {
+            localDataSource.removeFromWatchlist(movieId)
         }
     }
 
@@ -98,5 +95,23 @@ class MoviesRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun markMovieAsWatched(
+        movie: Movie,
+        userWatches: Map<UserId, UserMovieWatch>
+    ): Result<Unit> {
+        return runCatching {
+            localDataSource.saveMovieData(movie.toLocal())
+
+            userWatches.forEach { entry ->
+                localDataSource.upsertUserWatch(
+                    movieId = movie.id,
+                    userId = entry.key.value,
+                    userWatch = entry.value.toLocal()
+                )
+            }
+
+            localDataSource.removeFromWatchlist(movie.id)
+        }
+    }
 
 }

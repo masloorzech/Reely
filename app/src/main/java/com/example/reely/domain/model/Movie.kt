@@ -1,7 +1,7 @@
 package com.example.reely.domain.model
 
-import androidx.core.R
-import kotlin.math.round
+import com.example.reely.presentation.ui.screens.list.MovieListTab
+import com.example.reely.presentation.ui.screens.list.MovieSortOption
 
 data class Movie(
     val id: Int,
@@ -20,7 +20,6 @@ data class UserMovieWatch(
     val rating: Double? = null
 )
 
-
 data class PublicRating(
     val average: Double?,
     val voteCount: Int?
@@ -32,10 +31,9 @@ data class PosterPaths(
 )
 
 
-fun Movie.getAvailablePosterPath() : String?{
-    return posterPaths?.localPosterPath?:posterPaths?.remotePosterPath
+fun Movie.getAvailablePosterPath(): String? {
+    return posterPaths?.localPosterPath ?: posterPaths?.remotePosterPath
 }
-
 
 fun Movie.runtimeText(): String? {
     val runtime = runtime ?: return null
@@ -49,6 +47,30 @@ fun Movie.runtimeText(): String? {
         "${minutes}m"
     }
 }
+
 fun Movie.genresText(): String {
     return genres.joinToString(" · ")
+}
+
+fun Movie.isWatched(): Boolean {
+    return userWatches.isNotEmpty()
+}
+
+fun Movie.ourAverageRatingRounded(): Double? {
+    val ratings = userWatches.values
+        .mapNotNull { userWatch ->
+            userWatch.rating
+        }
+
+    if (ratings.isEmpty()) return null
+
+    return kotlin.math.round(ratings.average() * 10) / 10
+}
+
+fun Movie.latestWatchedAt(): String? {
+    return userWatches.values
+        .mapNotNull { userWatch ->
+            userWatch.watchedAt
+        }
+        .maxOrNull()
 }

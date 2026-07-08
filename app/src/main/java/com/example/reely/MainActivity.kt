@@ -11,6 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.example.reely.presentation.navigation.AppNavigation
 import com.example.reely.presentation.theme.ReelyTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,6 +22,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+
+            val mainViewModel: MainViewModel = hiltViewModel()
+
             ReelyTheme {
                 AppNavigation(
                     modifier = Modifier.fillMaxSize()

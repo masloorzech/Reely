@@ -53,7 +53,11 @@ fun AppNavigation(
 
         NavHost(
             navController = navController,
-            modifier = Modifier.padding(innerPadding),
+            modifier = if (showBottomBar) {
+                Modifier.padding(innerPadding)
+            } else {
+                Modifier
+            },
             startDestination = HomeScreenRoute,
             ){
 

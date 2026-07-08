@@ -25,6 +25,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,8 +35,13 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.example.reely.presentation.ui.formatWatchedDate
 
 @Composable
 fun PosterHeader(
@@ -99,17 +107,18 @@ fun MovieMainData(
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
 
-        Text(
-            title,
+        AutoResizeTitle(
+            text = title,
             style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            minFontSize = 22.sp
         )
         Spacer(
             modifier = Modifier.height(4.dp)
         )
 
         Text(
-            "$releaseDate · $duration \n$genres",
+            "${releaseDate.formatWatchedDate()} · $duration \n$genres",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
         )
@@ -174,4 +183,34 @@ fun MovieMainDataSkeleton() {
                 .background(shimmerBrush)
         )
     }
+}
+
+@Composable
+fun AutoResizeTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle = MaterialTheme.typography.displaySmall,
+    color: Color = MaterialTheme.colorScheme.onBackground,
+    minFontSize: TextUnit = 22.sp
+) {
+    var currentFontSize by remember(text) {
+        mutableStateOf(style.fontSize)
+    }
+
+    Text(
+        text = text,
+        modifier = modifier.fillMaxWidth(),
+        style = style.copy(fontSize = currentFontSize),
+        color = color,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        onTextLayout = { textLayoutResult ->
+            if (
+                textLayoutResult.hasVisualOverflow &&
+                currentFontSize > minFontSize
+            ) {
+                currentFontSize = (currentFontSize.value - 1).sp
+            }
+        }
+    )
 }

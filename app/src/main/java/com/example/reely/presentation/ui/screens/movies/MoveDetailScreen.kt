@@ -14,20 +14,29 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +50,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.ArrowLeft
@@ -53,24 +64,29 @@ import com.composables.icons.lucide.Tv
 import com.composables.icons.lucide.TvMinimalPlay
 import com.composables.icons.lucide.X
 import com.example.reely.domain.model.Movie
+import com.example.reely.domain.model.User
+import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.model.genresText
 import com.example.reely.domain.model.getAvailablePosterPath
 import com.example.reely.domain.model.getAvaliable
 import com.example.reely.domain.model.ourAverageRatingRounded
 import com.example.reely.domain.model.runtimeText
+import com.example.reely.presentation.ui.components.RatingMood
 import com.example.reely.presentation.ui.components.RatingResults
 import com.example.reely.presentation.ui.components.ReelyButton
 import com.example.reely.presentation.ui.components.ReelyIconButton
 import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyTab
 import com.example.reely.presentation.ui.components.SmallSectionHeader
+import com.example.reely.presentation.ui.formatWatchedDate
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
+import com.example.reely.presentation.ui.screens.movies.components.MarkAsWatchedDialog
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
+import com.example.reely.presentation.ui.screens.movies.components.RatingStars
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
-import com.example.reely.presentation.ui.screens.movies.model.MovieDetailsUiMode
-import com.example.reely.presentation.ui.screens.movies.model.detailsUiMode
 import java.util.Locale
+import kotlin.math.roundToInt
 
 private enum class WatchProviderTab(
     val type: ProviderSectionType,
@@ -125,25 +141,26 @@ fun MovieDetailsScreen(
                     selectedProviders = state.selectedProviders,
                     onProviderSectionSelected = viewModel::changeProvidersType
                 ) {
-                    when (movie.detailsUiMode()) {
-                        MovieDetailsUiMode.NotWatched -> {
-                            NotWatchedTopSection(
+                    when {
+                        movie.userWatches.isNotEmpty() -> {
+                            WatchedTopSection(
                                 movie = movie,
-                                onAddToWatchlistClick = viewModel::addToWatchlist
+                                users = state.users
                             )
                         }
 
-                        MovieDetailsUiMode.InWatchlist -> {
+                        movie.isInWatchlist -> {
                             WatchlistTopSection(
                                 movie = movie,
-                                onMarkAsWatchedClick = viewModel::markAsWatched,
+                                onMarkAsWatchedClick = viewModel::showRatingDialog,
                                 onRemoveFromWatchlistClick = viewModel::removeFromWatchlist
                             )
                         }
 
-                        MovieDetailsUiMode.Watched -> {
-                            WatchedTopSection(
-                                movie = movie
+                        else -> {
+                            NotWatchedTopSection(
+                                movie = movie,
+                                onAddToWatchlistClick = viewModel::addToWatchlist
                             )
                         }
                     }
@@ -154,11 +171,21 @@ fun MovieDetailsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(16.dp)
         ) {
             ReelyIconButton(
                 icon = Lucide.ArrowLeft,
                 onClick = onBack
+            )
+        }
+
+        if (state.isRatingDialogVisible) {
+            MarkAsWatchedDialog(
+                users = state.users,
+                isLoading = state.isMarkingAsWatched,
+                onDismiss = viewModel::hideRatingDialog,
+                onConfirm = viewModel::markAsWatched
             )
         }
     }
@@ -300,6 +327,8 @@ private fun WatchlistTopSection(
             onClick = onMarkAsWatchedClick
         )
 
+        Spacer(modifier = Modifier.weight(1f))
+
         ReelyButton(
             text = "Usuń z listy",
             overrideContainerColor = MaterialTheme.colorScheme.surface,
@@ -317,23 +346,30 @@ private fun WatchlistTopSection(
 
 @Composable
 private fun WatchedTopSection(
-    movie: Movie
+    movie: Movie,
+    users: List<User>
 ) {
+    val usersById = users.associateBy { user ->
+        user.id
+    }
+
     Column(
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        StarRating(
-            score = movie.ourAverageRatingRounded()
-        )
+        if (movie.userWatches.isNotEmpty()) {
+            StarRating(
+                score = movie.ourAverageRatingRounded()
+            )
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
 
-        RatingResults(
-            movie = movie,
-            style = MaterialTheme.typography.labelLarge
-        )
+            RatingResults(
+                movie = movie,
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
 
         movie.publicRating?.let { publicRating ->
             if (publicRating.average != null && publicRating.voteCount != null) {
@@ -361,11 +397,47 @@ private fun WatchedTopSection(
 
     Spacer(Modifier.height(16.dp))
 
-    Text(
-        text = "Obejrzany · przez",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-    )
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        movie.userWatches.entries.forEach { userData ->
+            val user = usersById[userData.key]
+            val watchedAt = userData.value.watchedAt
+            val rating = userData.value.rating
+            val mood = RatingMood.fromScore(rating)
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Text(
+                        text = user?.nickname ?: "User ${userData.key.value}",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+
+                    Text(
+                        text = watchedAt.formatWatchedDate(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                if (rating != null) {
+                    Text(
+                        text = String.format(Locale.US, "%.1f", rating),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = mood.color
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -397,17 +469,8 @@ fun WatchProvidersSection(
     selectedProviders: List<WatchProvider>,
     onSectionSelected: (ProviderSectionType) -> Unit
 ) {
-    if (isLoading) {
-        SmallSectionHeader(
-            sectionName = "Ładowanie dostępności..."
-        )
-        return
-    }
 
     if (sections.isEmpty()) {
-        SmallSectionHeader(
-            sectionName = "Brak informacji o dostępności w Polsce"
-        )
         return
     }
 

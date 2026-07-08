@@ -64,19 +64,14 @@ enum class MovieListTab(
     override val tabTitle: String,
     override val tabIcon: ImageVector?
 ) : ReelyTab {
-    WATCHED(
-        tabTitle = "Obejrzane",
-        tabIcon = Lucide.Clapperboard
-    ),
 
     WATCHLIST(
         tabTitle = "Do obejrzenia",
         tabIcon = Lucide.TvMinimalPlay
     ),
-
-    FAVOURITE(
-      tabTitle = "Ulubione",
-        tabIcon = Lucide.Bookmark
+    WATCHED(
+        tabTitle = "Obejrzane",
+        tabIcon = Lucide.Clapperboard
     )
 }
 
@@ -117,8 +112,7 @@ fun ListScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-        )
-        {
+        ) {
 
             SmallSectionHeader(
                 sectionName = "Twoje listy"

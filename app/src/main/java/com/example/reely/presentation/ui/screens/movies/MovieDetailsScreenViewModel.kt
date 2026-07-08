@@ -8,13 +8,20 @@ import androidx.navigation.toRoute
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieWatchProviders
+import com.example.reely.domain.model.User
+import com.example.reely.domain.model.UserId
+import com.example.reely.domain.model.UserMovieWatch
 import com.example.reely.domain.model.WatchProvider
-import com.example.reely.domain.usecase.AddMovieToWatchlist
+import com.example.reely.domain.usecase.AddMovieToWatchlistUseCase
 import com.example.reely.domain.usecase.GetMovieCreditsUseCase
 import com.example.reely.domain.usecase.GetMovieProvidersUseCase
 import com.example.reely.domain.usecase.LoadMovieDataUseCase
+import com.example.reely.domain.usecase.MarkMovieAsWatchedUseCase
+import com.example.reely.domain.usecase.ObserveUsersUseCase
+import com.example.reely.domain.usecase.RemoveMovieFromWatchlistUseCase
 import com.example.reely.presentation.navigation.MovieDetailsRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -61,6 +68,10 @@ data class MovieDetailsScreenState(
     val isMovieLoading: Boolean = false,
     val isAddingToWatchlist: Boolean = false,
 
+    val users: List<User> = emptyList(),
+    val isRatingDialogVisible: Boolean = false,
+    val isMarkingAsWatched: Boolean = false,
+
     val error: String? = null
 ) {
     val availableProviderSections: List<ProviderSectionType>
@@ -82,7 +93,10 @@ class MovieDetailsScreenViewModel @Inject constructor(
     private val loadMovieDataUseCase: LoadMovieDataUseCase,
     private val getMovieCreditsUseCase: GetMovieCreditsUseCase,
     private val getMovieProvidersUseCase: GetMovieProvidersUseCase,
-    private val addMovieToWatchlist: AddMovieToWatchlist
+    private val addMovieToWatchlistUseCase: AddMovieToWatchlistUseCase,
+    private val markMovieAsWatchedUseCase: MarkMovieAsWatchedUseCase,
+    private val removeMovieFromWatchlistUseCase: RemoveMovieFromWatchlistUseCase,
+    private val observeUsersUseCase: ObserveUsersUseCase
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<MovieDetailsRoute>()
@@ -93,39 +107,56 @@ class MovieDetailsScreenViewModel @Inject constructor(
     init {
         val movieId = route.movieId
 
+        observeUsers()
         loadMovieDetails(movieId)
         loadMovieProviders(movieId)
         loadMovieCredits(movieId)
     }
 
-    fun loadMovieDetails(movieId: Int) {
+    private fun observeUsers() {
         viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isMovieLoading = true,
-                    error = null
-                )
-            }
-
-            loadMovieDataUseCase(movieId)
-                .onSuccess { movie ->
+            observeUsersUseCase()
+                .collect { users ->
                     _state.update {
-                        it.copy(
-                            isMovieLoading = false,
-                            movie = movie
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    Log.d("ERROR", error.message.toString())
-                    _state.update {
-                        it.copy(
-                            isMovieLoading = false,
-                            error = "Błąd podczas ładowania filmu\n${error.message}\n${error.cause}"
-                        )
+                        it.copy(users = users)
                     }
                 }
         }
+    }
+
+    fun loadMovieDetails(movieId: Int) {
+        viewModelScope.launch {
+            reloadMovieDetails(movieId)
+        }
+    }
+
+    private suspend fun reloadMovieDetails(movieId: Int) {
+        _state.update {
+            it.copy(
+                isMovieLoading = true,
+                error = null
+            )
+        }
+
+        loadMovieDataUseCase(movieId)
+            .onSuccess { movie ->
+                _state.update {
+                    it.copy(
+                        isMovieLoading = false,
+                        movie = movie
+                    )
+                }
+            }
+            .onFailure { error ->
+                Log.d("ERROR", error.message.toString())
+
+                _state.update {
+                    it.copy(
+                        isMovieLoading = false,
+                        error = "Błąd podczas ładowania filmu\n${error.message}\n${error.cause}"
+                    )
+                }
+            }
     }
 
     fun loadMovieProviders(movieId: Int) {
@@ -197,32 +228,121 @@ class MovieDetailsScreenViewModel @Inject constructor(
 
     fun addToWatchlist() {
         viewModelScope.launch {
+            val movie = _state.value.movie ?: return@launch
+
             _state.update {
                 it.copy(
-                    isAddingToWatchlist = true
+                    isAddingToWatchlist = true,
+                    error = null
                 )
             }
 
-            val movie = _state.value.movie ?: return@launch
-
-            addMovieToWatchlist(movie)
-            loadMovieDetails(movie.id)
-
+            addMovieToWatchlistUseCase(movie)
+                .onSuccess {
+                    reloadMovieDetails(movie.id)
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            error = "Błąd podczas dodawania do watchlisty\n${error.message}"
+                        )
+                    }
+                }
 
             _state.update {
                 it.copy(
                     isAddingToWatchlist = false
                 )
             }
-
         }
     }
 
-    fun markAsWatched(){
-        //TODO not implemented yet
+    fun showRatingDialog() {
+        _state.update {
+            it.copy(
+                isRatingDialogVisible = true,
+                error = null
+            )
+        }
     }
 
-    fun removeFromWatchlist(){
-        //TODO not impemented yet
+    fun hideRatingDialog() {
+        _state.update {
+            it.copy(
+                isRatingDialogVisible = false
+            )
+        }
+    }
+
+    fun markAsWatched(
+        ratings: Map<UserId, Double?>
+    ) {
+        viewModelScope.launch {
+            val movie = _state.value.movie ?: return@launch
+
+            if (_state.value.users.isEmpty()) {
+                _state.update {
+                    it.copy(
+                        error = "Brak użytkowników do ocenienia filmu."
+                    )
+                }
+                return@launch
+            }
+
+            _state.update {
+                it.copy(
+                    isMarkingAsWatched = true,
+                    error = null
+                )
+            }
+
+            val watchedAt = LocalDate.now().toString()
+
+            val userWatches = ratings.mapValues { entry ->
+                UserMovieWatch(
+                    watchedAt = watchedAt,
+                    rating = entry.value
+                )
+            }
+
+            markMovieAsWatchedUseCase(
+                movie = movie,
+                userWatches = userWatches
+            ).onSuccess {
+                _state.update {
+                    it.copy(
+                        isRatingDialogVisible = false,
+                        isMarkingAsWatched = false
+                    )
+                }
+
+                reloadMovieDetails(movie.id)
+            }.onFailure { error ->
+                _state.update {
+                    it.copy(
+                        isMarkingAsWatched = false,
+                        error = "Błąd podczas oznaczania filmu jako obejrzany\n${error.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun removeFromWatchlist() {
+        viewModelScope.launch {
+            val movie = _state.value.movie ?: return@launch
+
+            removeMovieFromWatchlistUseCase(movie.id)
+                .onSuccess {
+                    reloadMovieDetails(movie.id)
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            error = "Błąd podczas usuwania z watchlisty\n${error.message}"
+                        )
+                    }
+                }
+        }
     }
 }
