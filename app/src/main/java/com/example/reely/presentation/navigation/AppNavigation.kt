@@ -65,7 +65,7 @@ fun AppNavigation(
 
             composable<HomeScreenRoute>{
                 HomeScreen(
-
+                    vm = hiltViewModel()
                 )
             }
 
@@ -100,6 +100,7 @@ fun AppNavigation(
                     viewModel = hiltViewModel()
                 )
             }
+
 
         }
 
