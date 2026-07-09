@@ -1,11 +1,14 @@
 package com.example.reely.presentation.ui.screens.profile
 
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserId
+import com.example.reely.domain.usecase.user.CreateUserUseCase
 import com.example.reely.domain.usecase.user.GetAllUsersUseCase
 import com.example.reely.domain.usecase.user.GetMainUserUseCase
+import com.example.reely.domain.usecase.user.UpdateUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,7 +47,9 @@ enum class UserDialogMode {
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
     private val getAllUsersUseCase : GetAllUsersUseCase,
-    private val getMainUserUseCase: GetMainUserUseCase
+    private val getMainUserUseCase: GetMainUserUseCase,
+    private val createUserUseCase: CreateUserUseCase,
+    private val updateUserUseCase: UpdateUserUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileScreenState())
@@ -142,13 +147,16 @@ class ProfileScreenViewModel @Inject constructor(
         }
     }
 
-    fun onDialogAvatarSelected(localAvatarPath: String) {
+    fun onDialogAvatarPicked(avatarPath: String?) {
+        if (avatarPath.isNullOrBlank()) return
+
         _state.update { state ->
             val dialog = state.userDialog ?: return@update state
 
             state.copy(
                 userDialog = dialog.copy(
-                    avatarPath = localAvatarPath
+                    avatarPath = avatarPath,
+                    error = null
                 )
             )
         }
@@ -178,19 +186,19 @@ class ProfileScreenViewModel @Inject constructor(
 
             val result = when (dialog.mode) {
                 UserDialogMode.Create -> {
-                    // createUserUseCase(
-                    //     nickname = nickname,
-                    //     avatarPath = dialog.avatarPath
-                    // )
+                     createUserUseCase(
+                         nickname = nickname,
+                         avatarPath = dialog.avatarPath
+                     )
                     Result.success(Unit)
                 }
 
                 UserDialogMode.Edit -> {
-                    // updateUserUseCase(
-                    //     userId = dialog.userId!!,
-                    //     nickname = nickname,
-                    //     avatarPath = dialog.avatarPath
-                    // )
+                     updateUserUseCase(
+                         userId = dialog.userId!!,
+                         nickname = nickname,
+                         avatarPath = dialog.avatarPath
+                     )
 
                     Result.success(Unit)
                 }

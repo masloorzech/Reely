@@ -1,5 +1,8 @@
 package com.example.reely.presentation.ui.screens.profile
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 
 import androidx.compose.foundation.background
@@ -45,6 +48,13 @@ fun ProfileScreen(
 ) {
 
     val state = viewModel.state.collectAsState().value
+
+    val avatarPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri ->
+            viewModel.onDialogAvatarPicked(uri?.toString())
+        }
+    )
 
     Box(
         modifier = modifier
@@ -196,7 +206,13 @@ fun ProfileScreen(
                 error = dialog.error,
                 isLoading = dialog.isSaving,
                 onNicknameChange = viewModel::onDialogNicknameChange,
-                onAvatarClick = {},
+                onAvatarClick = {
+                    avatarPickerLauncher.launch(
+                        PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly
+                        )
+                    )
+                },
                 onDismiss = viewModel::dismissUserDialog,
                 onConfirm = viewModel::confirmUserDialog
             )
