@@ -75,6 +75,7 @@ class ListScreenViewModel @Inject constructor(
 
     fun refresh() {
         loadMovies()
+        refreshVisibleMovies()
     }
 
     fun toggleDisplayStyle() {
@@ -93,7 +94,7 @@ class ListScreenViewModel @Inject constructor(
             it.copy(selectedTab = tab)
         }
 
-        refreshVisibleMovies()
+        refresh()
     }
 
     fun switchSort(sortType: MovieSortOption) {
@@ -101,7 +102,7 @@ class ListScreenViewModel @Inject constructor(
             it.copy(selectedSort = sortType)
         }
 
-        refreshVisibleMovies()
+        refresh()
     }
 
     fun changeSearchQuery(query: String) {
@@ -109,7 +110,7 @@ class ListScreenViewModel @Inject constructor(
             it.copy(searchQuery = query)
         }
 
-        refreshVisibleMovies()
+        refresh()
     }
 
     private fun refreshVisibleMovies() {

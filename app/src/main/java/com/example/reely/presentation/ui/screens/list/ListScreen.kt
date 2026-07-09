@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +33,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.composables.icons.lucide.Bookmark
@@ -100,8 +104,23 @@ fun ListScreen(
     vm : ListScreenViewModel = hiltViewModel(),
     onMovieClick: (movieId: Int) -> Unit = {}
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     val state = vm.state.collectAsState().value
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                vm.refresh()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Box(
         modifier = modifier
@@ -167,7 +186,9 @@ fun ListScreen(
                 MovieDisplayStyle.LIST -> {
                     MovieList(
                         movies = state.moviesList,
-                        isLoading = state.isLoading
+                        isLoading = state.isLoading,
+                        onMovieClick = { movie ->
+                        onMovieClick(movie.id)}
                     )
                 }
 
