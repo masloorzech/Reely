@@ -3,6 +3,7 @@ package com.example.reely.data.repository
 import com.example.reely.data.local.LocalMediaDataSource
 import com.example.reely.data.local.UsersLocalDataSource
 import com.example.reely.data.local.mapper.toDomain
+import com.example.reely.data.local.model.LocalUser
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.repository.UsersRepository
@@ -35,15 +36,27 @@ class UsersRepositoryImpl @Inject constructor(
 
     override suspend fun ensureMainUser(): Result<User> {
         return runCatching {
-            val existingMainUser = usersLocalDataSource.getMainUser()
+            val existingMainUser = usersLocalDataSource.getMainUserOrNull()
 
-            existingMainUser.toDomain()
+            if (existingMainUser != null) {
+                existingMainUser.toDomain()
+            } else {
+                val newUser = LocalUser(
+                    id = 0,
+                    nickname = "Ja",
+                    avatarPath = null,
+                )
+
+                val newId = usersLocalDataSource.insertUser(newUser)
+
+                usersLocalDataSource.getUser(newId.toInt())!!.toDomain()
+            }
         }
     }
 
     override suspend fun getMainUser(): Result<User>{
         return runCatching {
-            usersLocalDataSource.getMainUser().toDomain()
+            usersLocalDataSource.getMainUserOrNull()!!.toDomain()
         }
     }
 

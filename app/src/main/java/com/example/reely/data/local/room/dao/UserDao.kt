@@ -19,6 +19,9 @@ interface UserDao {
     @Query("SELECT * FROM users ORDER BY id ASC")
     suspend fun getUsers(): List<UserEntity>
 
+    @Query("SELECT * FROM users ORDER BY id ASC LIMIT 1")
+    suspend fun getMainUserOrNull(): UserEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity): Long
 

@@ -52,7 +52,11 @@ fun OurStatsSection(
         if (userRatingItems != null) {
             LazyRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(
+                    space = 12.dp,
+                    alignment = Alignment.CenterHorizontally
+                ),
+
             ) {
                 items(
                     items = userRatingItems,

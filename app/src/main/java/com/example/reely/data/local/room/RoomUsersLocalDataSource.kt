@@ -4,6 +4,7 @@ import com.example.reely.data.local.UsersLocalDataSource
 import com.example.reely.data.local.model.LocalUser
 import com.example.reely.data.local.room.dao.UserDao
 import com.example.reely.data.local.room.entity.UserEntity
+import com.example.reely.data.local.room.mapper.toEntity
 import com.example.reely.data.local.room.mapper.toLocalUser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -22,6 +23,10 @@ class RoomUsersLocalDataSource @Inject constructor(
             }
     }
 
+    override suspend fun insertUser(user: LocalUser): Long {
+        return userDao.insertUser(user.toEntity())
+    }
+
     override suspend fun getUsers(): List<LocalUser> {
         return userDao.getUsers()
             .map { user ->
@@ -33,8 +38,8 @@ class RoomUsersLocalDataSource @Inject constructor(
         return userDao.getUserById(userId)?.toLocalUser()
     }
 
-    override suspend fun getMainUser(): LocalUser {
-        return userDao.getUsers().first().toLocalUser()
+    override suspend fun getMainUserOrNull(): LocalUser? {
+        return userDao.getMainUserOrNull()?.toLocalUser()
     }
 
     override suspend fun addUser(

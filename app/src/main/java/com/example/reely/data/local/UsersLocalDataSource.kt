@@ -8,11 +8,13 @@ interface UsersLocalDataSource {
 
     fun observeUsers(): Flow<List<LocalUser>>
 
+    suspend fun insertUser(user : LocalUser) : Long
+
     suspend fun getUsers(): List<LocalUser>
 
     suspend fun getUser(userId: Int) : LocalUser?
 
-    suspend fun getMainUser(): LocalUser
+    suspend fun getMainUserOrNull(): LocalUser?
 
     suspend fun addUser(
         nickname: String,
