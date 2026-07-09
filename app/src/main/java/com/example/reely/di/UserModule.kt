@@ -19,7 +19,7 @@ abstract class UserModule {
     ): UsersRepository
 
     @Binds
-    abstract fun bindUserLocalDAtaSource(
+    abstract fun bindUserLocalDataSource(
         impl : RoomUsersLocalDataSource
     ): UsersLocalDataSource
 

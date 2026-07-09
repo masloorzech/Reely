@@ -2,7 +2,7 @@ package com.example.reely
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.reely.domain.usecase.EnsureMainUserUseCase
+import com.example.reely.domain.usecase.user.EnsureMainUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package com.example.reely.domain.usecase
+package com.example.reely.domain.usecase.movie
 
 import com.example.reely.domain.model.MovieWatchProviders
 import com.example.reely.domain.repository.MoviesRepository

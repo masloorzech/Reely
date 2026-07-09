@@ -6,7 +6,7 @@ import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.isWatched
 import com.example.reely.domain.model.latestWatchedAt
 import com.example.reely.domain.model.ourAverageRatingRounded
-import com.example.reely.domain.usecase.GetUserMoviesUseCase
+import com.example.reely.domain.usecase.movie.GetUserMoviesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

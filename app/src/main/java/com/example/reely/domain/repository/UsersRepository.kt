@@ -10,6 +10,8 @@ interface UsersRepository {
 
     suspend fun getUsers(): Result<List<User>>
 
+    suspend fun getMainUser(): Result<User>
+
     suspend fun ensureMainUser(): Result<User>
 
     suspend fun addUser(
@@ -18,4 +20,8 @@ interface UsersRepository {
     ): Result<User>
 
     suspend fun deleteUser(userId: UserId): Result<Unit>
+
+    suspend fun updateUserAvatar(userId: UserId, sourceUri : String): Result<User>
+
+    suspend fun updateUserUsername(userId: UserId, username: String): Result<Unit>
 }

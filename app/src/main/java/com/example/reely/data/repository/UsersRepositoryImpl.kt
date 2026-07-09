@@ -1,5 +1,6 @@
 package com.example.reely.data.repository
 
+import com.example.reely.data.local.LocalMediaDataSource
 import com.example.reely.data.local.UsersLocalDataSource
 import com.example.reely.data.local.mapper.toDomain
 import com.example.reely.domain.model.User
@@ -10,11 +11,12 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class UsersRepositoryImpl @Inject constructor(
-    private val localDataSource: UsersLocalDataSource
+    private val usersLocalDataSource: UsersLocalDataSource,
+    private val mediaLocalDataSource: LocalMediaDataSource
 ) : UsersRepository {
 
     override fun observeUsers(): Flow<List<User>> {
-        return localDataSource.observeUsers()
+        return usersLocalDataSource.observeUsers()
             .map { users ->
                 users.map { user ->
                     user.toDomain()
@@ -24,7 +26,7 @@ class UsersRepositoryImpl @Inject constructor(
 
     override suspend fun getUsers(): Result<List<User>> {
         return runCatching {
-            localDataSource.getUsers()
+            usersLocalDataSource.getUsers()
                 .map { user ->
                     user.toDomain()
                 }
@@ -33,25 +35,25 @@ class UsersRepositoryImpl @Inject constructor(
 
     override suspend fun ensureMainUser(): Result<User> {
         return runCatching {
-            val existingMainUser = localDataSource.getMainUser()
+            val existingMainUser = usersLocalDataSource.getMainUser()
 
-            if (existingMainUser != null) {
-                existingMainUser.toDomain()
-            } else {
-                localDataSource.addUser(
-                    nickname = "Ja",
-                    avatarPath = null
-                ).toDomain()
-            }
+            existingMainUser.toDomain()
         }
     }
+
+    override suspend fun getMainUser(): Result<User>{
+        return runCatching {
+            usersLocalDataSource.getMainUser().toDomain()
+        }
+    }
+
 
     override suspend fun addUser(
         nickname: String,
         avatarPath: String?
     ): Result<User> {
         return runCatching {
-            localDataSource.addUser(
+            usersLocalDataSource.addUser(
                 nickname = nickname,
                 avatarPath = avatarPath
             ).toDomain()
@@ -60,7 +62,38 @@ class UsersRepositoryImpl @Inject constructor(
 
     override suspend fun deleteUser(userId: UserId): Result<Unit> {
         return runCatching {
-            localDataSource.deleteUser(userId.value)
+            val user = usersLocalDataSource.getUser(userId.value)
+            mediaLocalDataSource.deleteFile(user?.avatarPath)
+            usersLocalDataSource.deleteUser(userId.value)
         }
     }
+
+    override suspend fun updateUserAvatar(
+        userId: UserId,
+        sourceUri: String
+    ): Result<User> {
+        return runCatching {
+            val path = mediaLocalDataSource.copyImageToAppStorage(
+                sourceUri,
+                directoryName = "avatar"
+            )
+            usersLocalDataSource.updateAvatar(userId.value, path).toDomain()
+        }
+    }
+
+    override suspend fun updateUserUsername(
+        userId: UserId,
+        username: String
+    ): Result<Unit> {
+
+        return runCatching {
+            usersLocalDataSource.updateNickname(
+                userId.value,
+                username
+            )
+        }
+
+    }
+
+
 }

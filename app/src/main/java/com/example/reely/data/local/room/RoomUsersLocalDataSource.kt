@@ -29,9 +29,12 @@ class RoomUsersLocalDataSource @Inject constructor(
             }
     }
 
-    override suspend fun getMainUser(): LocalUser? {
-        return userDao.getMainUser()
-            ?.toLocalUser()
+    override suspend fun getUser(userId: Int): LocalUser? {
+        return userDao.getUserById(userId)?.toLocalUser()
+    }
+
+    override suspend fun getMainUser(): LocalUser {
+        return userDao.getUsers().first().toLocalUser()
     }
 
     override suspend fun addUser(
@@ -54,5 +57,15 @@ class RoomUsersLocalDataSource @Inject constructor(
 
     override suspend fun deleteUser(userId: Int) {
         userDao.deleteUser(userId)
+    }
+
+    override suspend fun updateNickname(userId: Int, nickname: String) : Int{
+        return userDao.updateUserNickname(userId,nickname)
+    }
+
+    override suspend fun updateAvatar(userId: Int, path: String) : LocalUser{
+
+        return userDao.updateAvatarPathAndGetUser(userId, path).toLocalUser()
+
     }
 }

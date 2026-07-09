@@ -8,9 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.Movie
-import com.example.reely.domain.usecase.GetPopularMoviesUseCase
-import com.example.reely.domain.usecase.SaveMovieDataUseCase
-import com.example.reely.domain.usecase.SearchMovieUseCase
+import com.example.reely.domain.usecase.movie.GetPopularMoviesUseCase
+import com.example.reely.domain.usecase.movie.SaveMovieDataUseCase
+import com.example.reely.domain.usecase.movie.SearchMovieUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow

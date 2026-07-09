@@ -10,7 +10,9 @@ interface UsersLocalDataSource {
 
     suspend fun getUsers(): List<LocalUser>
 
-    suspend fun getMainUser(): LocalUser?
+    suspend fun getUser(userId: Int) : LocalUser?
+
+    suspend fun getMainUser(): LocalUser
 
     suspend fun addUser(
         nickname: String,
@@ -18,4 +20,8 @@ interface UsersLocalDataSource {
     ): LocalUser
 
     suspend fun deleteUser(userId: Int)
+
+    suspend fun updateNickname(userId: Int, nickname: String) : Int
+
+    suspend fun updateAvatar(userId : Int, path: String) : LocalUser
 }
