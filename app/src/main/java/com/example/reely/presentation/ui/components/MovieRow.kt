@@ -11,12 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,8 +28,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import com.composables.icons.lucide.Ellipsis
 import com.composables.icons.lucide.EllipsisVertical
 import com.composables.icons.lucide.Lucide
 import com.example.reely.R
@@ -40,7 +36,6 @@ import com.example.reely.domain.model.PosterPaths
 import com.example.reely.domain.model.PublicRating
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.UserMovieWatch
-import com.example.reely.domain.model.getAvailablePosterPath
 import com.example.reely.domain.model.runtimeText
 import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.formatWatchedDate
@@ -80,7 +75,6 @@ fun MovieRow(
 ){
     val isPreview = LocalInspectionMode.current
 
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
@@ -109,9 +103,7 @@ fun MovieRow(
                 contentScale = ContentScale.Fit
             )
         } else {
-            MoviePoster(
-                movie = movie,
-            )
+            MoviePoster(movie = movie)
         }
 
         Spacer(Modifier.width(8.dp))
@@ -144,7 +136,6 @@ fun MovieRow(
     }
 
 }
-
 
 @Preview
 @Composable
