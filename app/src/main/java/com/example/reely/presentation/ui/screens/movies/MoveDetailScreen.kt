@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Clock
@@ -55,6 +56,7 @@ import com.composables.icons.lucide.Tv
 import com.composables.icons.lucide.TvMinimalPlay
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.User
+import com.example.reely.domain.model.UserStatsItem
 import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.model.genresText
 import com.example.reely.domain.model.getAvailablePosterPath
@@ -103,6 +105,8 @@ fun MovieDetailsScreen(
     val state = viewModel.state.collectAsState().value
     val movie = state.movie
 
+    val stats by viewModel.stats.collectAsStateWithLifecycle()
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -134,7 +138,7 @@ fun MovieDetailsScreen(
                             WatchedTopSection(
                                 movie = movie,
                                 users = state.users,
-                                userRatingItems = state.userRatingItems
+                                userStatsItem = stats.userStats
                             )
                         }
 
@@ -361,7 +365,7 @@ private fun WatchlistTopSection(
 private fun WatchedTopSection(
     movie: Movie,
     users: List<User>,
-    userRatingItems: List<UserRatingItems>
+    userStatsItem: List<UserStatsItem>
 ) {
     val usersById = users.associateBy { user ->
         user.id
@@ -414,7 +418,7 @@ private fun WatchedTopSection(
 
     OurStatsSection(
         textOverride = "Wasze oceny",
-        userRatingItems = userRatingItems
+        userRatingItems = userStatsItem
     )
 
     Spacer(Modifier.height(16.dp))

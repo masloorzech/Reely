@@ -5,6 +5,7 @@ import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieWatchProviders
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.UserMovieWatch
+import kotlinx.coroutines.flow.Flow
 
 interface MoviesRepository {
 
@@ -20,12 +21,15 @@ interface MoviesRepository {
     suspend fun getMovieCast(movieId: Int): Result<MovieCredits>
 
     suspend fun getMovieWatchProviders(movieId: Int): Result<MovieWatchProviders>
+    fun observeWatchedMovies(): Flow<List<Movie>>
 
     suspend fun addMovieToWatchlist(movie: Movie): Result<Unit>
 
     suspend fun getUserMovies(): Result<List<Movie>>
 
     suspend fun removeMovieFromWatchlist(movieId: Int): Result<Unit>
+
+    suspend fun getRecentWatchedMovies(userId: UserId) : Result<List<Movie>>
 
     suspend fun markMovieAsWatched(
         movie: Movie,

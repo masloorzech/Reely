@@ -6,6 +6,7 @@ import androidx.room.Upsert
 import com.example.reely.data.local.room.entity.MovieEntity
 import com.example.reely.data.local.room.entity.MovieUserWatchEntity
 import com.example.reely.data.local.room.entity.MovieWatchlistEntity
+import kotlinx.coroutines.flow.Flow
 
 
 @Dao
@@ -21,6 +22,21 @@ interface MovieDao {
     suspend fun getMovie(movieId: Int): MovieEntity?
 
     // WATCHLIST
+    @Query(
+        """
+    SELECT DISTINCT movies.*
+    FROM movies
+    INNER JOIN movie_user_watches 
+        ON movies.id = movie_user_watches.movieId
+    """
+    )
+    fun observeWatchedMovieEntities(): Flow<List<MovieEntity>>
+
+    @Query("SELECT * FROM movie_user_watches WHERE movieId IN (:movieIds)")
+    fun observeUserWatchesForMovies(movieIds: List<Int>): Flow<List<MovieUserWatchEntity>>
+
+    @Query("SELECT * FROM movie_watchlist WHERE movieId IN (:movieIds)")
+    fun observeWatchlistItemsForMovies(movieIds: List<Int>): Flow<List<MovieWatchlistEntity>>
 
     @Upsert
     suspend fun upsertWatchlistItem(item: MovieWatchlistEntity)
@@ -30,6 +46,17 @@ interface MovieDao {
 
     @Query("DELETE FROM movie_watchlist WHERE movieId = :movieId")
     suspend fun deleteWatchlistItem(movieId: Int)
+
+    @Query("""
+        SELECT movies.*
+        FROM movies
+        INNER JOIN movie_user_watches 
+            ON movies.id = movie_user_watches.movieId
+        WHERE movie_user_watches.userId = :mainUserId
+        ORDER BY movie_user_watches.watchedAt ASC
+        LIMIT 8
+""")
+    suspend fun getRecentWatchedMovies(mainUserId: Int) : List<MovieEntity>
 
     @Query(
         """

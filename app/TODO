@@ -1,0 +1,5 @@
+//Sekcja our stats pokazuje null kedy nie ma oceny a powinna np brak oceny
+//Dodać sekcje statystyk
+//Statystiki zaokraglać do pełnych, w sekcji detalu filmu ststystyki tylko do filmu
+//Sortowanie nie działa tak jak powinno filmów :'(
+//Przycisk losowania dodać

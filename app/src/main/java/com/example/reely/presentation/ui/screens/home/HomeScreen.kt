@@ -12,12 +12,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.User
 import com.example.reely.domain.usecase.user.GetAllUsersUseCase
 import com.example.reely.presentation.theme.ReelyTheme
@@ -36,10 +39,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    onMovieClick : (Movie) -> Unit = {},
     vm : HomeScreenViewModel = viewModel()
 ) {
 
     val state = vm.state.collectAsState().value
+
+    val stats by vm.stats.collectAsStateWithLifecycle()
+
 
     Box(
         modifier = modifier
@@ -67,12 +74,15 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LastSeenSection(emptyList())
+            LastSeenSection(
+                state.recentSeenMovies,
+                onMovieClick = onMovieClick
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             OurStatsSection(
-                userRatingItems = null
+                userRatingItems = stats.userStats
             )
 
             //CalendarSection()

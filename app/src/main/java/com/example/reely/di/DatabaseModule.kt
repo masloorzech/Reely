@@ -26,7 +26,6 @@ object DatabaseModule {
             ReelyDatabase::class.java,
             "reely_database"
         )
-            .fallbackToDestructiveMigration(true)
             .build()
     }
 

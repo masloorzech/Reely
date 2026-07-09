@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieWatchProviders
+import com.example.reely.domain.model.StatsOverview
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.UserMovieWatch
@@ -21,12 +22,15 @@ import com.example.reely.domain.usecase.user.ObserveUsersUseCase
 import com.example.reely.domain.usecase.movie.RemoveMovieFromWatchedUseCase
 import com.example.reely.domain.usecase.movie.RemoveMovieFromWatchlistUseCase
 import com.example.reely.domain.usecase.movie.UpdateMovieWatchesUseCase
+import com.example.reely.domain.usecase.statistics.ObserveStatsUseCase
 import com.example.reely.presentation.navigation.MovieDetailsRoute
 import com.example.reely.presentation.ui.model.UserRatingItems
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -88,16 +92,6 @@ data class MovieDetailsScreenState(
         get() = movieProviders
             ?.let { selectedProviderSection.providersFrom(it) }
             .orEmpty()
-
-    val userRatingItems: List<UserRatingItems>
-        get() = users.map { user ->
-            val watch = movie?.userWatches?.get(user.id)
-
-            UserRatingItems(
-                user = user,
-                watchedMovies = watch
-            )
-        }
 }
 
 @HiltViewModel
@@ -111,15 +105,21 @@ class MovieDetailsScreenViewModel @Inject constructor(
     private val removeMovieFromWatchlistUseCase: RemoveMovieFromWatchlistUseCase,
     private val observeUsersUseCase: ObserveUsersUseCase,
     private val updateMovieWatchesUseCase: UpdateMovieWatchesUseCase,
-    private val removeMovieFromWatchedUseCase: RemoveMovieFromWatchedUseCase
+    private val removeMovieFromWatchedUseCase: RemoveMovieFromWatchedUseCase,
+    private val observeStatsUseCase: ObserveStatsUseCase
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<MovieDetailsRoute>()
 
+    val stats = observeStatsUseCase()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = StatsOverview()
+        )
+
     private val _state = MutableStateFlow(MovieDetailsScreenState())
     val state = _state.asStateFlow()
-
-
 
     init {
         val movieId = route.movieId

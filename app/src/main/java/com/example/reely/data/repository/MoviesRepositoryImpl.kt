@@ -12,6 +12,8 @@ import com.example.reely.domain.model.MovieWatchProviders
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.UserMovieWatch
 import com.example.reely.domain.repository.MoviesRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class MoviesRepositoryImpl @Inject constructor(
@@ -47,7 +49,7 @@ class MoviesRepositoryImpl @Inject constructor(
                     isInWatchlist = localMovieWithUserData.isInWatchlist,
                     userWatches = localMovieWithUserData.userWatches
                         .mapKeys { entry ->
-                            com.example.reely.domain.model.UserId(entry.key)
+                            UserId(entry.key)
                         }
                         .mapValues { entry ->
                             entry.value.toDomain()
@@ -75,6 +77,15 @@ class MoviesRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun observeWatchedMovies(): Flow<List<Movie>> {
+        return localDataSource.observeWatchedMovies()
+            .map { movies ->
+                movies.map { movie ->
+                    movie.toDomain()
+                }
+            }
+    }
+
     override suspend fun addMovieToWatchlist(movie: Movie): Result<Unit> {
         return runCatching {
             localDataSource.saveMovieData(movie.toLocal())
@@ -86,6 +97,14 @@ class MoviesRepositoryImpl @Inject constructor(
         return runCatching {
             localDataSource.removeFromWatchlist(movieId)
         }
+    }
+
+    override suspend fun getRecentWatchedMovies(userId: UserId): Result<List<Movie>> {
+
+        return runCatching {
+            localDataSource.getRecentWatched(userId.value).map{ it.toDomain() }
+        }
+
     }
 
     override suspend fun getUserMovies(): Result<List<Movie>> {

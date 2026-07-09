@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import coil3.compose.AsyncImage
+import com.example.reely.domain.model.UserStatsItem
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.model.UserRatingItems
 import java.io.File
@@ -38,7 +39,7 @@ import java.io.File
 @Composable
 fun OurStatsSection(
     textOverride: String? = "Wasze statystyki",
-    userRatingItems: List<UserRatingItems>?
+    userRatingItems: List<UserStatsItem>?
 ) {
     Column(
         modifier = Modifier.fillMaxWidth()
@@ -64,18 +65,12 @@ fun OurStatsSection(
                 ) { userStats ->
                     SmallStatsCard(
                         user = userStats.user,
-                        averageRating = userStats.watchedMovies?.rating,
+                        averageRating = userStats.averageRating,
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.width(156.dp)
                     )
                 }
             }
-        } else {
-            Text(
-                text = "TODO",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-            )
         }
     }
 }

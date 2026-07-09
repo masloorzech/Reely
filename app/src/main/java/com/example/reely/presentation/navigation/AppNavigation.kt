@@ -45,7 +45,7 @@ fun AppNavigation(
                         HomeScreenDestination,
                         SearchScreenDestination,
                         ListScreenDestination,
-                        StatisticsScreenDestination,
+                        //StatisticsScreenDestination,
                         ProfileScreenDestination
                     ),
                 )
@@ -65,7 +65,10 @@ fun AppNavigation(
 
             composable<HomeScreenRoute>{
                 HomeScreen(
-                    vm = hiltViewModel()
+                    vm = hiltViewModel(),
+                    onMovieClick = { movie ->
+                        navController.navigate(MovieDetailsRoute(movie.id))
+                    }
                 )
             }
 

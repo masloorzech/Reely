@@ -13,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import com.example.reely.domain.model.Movie
 import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.components.MovieRow
-import com.example.reely.presentation.ui.components.mockMovie
 
 @Composable
 fun MovieList(

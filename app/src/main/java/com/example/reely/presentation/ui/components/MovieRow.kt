@@ -40,33 +40,6 @@ import com.example.reely.domain.model.runtimeText
 import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.formatWatchedDate
 
-val mockMovie = Movie(
-    id = 1,
-    title = "Inception",
-    overview = "A skilled thief enters people's dreams to steal secrets, but is offered a chance to erase his criminal past by planting an idea instead.",
-    posterPaths = PosterPaths(
-        localPosterPath = null,
-        remotePosterPath = "https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg"
-    ),
-    releaseDate = "2010-07-16",
-    publicRating = PublicRating(
-        average = 8.8,
-        voteCount = 23000
-    ),
-    runtime = 148,
-    genres = listOf("Sci-Fi", "Action", "Thriller"),
-    isInWatchlist = true,
-    userWatches = mapOf(
-        UserId(1) to UserMovieWatch(
-            watchedAt = "2024-05-10",
-            rating = 9.0
-        ),
-        UserId(1) to UserMovieWatch(
-            watchedAt = "2024-06-01",
-            rating = 8.5
-        )
-    )
-)
 @Composable
 fun MovieRow(
     modifier: Modifier = Modifier,
@@ -122,6 +95,7 @@ fun MovieRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
             )
+
         }
 
         Spacer(Modifier.weight(1f))
@@ -135,32 +109,4 @@ fun MovieRow(
 
     }
 
-}
-
-@Preview
-@Composable
-fun MovieRowPreview(){
-    ReelyTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = MaterialTheme.colorScheme.background
-                )
-                .padding(16.dp)
-        ){
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ){
-                repeat(7){
-                    item {
-                        MovieRow(
-                            movie = mockMovie
-                        )
-                    }
-                }
-
-            }
-        }
-    }
 }

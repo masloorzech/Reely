@@ -3,6 +3,8 @@ package com.example.reely.data.local
 import com.example.reely.data.local.model.LocalMovie
 import com.example.reely.data.local.model.LocalMovieUserWatch
 import com.example.reely.data.local.model.LocalMovieWithUserData
+import com.example.reely.data.local.model.LocalUser
+import kotlinx.coroutines.flow.Flow
 
 interface MoviesLocalDataSource {
 
@@ -20,6 +22,8 @@ interface MoviesLocalDataSource {
         addedByUserId: Int? = null
     )
 
+    suspend fun getRecentWatched(userId: Int) : List<LocalMovieWithUserData>
+
     suspend fun removeFromWatchlist(movieId: Int)
 
     suspend fun upsertUserWatch(
@@ -33,5 +37,6 @@ interface MoviesLocalDataSource {
         userId: Int
     )
 
+    fun observeWatchedMovies(): Flow<List<LocalMovieWithUserData>>
     suspend fun deleteUserWatchesForMovie(movieId: Int)
 }
