@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Clock
@@ -106,7 +107,7 @@ private enum class WatchProviderTab(
 @Composable
 fun MovieDetailsScreen(
     onBack: () -> Unit = {},
-    viewModel: MovieDetailsScreenViewModel = hiltViewModel()
+    viewModel: MovieDetailsScreenViewModel = viewModel()
 ) {
     val state = viewModel.state.collectAsState().value
     val movie = state.movie

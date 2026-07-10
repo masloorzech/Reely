@@ -2,9 +2,9 @@ DONE: Sekcja our stats pokazuje null kedy nie ma oceny a powinna np brak oceny
 DONE: Statystiki zaokraglać do pełnych, w sekcji detalu filmu ststystyki tylko do filmu
 DONE: Sortowanie nie działa tak jak powinno filmów :'(
 DONE: Osttanio wyszukiwane
+DONE: Obsada
 
 TODO: Dodać sekcje statystyk
 TODO: Filtry w ekranie listy
-TODO: Liczba filmó w liscie
+TODO: Liczba filmów w liscie
 TODO: Przycisk losowania dodać
-TODO: OBSADA
