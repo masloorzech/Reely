@@ -35,6 +35,7 @@ import com.example.reely.domain.model.UserStatsItem
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.model.UserRatingItems
 import java.io.File
+import java.util.Locale
 
 @Composable
 fun OurStatsSection(
@@ -151,8 +152,11 @@ fun SmallStatsCard(
 
                 Spacer(modifier = Modifier.width(4.dp))
 
+
                 Text(
-                    text = averageRating.toString(),
+                    text = averageRating
+                        ?.let { String.format(Locale.getDefault(), "%.1f", it) }
+                        ?: "Brak ocen",
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
