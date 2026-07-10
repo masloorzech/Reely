@@ -12,10 +12,13 @@ import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieWatchProviders
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.UserMovieWatch
+import com.example.reely.domain.model.UserWatchListStatus
 import com.example.reely.domain.repository.MoviesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class MoviesRepositoryImpl @Inject constructor(
     private val remoteDataSource: MoviesRemoteDataSource,
@@ -49,7 +52,10 @@ class MoviesRepositoryImpl @Inject constructor(
                 remoteMovie
             } else {
                 remoteMovie.copy(
-                    isInWatchlist = localMovieWithUserData.isInWatchlist,
+                    userWatchlistStatus = UserWatchListStatus(
+                        localMovieWithUserData.watchList.isAdded,
+                        addedAt = localMovieWithUserData.watchList.addedAt
+                    ),
                     userWatches = localMovieWithUserData.userWatches
                         .mapKeys { entry ->
                             UserId(entry.key)
@@ -89,10 +95,15 @@ class MoviesRepositoryImpl @Inject constructor(
             }
     }
 
+    @OptIn(ExperimentalTime::class)
     override suspend fun addMovieToWatchlist(movie: Movie): Result<Unit> {
         return runCatching {
             localDataSource.saveMovieData(movie.toLocal())
-            localDataSource.addToWatchlist(movieId = movie.id)
+
+            localDataSource.addToWatchlist(
+                movieId = movie.id,
+                addedAt = Clock.System.now().toString()
+            )
         }
     }
 

@@ -149,7 +149,7 @@ fun MovieDetailsScreen(
                             )
                         }
 
-                        movie.isInWatchlist -> {
+                        movie.userWatchlistStatus.isInWatchlist -> {
                             WatchlistTopSection(
                                 movie = movie,
                                 onMarkAsWatchedClick = viewModel::showRatingDialog,
@@ -199,7 +199,7 @@ fun MovieDetailsScreen(
                             }
                         )
                     }
-                    movie.isInWatchlist -> {
+                    movie.userWatchlistStatus.isInWatchlist -> {
                         ReelyButton(
                             text = "Usuń z listy",
                             onClick = {

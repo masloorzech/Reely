@@ -19,9 +19,12 @@ data class LocalMovieUserWatch(
     val watchedAt: String? = null,
     val rating: Double? = null
 )
-
+data class LocalWatchlistStatus(
+    val isAdded: Boolean,
+    val addedAt: String?
+)
 data class LocalMovieWithUserData(
     val movie: LocalMovie,
-    val isInWatchlist: Boolean,
+    val watchList: LocalWatchlistStatus,
     val userWatches: Map<Int, LocalMovieUserWatch>
 )

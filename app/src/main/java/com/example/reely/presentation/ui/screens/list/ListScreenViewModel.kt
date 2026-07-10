@@ -132,7 +132,7 @@ private fun List<Movie>.filterByTab(tab: MovieListTab): List<Movie> {
         }
 
         MovieListTab.WATCHLIST -> filter { movie ->
-            movie.isInWatchlist && !movie.isWatched()
+            movie.userWatchlistStatus.isInWatchlist && !movie.isWatched()
         }
 
     }
@@ -178,6 +178,12 @@ private fun List<Movie>.sortByOption(sort: MovieSortOption): List<Movie> {
             movie.title.lowercase()
         }
 
-        MovieSortOption.ADDING_TIME -> this
+        MovieSortOption.ADDING_TIME -> sortedWith(
+            compareByDescending<Movie> { movie ->
+                movie.userWatchlistStatus.addedAt ?: movie.latestWatchedAt()
+            }.thenBy { movie ->
+                movie.title.lowercase()
+            }
+        )
     }
 }

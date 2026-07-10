@@ -2,7 +2,10 @@ package com.example.reely.domain.model
 
 import com.example.reely.presentation.ui.screens.list.MovieListTab
 import com.example.reely.presentation.ui.screens.list.MovieSortOption
-
+data class UserWatchListStatus(
+    val isInWatchlist : Boolean,
+    val addedAt: String?
+)
 data class Movie(
     val id: Int,
     val title: String,
@@ -12,7 +15,7 @@ data class Movie(
     val publicRating: PublicRating?,
     val runtime: Int? = null,
     val genres: List<String> = emptyList(),
-    val isInWatchlist: Boolean = false,
+    val userWatchlistStatus: UserWatchListStatus = UserWatchListStatus(false,null),
     val userWatches: Map<UserId, UserMovieWatch> = emptyMap()
 ){
 

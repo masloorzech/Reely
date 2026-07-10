@@ -10,6 +10,7 @@ import com.example.reely.domain.model.PublicRating
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.UserMovieWatch
+import com.example.reely.domain.model.UserWatchListStatus
 
 fun Movie.toLocal(): LocalMovie {
     return LocalMovie(
@@ -44,14 +45,16 @@ fun LocalMovie.toDomain(): Movie {
         ),
         runtime = runtime,
         genres = genres,
-        isInWatchlist = false,
         userWatches = emptyMap()
     )
 }
 
 fun LocalMovieWithUserData.toDomain(): Movie {
     return movie.toDomain().copy(
-        isInWatchlist = isInWatchlist,
+        userWatchlistStatus = UserWatchListStatus(
+            isInWatchlist = watchList.isAdded,
+            addedAt = watchList.addedAt
+        ),
         userWatches = userWatches
             .mapKeys { entry -> UserId(entry.key) }
             .mapValues { entry -> entry.value.toDomain() }
