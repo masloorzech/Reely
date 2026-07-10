@@ -138,7 +138,6 @@ fun MovieDetailsScreen(
                             WatchedTopSection(
                                 movie = movie,
                                 users = state.users,
-                                userStatsItem = stats.userStats
                             )
                         }
 
@@ -365,7 +364,6 @@ private fun WatchlistTopSection(
 private fun WatchedTopSection(
     movie: Movie,
     users: List<User>,
-    userStatsItem: List<UserStatsItem>
 ) {
     val usersById = users.associateBy { user ->
         user.id
@@ -418,7 +416,7 @@ private fun WatchedTopSection(
 
     OurStatsSection(
         textOverride = "Wasze oceny",
-        userRatingItems = userStatsItem
+        userRatingItems = movie.toUserStatItemsForMovie(users)
     )
 
     Spacer(Modifier.height(16.dp))

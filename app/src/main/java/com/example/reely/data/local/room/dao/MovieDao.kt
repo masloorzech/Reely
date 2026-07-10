@@ -53,7 +53,7 @@ interface MovieDao {
         INNER JOIN movie_user_watches 
             ON movies.id = movie_user_watches.movieId
         WHERE movie_user_watches.userId = :mainUserId
-        ORDER BY movie_user_watches.watchedAt ASC
+        ORDER BY movie_user_watches.watchedAt DESC
         LIMIT 8
 """)
     suspend fun getRecentWatchedMovies(mainUserId: Int) : List<MovieEntity>

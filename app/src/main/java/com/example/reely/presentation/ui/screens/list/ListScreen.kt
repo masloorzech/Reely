@@ -55,6 +55,7 @@ import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyMenuButton
 import com.example.reely.presentation.ui.components.ReelySearchField
 import com.example.reely.presentation.ui.components.ReelyTab
+import com.example.reely.presentation.ui.components.TopBar
 import com.example.reely.presentation.ui.screens.list.components.MovieList
 import com.example.reely.presentation.ui.screens.search.components.MovieGrid
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -133,7 +134,7 @@ fun ListScreen(
                 .fillMaxSize()
         ) {
 
-            SmallSectionHeader(
+            TopBar(
                 sectionName = "Twoje listy"
             )
 

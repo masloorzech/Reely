@@ -1,4 +1,4 @@
-package com.example.reely.data.local.LocalStorage
+package com.example.reely.data.local.storage
 
 import android.content.Context
 import android.net.Uri

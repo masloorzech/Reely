@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -43,10 +44,13 @@ fun HomeScreen(
     vm : HomeScreenViewModel = viewModel()
 ) {
 
-    val state = vm.state.collectAsState().value
+    val state = vm.state.collectAsStateWithLifecycle().value
 
     val stats by vm.stats.collectAsStateWithLifecycle()
 
+    LaunchedEffect(stats) {
+        vm.refreshRecentMovies()
+    }
 
     Box(
         modifier = modifier

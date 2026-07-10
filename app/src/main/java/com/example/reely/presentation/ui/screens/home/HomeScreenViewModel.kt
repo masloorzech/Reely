@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.StatsOverview
 import com.example.reely.domain.model.User
+import com.example.reely.domain.model.UserId
 import com.example.reely.domain.usecase.movie.GetRecentWatchedMoviesUseCase
 import com.example.reely.domain.usecase.statistics.ObserveStatsUseCase
 import com.example.reely.domain.usecase.user.GetAllUsersUseCase
@@ -30,7 +31,7 @@ data class HomeScreenUIState(
 class HomeScreenViewModel @Inject constructor(
     private val getAllUsersUseCase: GetAllUsersUseCase,
     private val getRecentWatchedMoviesUseCase: GetRecentWatchedMoviesUseCase,
-    observeStatsUseCase: ObserveStatsUseCase
+    private val observeStatsUseCase: ObserveStatsUseCase
 
 ) : ViewModel(){
 
@@ -49,46 +50,43 @@ class HomeScreenViewModel @Inject constructor(
         loadInitialData()
     }
 
-    fun loadInitialData(){
+    private fun loadInitialData() {
         viewModelScope.launch {
-            getAllUsersUseCase().onSuccess { users ->
-                _state.update {
-                    it.copy(
-                        users = users
-                    )
+            getAllUsersUseCase()
+                .onSuccess { users ->
+                    _state.update { it.copy(users = users) }
+
+                    users.firstOrNull()?.let { mainUser ->
+                        loadRecentMovies(mainUser.id)
+                    }
                 }
+                .onFailure { error ->
+                    _state.update { it.copy(error = error.message) }
+                }
+        }
+    }
 
-                val mainUser = users.firstOrNull() ?: return@launch
+    fun refreshRecentMovies() {
+        val mainUser = state.value.users.firstOrNull() ?: return
+        loadRecentMovies(mainUser.id)
+    }
 
-                getRecentWatchedMoviesUseCase(userId = mainUser.id).onSuccess {movies ->
-
+    private fun loadRecentMovies(userId: UserId) {
+        viewModelScope.launch {
+            getRecentWatchedMoviesUseCase(userId)
+                .onSuccess { movies ->
                     _state.update {
                         it.copy(
-                            recentSeenMovies = movies
+                            recentSeenMovies = movies,
+                            error = null
                         )
                     }
-
                 }
-                    .onFailure { error ->
-                        _state.update {
-                            it.copy(
-                                error = error.message
-                            )
-                        }
-                        return@launch
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(error = error.message)
                     }
-
-
-            }.onFailure { error ->
-                _state.update {
-                    it.copy(
-                        error = error.message
-                    )
                 }
-                return@launch
-            }
-
-
         }
     }
 }

@@ -45,6 +45,8 @@ fun SearchScreen(
         }
     }
 
+    val recentSearches = viewModel.recentSearches.collectAsState().value
+
     val state = viewModel.state.collectAsState().value
 
     Box(
@@ -74,13 +76,8 @@ fun SearchScreen(
             Spacer(modifier.height(16.dp))
 
             RecentSearchesSection(
-                recentSearches = listOf(
-                    "Interstellar",
-                    "Woda",
-                    "Kształt wody",
-                    "Sparkle",
-                    "Dash"
-                )
+                recentSearches = recentSearches,
+                onClick = viewModel::onQueryChange
             )
 
             Spacer(modifier.height(32.dp))

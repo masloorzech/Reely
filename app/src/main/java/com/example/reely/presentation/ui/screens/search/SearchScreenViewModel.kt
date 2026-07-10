@@ -1,21 +1,20 @@
 package com.example.reely.presentation.ui.screens.search
 
 import android.util.Log
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.usecase.movie.GetPopularMoviesUseCase
+import com.example.reely.domain.usecase.movie.ObserveRecentSearchesUseCase
 import com.example.reely.domain.usecase.movie.SaveMovieDataUseCase
 import com.example.reely.domain.usecase.movie.SearchMovieUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -44,8 +43,16 @@ sealed interface SearchEvent {
 class SearchScreenViewModel @Inject constructor(
     private val getPopularMoviesUseCase: GetPopularMoviesUseCase,
     private val searchMovieUseCase: SearchMovieUseCase,
-    private val saveMovieData: SaveMovieDataUseCase
+    private val saveMovieData: SaveMovieDataUseCase,
+    private val observeRecentSearchesUseCase: ObserveRecentSearchesUseCase
 )  : ViewModel(){
+
+    val recentSearches = observeRecentSearchesUseCase()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
     private var _state = MutableStateFlow(SearchUiState())
     val state = _state.asStateFlow()

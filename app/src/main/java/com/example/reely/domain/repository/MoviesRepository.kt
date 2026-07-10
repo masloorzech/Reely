@@ -42,5 +42,5 @@ interface MoviesRepository {
     ): Result<Unit>
 
     suspend fun removeMovieFromWatched(movieId: Int): Result<Unit>
-
+    fun observeRecentSearches(): Flow<List<String>>
 }

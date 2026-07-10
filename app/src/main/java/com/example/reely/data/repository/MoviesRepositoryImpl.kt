@@ -1,6 +1,7 @@
 package com.example.reely.data.repository
 
 import com.example.reely.data.local.MoviesLocalDataSource
+import com.example.reely.data.local.RecentSearchesLocalDataSource
 import com.example.reely.data.local.mapper.toDomain
 import com.example.reely.data.local.mapper.toLocal
 import com.example.reely.data.remote.MoviesRemoteDataSource
@@ -19,6 +20,7 @@ import javax.inject.Inject
 class MoviesRepositoryImpl @Inject constructor(
     private val remoteDataSource: MoviesRemoteDataSource,
     private val localDataSource: MoviesLocalDataSource,
+    private val searchesLocalDataSource: RecentSearchesLocalDataSource,
 ) : MoviesRepository {
 
     override suspend fun getPopularMovies(): Result<List<Movie>> {
@@ -30,6 +32,7 @@ class MoviesRepositoryImpl @Inject constructor(
 
     override suspend fun search(query: String): Result<List<Movie>> {
         return runCatching {
+            searchesLocalDataSource.add(query)
             remoteDataSource.search(query)
                 .map { it.toDomain() }
         }
@@ -154,4 +157,5 @@ class MoviesRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun observeRecentSearches(): Flow<List<String>> = searchesLocalDataSource.observeRecentSearches()
 }

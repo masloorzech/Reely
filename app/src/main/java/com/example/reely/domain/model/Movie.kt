@@ -14,7 +14,27 @@ data class Movie(
     val genres: List<String> = emptyList(),
     val isInWatchlist: Boolean = false,
     val userWatches: Map<UserId, UserMovieWatch> = emptyMap()
-)
+){
+
+
+    fun toUserStatItemsForMovie(users: List<User>) : List<UserStatsItem> {
+
+        val userStatsItemsList = mutableListOf<UserStatsItem>()
+        userWatches.forEach { (userId, userMovieWatch) ->
+
+            userStatsItemsList.add(
+                UserStatsItem(
+                    user = users.first { it.id == userId },
+                    watchedCount = 1,
+                    ratedCount = 1,
+                    averageRating = userMovieWatch.rating,
+                    topGenre = null
+                )
+            )
+        }
+        return userStatsItemsList.toList()
+    }
+}
 data class UserMovieWatch(
     val watchedAt: String? = null,
     val rating: Double? = null
