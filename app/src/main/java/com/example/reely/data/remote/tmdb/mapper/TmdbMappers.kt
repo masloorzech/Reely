@@ -1,11 +1,13 @@
 package com.example.reely.data.remote.tmdb.mapper
 
 import com.example.reely.data.remote.model.RemoteCastMember
+import com.example.reely.data.remote.model.RemoteCrewMember
 import com.example.reely.data.remote.model.RemoteMovie
 import com.example.reely.data.remote.model.RemoteMovieCredits
 import com.example.reely.data.remote.model.RemoteMovieWatchProviders
 import com.example.reely.data.remote.model.RemoteWatchProvider
 import com.example.reely.data.remote.tmdb.dto.TmdbCastMemberDto
+import com.example.reely.data.remote.tmdb.dto.TmdbCrewMemberDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMovieCreditsDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMovieDetailsDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMovieDto
@@ -75,7 +77,20 @@ fun TmdbWatchProviderDto.toRemote(): RemoteWatchProvider {
 fun TmdbMovieCreditsDto.toRemote(): RemoteMovieCredits {
     return RemoteMovieCredits(
         movieId = id,
-        cast = cast.map { it.toRemote() }
+        cast = cast.map { it.toRemote() },
+        crew = crew.map { it.toRemote() }
+    )
+}
+
+fun TmdbCrewMemberDto.toRemote(): RemoteCrewMember{
+    return RemoteCrewMember(
+        id = id,
+        name = name.orEmpty(),
+        originalName = originalName,
+        profilePath = profilePath?.toTmdbProfileUrl(),
+        department = department,
+        job = job,
+        creditId = creditId
     )
 }
 

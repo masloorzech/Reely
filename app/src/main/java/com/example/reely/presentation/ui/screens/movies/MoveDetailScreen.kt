@@ -56,6 +56,7 @@ import com.composables.icons.lucide.Trash
 import com.composables.icons.lucide.Tv
 import com.composables.icons.lucide.TvMinimalPlay
 import com.example.reely.domain.model.CastMember
+import com.example.reely.domain.model.CrewMember
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserStatsItem
@@ -76,9 +77,11 @@ import com.example.reely.presentation.ui.formatWatchedDate
 import com.example.reely.presentation.ui.model.UserRatingItems
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
 import com.example.reely.presentation.ui.screens.movies.components.CastMemberItem
+import com.example.reely.presentation.ui.screens.movies.components.CrewMemberItem
 import com.example.reely.presentation.ui.screens.movies.components.MarkAsWatchedDialog
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
+import com.example.reely.presentation.ui.screens.movies.toCrewUiItems
 import java.util.Locale
 
 private enum class WatchProviderTab(
@@ -136,6 +139,7 @@ fun MovieDetailsScreen(
                     selectedProviders = state.selectedProviders,
                     onProviderSectionSelected = viewModel::changeProvidersType,
                     cast = state.movieCredits?.cast,
+                    crew = state.movieCredits?.crew,
                     isCastLoading = state.isMovieCreditsLoading
                 ) {
                     when {
@@ -238,6 +242,7 @@ private fun MovieDetailsContent(
     availableProviderSections: List<ProviderSectionType>,
     selectedProviderSection: ProviderSectionType,
     cast: List<CastMember>?,
+    crew: List<CrewMember>?,
     isCastLoading: Boolean,
     selectedProviders: List<WatchProvider>,
     onProviderSectionSelected: (ProviderSectionType) -> Unit,
@@ -281,6 +286,11 @@ private fun MovieDetailsContent(
 
             MovieCastSection(
                 cast = cast,
+                isLoading = isCastLoading
+            )
+
+            MovieCrewSection(
+                crew = crew,
                 isLoading = isCastLoading
             )
         }
@@ -341,6 +351,67 @@ fun MovieCastSection(
                         ) { member ->
                             CastMemberItem(
                                 castMember = member
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MovieCrewSection(
+    crew: List<CrewMember>?,
+    isLoading: Boolean,
+    modifier: Modifier = Modifier
+){
+    val crewItems = remember(crew) {
+        crew?.toCrewUiItems()
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        SmallSectionHeader(
+            sectionName = "Twórcy:"
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        when {
+            isLoading -> {
+                Text(
+                    text = "Ładowanie twórców...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(
+                        alpha = 0.6f
+                    )
+                )
+            }
+
+            crewItems != null -> when {
+
+                crewItems.isEmpty() -> {
+                    Text(
+                        text = "Brak informacji o twórcach.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = 0.6f
+                        )
+                    )
+                }
+
+                else -> {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = crewItems,
+                            key = { item: CrewUiItem -> item.personId }
+                        ) { item: CrewUiItem ->
+                            CrewMemberItem(
+                                item = item
                             )
                         }
                     }

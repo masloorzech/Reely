@@ -1,10 +1,12 @@
 package com.example.reely.data.remote.mapper
 
 import com.example.reely.data.remote.model.RemoteCastMember
+import com.example.reely.data.remote.model.RemoteCrewMember
 import com.example.reely.data.remote.model.RemoteMovieCredits
 import com.example.reely.data.remote.model.RemoteMovieWatchProviders
 import com.example.reely.data.remote.model.RemoteWatchProvider
 import com.example.reely.domain.model.CastMember
+import com.example.reely.domain.model.CrewMember
 import com.example.reely.domain.model.LogoPaths
 import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieWatchProviders
@@ -14,7 +16,8 @@ import com.example.reely.domain.model.WatchProvider
 fun RemoteMovieCredits.toDomain(): MovieCredits {
     return MovieCredits(
         movieId = movieId,
-        cast = cast.map { it.toDomain() }
+        cast = cast.map { it.toDomain() },
+        crew = crew.map { it.toDomain() }
     )
 }
 
@@ -29,6 +32,21 @@ fun RemoteCastMember.toDomain(): CastMember {
         ),
         character = character,
         order = order
+    )
+}
+
+fun RemoteCrewMember.toDomain(): CrewMember {
+    return CrewMember(
+        id = id,
+        name = name,
+        originalName = originalName,
+        profilePath = ProfilePaths(
+            localProfilePath = null,
+            remoteProfilePath = profilePath
+        ),
+        department = department,
+        job = job,
+        creditId = creditId
     )
 }
 
