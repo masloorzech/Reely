@@ -72,14 +72,10 @@ fun LastSeenSection(
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(
-                        items = lastSeenFilmsList,
-                        key = { movie -> movie.id }
-                    ) { movie ->
-                        MovieCard(
-                            movie = movie,
-                            onClick = onMovieClick
-                        )
+                    repeat(5){
+                        item {
+                            MoviePosterEmpty() {}
+                        }
                     }
                 }
 

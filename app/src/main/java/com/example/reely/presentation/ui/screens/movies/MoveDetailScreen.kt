@@ -112,8 +112,6 @@ fun MovieDetailsScreen(
     val state = viewModel.state.collectAsState().value
     val movie = state.movie
 
-    val stats by viewModel.stats.collectAsStateWithLifecycle()
-
     Box(
         modifier = Modifier
             .fillMaxSize()

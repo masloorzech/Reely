@@ -97,7 +97,6 @@ fun HomeScreen(
             WatchedMoviesCalendarSection(
                 month = state.calendarMonth,
                 moviesByDate = state.watchedMoviesByDate,
-                modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             Spacer(modifier = Modifier.height(32.dp))

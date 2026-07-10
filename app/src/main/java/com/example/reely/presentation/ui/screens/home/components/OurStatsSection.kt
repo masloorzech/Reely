@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -68,7 +69,7 @@ fun OurStatsSection(
                         user = userStats.user,
                         averageRating = userStats.averageRating,
                         tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.width(156.dp)
+                        modifier = Modifier.defaultMinSize(160.dp)
                     )
                 }
             }
@@ -158,7 +159,8 @@ fun SmallStatsCard(
                         ?.let { String.format(Locale.getDefault(), "%.1f", it) }
                         ?: "Brak ocen",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1
                 )
 
             }

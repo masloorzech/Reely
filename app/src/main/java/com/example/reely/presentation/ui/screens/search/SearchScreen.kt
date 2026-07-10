@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -80,17 +81,18 @@ fun SearchScreen(
                 onClick = viewModel::onQueryChange
             )
 
-            Spacer(modifier.height(32.dp))
+            Spacer(modifier.height(16.dp))
 
             SmallSectionHeader(state.searchSectionName)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             MovieGrid(
                 movies = state.movies,
                 isLoading = state.isLoading || state.error!=null,
                 onMovieClick = viewModel::onMovieSelected
             )
+            Spacer(modifier = Modifier.height(16.dp))
 
         }
         Row(

@@ -58,7 +58,7 @@ fun AppNavigation(
             modifier = if (showBottomBar) {
                 Modifier.padding(innerPadding)
             } else {
-                Modifier
+                Modifier.padding(bottom = innerPadding.calculateBottomPadding())
             },
             startDestination = HomeScreenRoute,
             ){
