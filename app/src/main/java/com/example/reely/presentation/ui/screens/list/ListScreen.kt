@@ -39,13 +39,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composables.icons.lucide.ArrowDown
+import com.composables.icons.lucide.ArrowDownAZ
+import com.composables.icons.lucide.ArrowUp
 import com.composables.icons.lucide.Bookmark
 import com.composables.icons.lucide.Clapperboard
+import com.composables.icons.lucide.Clock
 import com.composables.icons.lucide.Grid2x2
 import com.composables.icons.lucide.Grid3x2
 import com.composables.icons.lucide.Grip
 import com.composables.icons.lucide.List
 import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.TvMinimalPlay
 import com.example.reely.domain.model.Movie
 import com.example.reely.presentation.theme.ReelyTheme
@@ -81,12 +86,29 @@ enum class MovieListTab(
 }
 
 enum class MovieSortOption(
-    val title: String
+    val label: String,
+    val icon: ImageVector
 ) {
-    RATING_DESC("Najwyżej oceniane"),
-    NEWEST("Najnowsze"),
-    OLDEST("Najstarsze"),
-    TITLE_ASC("Alfabetycznie")
+    RATING_DESC(
+        label = "Najlepiej oceniane",
+        icon = Lucide.Star
+    ),
+    NEWEST(
+        label = "Najnowsze",
+        icon = Lucide.ArrowDown
+    ),
+    OLDEST(
+        label = "Najstarsze",
+        icon = Lucide.ArrowUp
+    ),
+    TITLE_ASC(
+        label = "Alfabetycznie",
+        icon = Lucide.ArrowDownAZ
+    ),
+    ADDING_TIME(
+        label = "Ostatnio dodane",
+        icon = Lucide.Clock
+    )
 }
 enum class MovieDisplayStyle(
     val icon: ImageVector
@@ -162,7 +184,8 @@ fun ListScreen(
                 ReelyMenuButton(
                     selectedOption = state.selectedSort,
                     options = MovieSortOption.entries,
-                    optionLabel = { it.title },
+                    optionLabel = { it.label },
+                    optionIcon = { it.icon },
                     onOptionSelected = { vm.switchSort(it)}
                 )
                 Spacer(Modifier.weight(1f))
@@ -187,7 +210,6 @@ fun ListScreen(
                 MovieDisplayStyle.LIST -> {
                     MovieList(
                         movies = state.moviesList,
-                        isLoading = state.isLoading,
                         onMovieClick = { movie ->
                         onMovieClick(movie.id)}
                     )

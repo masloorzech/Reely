@@ -19,7 +19,6 @@ fun MovieList(
     modifier: Modifier = Modifier,
     movies : List<Movie> = emptyList(),
     onMovieClick: (Movie) -> Unit = {},
-    isLoading: Boolean = false
 ) {
 
     LazyColumn(

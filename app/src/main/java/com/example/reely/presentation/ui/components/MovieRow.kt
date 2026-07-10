@@ -53,9 +53,9 @@ fun MovieRow(
         modifier = modifier
             .background(
                 color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(12.dp)
             )
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .clickable(
                 onClick = {
                     onMovieClicked(movie)

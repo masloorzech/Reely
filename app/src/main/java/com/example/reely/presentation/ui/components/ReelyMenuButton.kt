@@ -25,6 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Menu
@@ -32,12 +34,13 @@ import com.example.reely.presentation.theme.InputBackground
 
 @Composable
 fun <T> ReelyMenuButton(
+    modifier: Modifier = Modifier,
     selectedOption: T,
     options: List<T>,
+    optionIcon: (T) -> ImageVector? = { null },
     optionLabel: (T) -> String,
     onOptionSelected: (T) -> Unit,
-    modifier: Modifier = Modifier,
-    label: String = "Sortuj:"
+    label: String = "Sortuj:",
 ) {
     var expanded by remember {
         mutableStateOf(false)
@@ -83,9 +86,21 @@ fun <T> ReelyMenuButton(
             onDismissRequest = {
                 expanded = false
             },
-            modifier = Modifier.background(InputBackground)
+            modifier = Modifier.background(InputBackground),
+            shape = RoundedCornerShape(
+                topStart = 16.dp,
+                topEnd = 16.dp,
+                bottomEnd = 16.dp,
+                bottomStart = 16.dp
+            ),
+            offset = DpOffset(
+                y = 8.dp,
+                x = 0.dp
+            )
         ) {
             options.forEach { option ->
+                val icon = optionIcon(option)
+
                 DropdownMenuItem(
                     text = {
                         Text(
@@ -100,7 +115,17 @@ fun <T> ReelyMenuButton(
                     },
                     colors = MenuDefaults.itemColors(
                         textColor = MaterialTheme.colorScheme.onSurface
-                    )
+                    ),
+                    leadingIcon = icon?.let {
+                        {
+                            Icon(
+                                imageVector = it,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    },
                 )
             }
         }

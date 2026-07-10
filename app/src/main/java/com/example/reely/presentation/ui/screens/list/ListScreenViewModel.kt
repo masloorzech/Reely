@@ -177,5 +177,7 @@ private fun List<Movie>.sortByOption(sort: MovieSortOption): List<Movie> {
         MovieSortOption.TITLE_ASC -> sortedBy { movie ->
             movie.title.lowercase()
         }
+
+        MovieSortOption.ADDING_TIME -> this
     }
 }

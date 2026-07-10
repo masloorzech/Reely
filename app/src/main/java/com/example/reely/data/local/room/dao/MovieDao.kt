@@ -64,7 +64,8 @@ interface MovieDao {
         FROM movies
         INNER JOIN movie_watchlist 
             ON movies.id = movie_watchlist.movieId
-        """
+        ORDER BY movie_watchlist.addedAt DESC
+    """
     )
     suspend fun getWatchlistMovieEntities(): List<MovieEntity>
 
