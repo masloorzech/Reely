@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -54,6 +55,7 @@ import com.composables.icons.lucide.ShoppingCart
 import com.composables.icons.lucide.Trash
 import com.composables.icons.lucide.Tv
 import com.composables.icons.lucide.TvMinimalPlay
+import com.example.reely.domain.model.CastMember
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserStatsItem
@@ -73,6 +75,7 @@ import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.formatWatchedDate
 import com.example.reely.presentation.ui.model.UserRatingItems
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
+import com.example.reely.presentation.ui.screens.movies.components.CastMemberItem
 import com.example.reely.presentation.ui.screens.movies.components.MarkAsWatchedDialog
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
@@ -131,7 +134,9 @@ fun MovieDetailsScreen(
                     availableProviderSections = state.availableProviderSections,
                     selectedProviderSection = state.selectedProviderSection,
                     selectedProviders = state.selectedProviders,
-                    onProviderSectionSelected = viewModel::changeProvidersType
+                    onProviderSectionSelected = viewModel::changeProvidersType,
+                    cast = state.movieCredits?.cast,
+                    isCastLoading = state.isMovieCreditsLoading
                 ) {
                     when {
                         movie.isWatched() -> {
@@ -232,6 +237,8 @@ private fun MovieDetailsContent(
     isMovieProvidersLoading: Boolean,
     availableProviderSections: List<ProviderSectionType>,
     selectedProviderSection: ProviderSectionType,
+    cast: List<CastMember>?,
+    isCastLoading: Boolean,
     selectedProviders: List<WatchProvider>,
     onProviderSectionSelected: (ProviderSectionType) -> Unit,
     topSection: @Composable ColumnScope.() -> Unit
@@ -271,12 +278,75 @@ private fun MovieDetailsContent(
             )
 
             Spacer(Modifier.height(32.dp))
+
+            MovieCastSection(
+                cast = cast,
+                isLoading = isCastLoading
+            )
         }
 
         MovieDetailsTopGradient(
             visible = showTopGradient,
             modifier = Modifier.align(Alignment.TopCenter)
         )
+    }
+}
+
+@Composable
+fun MovieCastSection(
+    cast: List<CastMember>?,
+    isLoading: Boolean,
+    modifier: Modifier = Modifier
+) {
+
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        SmallSectionHeader(
+            sectionName = "Obsada:"
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        when {
+            isLoading -> {
+                Text(
+                    text = "Ładowanie obsady...",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(
+                        alpha = 0.6f
+                    )
+                )
+            }
+
+            cast != null -> when{
+
+                cast.isEmpty() -> {
+                    Text(
+                        text = "Brak informacji o obsadzie.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = 0.6f
+                        )
+                    )
+                }
+
+                else -> {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(
+                            items = cast,
+                            key = { member -> member.id }
+                        ) { member ->
+                            CastMemberItem(
+                                castMember = member
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

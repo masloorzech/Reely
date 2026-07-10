@@ -16,7 +16,6 @@ data class Movie(
     val userWatches: Map<UserId, UserMovieWatch> = emptyMap()
 ){
 
-
     fun toUserStatItemsForMovie(users: List<User>) : List<UserStatsItem> {
 
         val userStatsItemsList = mutableListOf<UserStatsItem>()
