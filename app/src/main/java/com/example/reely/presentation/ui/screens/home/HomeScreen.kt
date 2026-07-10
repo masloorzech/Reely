@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +31,7 @@ import com.example.reely.presentation.ui.screens.home.components.HomeScreenViewM
 import com.example.reely.presentation.ui.screens.home.components.LastSeenSection
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
 import com.example.reely.presentation.ui.screens.home.components.RandomFilmCard
+import com.example.reely.presentation.ui.screens.home.components.WatchedMoviesCalendarSection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +43,7 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onMovieClick : (Movie) -> Unit = {},
+    onSeeMoreClick : () -> Unit = {},
     vm : HomeScreenViewModel = viewModel()
 ) {
 
@@ -64,7 +67,6 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
         )
         {
-
             HelloSection(
                 firstAvatarPath = state.users.firstOrNull()?.avatarPath,
                 secondAvatarPath = state.users.getOrNull(1)?.avatarPath
@@ -80,7 +82,8 @@ fun HomeScreen(
 
             LastSeenSection(
                 state.recentSeenMovies,
-                onMovieClick = onMovieClick
+                onMovieClick = onMovieClick,
+                onSeeMoreClick = onSeeMoreClick
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -89,7 +92,16 @@ fun HomeScreen(
                 userRatingItems = stats.userStats
             )
 
-            //CalendarSection()
+            Spacer(modifier = Modifier.height(16.dp))
+
+            WatchedMoviesCalendarSection(
+                month = state.calendarMonth,
+                moviesByDate = state.watchedMoviesByDate,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
 
         }
 

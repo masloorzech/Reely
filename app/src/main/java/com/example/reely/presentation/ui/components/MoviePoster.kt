@@ -67,7 +67,7 @@ fun MoviePoster(
                 RoundedCornerShape(8.dp)
             )
             .background(
-                color = MaterialTheme.colorScheme.surfaceContainer,
+                color = MaterialTheme.colorScheme.surface,
             )
             .clickable(
                 onClick = {
@@ -138,7 +138,7 @@ fun MoviePosterSkeleton(
         label = "shimmer_offset"
     )
 
-    val baseColor = MaterialTheme.colorScheme.surfaceContainer
+    val baseColor = MaterialTheme.colorScheme.surface
     val highlightColor = MaterialTheme.colorScheme.surfaceContainerLow
 
     val shimmerBrush = Brush.linearGradient(
@@ -172,7 +172,7 @@ fun MoviePosterEmpty(
             .height(150.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(
-                color = MaterialTheme.colorScheme.surfaceContainer
+                color = MaterialTheme.colorScheme.surface
             ),
         content = content
     )

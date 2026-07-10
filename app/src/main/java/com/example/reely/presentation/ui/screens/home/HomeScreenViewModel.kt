@@ -7,10 +7,12 @@ import com.example.reely.domain.model.StatsOverview
 import com.example.reely.domain.model.User
 import com.example.reely.domain.model.UserId
 import com.example.reely.domain.usecase.movie.GetRecentWatchedMoviesUseCase
+import com.example.reely.domain.usecase.statistics.ObserveMonthlyWatchedMoviesUseCase
 import com.example.reely.domain.usecase.statistics.ObserveStatsUseCase
 import com.example.reely.domain.usecase.user.GetAllUsersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,21 +20,26 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.internal.userAgent
+import java.time.LocalDate
+import java.time.YearMonth
 
 data class HomeScreenUIState(
 
     val users: List<User> = emptyList(),
     val recentSeenMovies: List<Movie> = emptyList(),
-    val error: String? = null
+    val watchedMoviesByDate: Map<LocalDate, List<Movie>> = emptyMap(),
+    val calendarMonth: YearMonth = YearMonth.now(),
 
-)
+    val error: String? = null,
+
+    )
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     private val getAllUsersUseCase: GetAllUsersUseCase,
     private val getRecentWatchedMoviesUseCase: GetRecentWatchedMoviesUseCase,
-    private val observeStatsUseCase: ObserveStatsUseCase
-
+    private val observeStatsUseCase: ObserveStatsUseCase,
+    private val observeMonthlyWatchedMoviesUseCase: ObserveMonthlyWatchedMoviesUseCase
 ) : ViewModel(){
 
     val stats = observeStatsUseCase()
@@ -46,10 +53,11 @@ class HomeScreenViewModel @Inject constructor(
 
     val state = _state.asStateFlow()
 
+    private var calendarJob: Job? = null
+
     init {
         loadInitialData()
     }
-
     private fun loadInitialData() {
         viewModelScope.launch {
             getAllUsersUseCase()
@@ -58,6 +66,7 @@ class HomeScreenViewModel @Inject constructor(
 
                     users.firstOrNull()?.let { mainUser ->
                         loadRecentMovies(mainUser.id)
+                        observeMonthlyCalendar(mainUser.id)
                     }
                 }
                 .onFailure { error ->
@@ -69,6 +78,29 @@ class HomeScreenViewModel @Inject constructor(
     fun refreshRecentMovies() {
         val mainUser = state.value.users.firstOrNull() ?: return
         loadRecentMovies(mainUser.id)
+    }
+
+    private fun observeMonthlyCalendar(userId: UserId) {
+        calendarJob?.cancel()
+
+        val month = YearMonth.now()
+
+        _state.update {
+            it.copy(calendarMonth = month)
+        }
+
+        calendarJob = viewModelScope.launch {
+            observeMonthlyWatchedMoviesUseCase(
+                userId = userId,
+                month = month
+            ).collect { moviesByDate ->
+                _state.update {
+                    it.copy(
+                        watchedMoviesByDate = moviesByDate
+                    )
+                }
+            }
+        }
     }
 
     private fun loadRecentMovies(userId: UserId) {

@@ -283,12 +283,14 @@ private fun MovieDetailsContent(
                 description = movie.overview
             )
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.height(16.dp))
 
             MovieCastSection(
                 cast = cast,
                 isLoading = isCastLoading
             )
+
+            Spacer(Modifier.height(16.dp))
 
             MovieCrewSection(
                 crew = crew,

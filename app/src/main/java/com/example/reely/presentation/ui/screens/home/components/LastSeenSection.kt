@@ -1,6 +1,7 @@
 package com.example.reely.presentation.ui.screens.home.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +33,8 @@ import com.example.reely.presentation.ui.components.RatingResults
 @Composable
 fun LastSeenSection(
     lastSeenFilmsList: List<Movie>,
-    onMovieClick: (Movie) -> Unit = {}
+    onMovieClick: (Movie) -> Unit = {},
+    onSeeMoreClick: () -> Unit = {}
 ){
 
     Column(
@@ -54,7 +56,10 @@ fun LastSeenSection(
             Text(
                 text = "Zobacz więcej >",
                 color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.clickable(
+                    onClick = onSeeMoreClick
+                )
             )
         }
         Spacer(Modifier.height(8.dp))

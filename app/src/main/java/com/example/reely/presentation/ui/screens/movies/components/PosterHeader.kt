@@ -143,7 +143,7 @@ fun MovieMainDataSkeleton() {
         label = "shimmer_offset"
     )
 
-    val baseColor = MaterialTheme.colorScheme.surfaceContainer
+    val baseColor = MaterialTheme.colorScheme.surface
     val highlightColor = MaterialTheme.colorScheme.surfaceContainerLow
 
     val shimmerBrush = Brush.linearGradient(

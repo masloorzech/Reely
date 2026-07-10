@@ -89,7 +89,7 @@ fun SmallStatsCard(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                color = MaterialTheme.colorScheme.surfaceContainer,
+                color = MaterialTheme.colorScheme.surface,
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(16.dp)

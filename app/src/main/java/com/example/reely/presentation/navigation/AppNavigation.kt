@@ -68,6 +68,15 @@ fun AppNavigation(
                     vm = hiltViewModel(),
                     onMovieClick = { movie ->
                         navController.navigate(MovieDetailsRoute(movie.id))
+                    },
+                    onSeeMoreClick = {
+                        navController.navigate(ListScreenRoute) {
+                            popUpTo(navController.graph.id) {
+                                inclusive = true
+                            }
+
+                            launchSingleTop = true
+                        }
                     }
                 )
             }
