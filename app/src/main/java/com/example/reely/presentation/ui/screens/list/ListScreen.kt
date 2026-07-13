@@ -201,12 +201,6 @@ fun ListScreen(
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
                 Spacer(Modifier.weight(1f))
-                ReelyIconButton(
-                    onClick = {
-                        vm.showFilterDialog()
-                    },
-                    icon = Lucide.Funnel
-                )
                 Spacer(Modifier.width(4.dp))
                 ReelyIconButton(
                     onClick = {vm.toggleDisplayStyle()},
