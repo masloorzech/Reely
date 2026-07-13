@@ -127,9 +127,6 @@ fun AppNavigation(
                     viewModel = hiltViewModel()
                 )
             }
-
-
         }
-
     }
 }
