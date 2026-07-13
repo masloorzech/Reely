@@ -1,9 +1,16 @@
 package com.example.reely.presentation.ui.screens.movies
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
+
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -43,8 +49,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.ArrowLeft
@@ -60,7 +64,6 @@ import com.example.reely.domain.model.CastMember
 import com.example.reely.domain.model.CrewMember
 import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.User
-import com.example.reely.domain.model.UserStatsItem
 import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.model.genresText
 import com.example.reely.domain.model.getAvailablePosterPath
@@ -75,14 +78,12 @@ import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyTab
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.formatWatchedDate
-import com.example.reely.presentation.ui.model.UserRatingItems
 import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
-import com.example.reely.presentation.ui.screens.movies.components.CastMemberItem
-import com.example.reely.presentation.ui.screens.movies.components.CrewMemberItem
 import com.example.reely.presentation.ui.screens.movies.components.MarkAsWatchedDialog
+import com.example.reely.presentation.ui.screens.movies.components.MovieCastSection
+import com.example.reely.presentation.ui.screens.movies.components.MovieCrewSection
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
-import com.example.reely.presentation.ui.screens.movies.toCrewUiItems
 import java.util.Locale
 
 private enum class WatchProviderTab(
@@ -104,6 +105,12 @@ private enum class WatchProviderTab(
     }
 }
 
+private enum class MovieAction {
+    Hidden,
+    RemoveFromWatched,
+    RemoveFromWatchlist
+}
+
 @Composable
 fun MovieDetailsScreen(
     onBack: () -> Unit = {},
@@ -111,6 +118,15 @@ fun MovieDetailsScreen(
 ) {
     val state = viewModel.state.collectAsState().value
     val movie = state.movie
+
+    val movieAction = when {
+        movie == null -> MovieAction.Hidden
+        movie.isWatched() -> MovieAction.RemoveFromWatched
+        movie.userWatchlistStatus.isInWatchlist ->
+            MovieAction.RemoveFromWatchlist
+
+        else -> MovieAction.Hidden
+    }
 
     Box(
         modifier = Modifier
@@ -166,8 +182,8 @@ fun MovieDetailsScreen(
                 }
             }
         }
-
         Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
@@ -177,49 +193,72 @@ fun MovieDetailsScreen(
                 icon = Lucide.ArrowLeft,
                 onClick = onBack
             )
-            Spacer(
-                Modifier.weight(1f)
-            )
-            if (movie!=null) {
-                when {
-                    movie.isWatched() -> {
+
+            Spacer(Modifier.weight(1f))
+
+            AnimatedContent(
+                targetState = movieAction,
+                contentAlignment = Alignment.CenterEnd,
+                transitionSpec = {
+                    ContentTransform(
+                        targetContentEnter =
+                            fadeIn(animationSpec = tween(220)) +
+                                    scaleIn(
+                                        animationSpec = tween(220),
+                                        initialScale = 0.92f
+                                    ),
+                        initialContentExit =
+                            fadeOut(animationSpec = tween(140)) +
+                                    scaleOut(
+                                        animationSpec = tween(140),
+                                        targetScale = 0.92f
+                                    ),
+                        sizeTransform = SizeTransform(clip = false)
+                    )
+                },
+                label = "movieActionButton"
+            ) { action ->
+                when (action) {
+                    MovieAction.RemoveFromWatched -> {
                         ReelyButton(
                             text = "Usuń z obejrzanych",
-                            onClick = {
-                                viewModel.removeFromWatched()
-                            },
-                            overrideContainerColor = MaterialTheme.colorScheme.surface,
+                            onClick = viewModel::removeFromWatched,
+                            overrideContainerColor =
+                                MaterialTheme.colorScheme.surface,
                             leadingIcon = {
                                 Icon(
                                     imageVector = Lucide.Trash,
-                                    contentDescription = "Bin",
+                                    contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onBackground,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
                         )
                     }
-                    movie.userWatchlistStatus.isInWatchlist -> {
+
+                    MovieAction.RemoveFromWatchlist -> {
                         ReelyButton(
                             text = "Usuń z listy",
-                            onClick = {
-                                viewModel.removeFromWatchlist()
-                            },
-                            overrideContainerColor = MaterialTheme.colorScheme.surface,
+                            onClick = viewModel::removeFromWatchlist,
+                            overrideContainerColor =
+                                MaterialTheme.colorScheme.surface,
                             leadingIcon = {
                                 Icon(
                                     imageVector = Lucide.Trash,
-                                    contentDescription = "Bin",
+                                    contentDescription = null,
                                     tint = MaterialTheme.colorScheme.onBackground,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
                         )
+                    }
+
+                    MovieAction.Hidden -> {
+                        Spacer(Modifier)
                     }
                 }
             }
         }
-
         if (state.isRatingDialogVisible) {
             MarkAsWatchedDialog(
                 users = state.users,
@@ -304,125 +343,6 @@ private fun MovieDetailsContent(
 }
 
 @Composable
-fun MovieCastSection(
-    cast: List<CastMember>?,
-    isLoading: Boolean,
-    modifier: Modifier = Modifier
-) {
-
-    Column(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        SmallSectionHeader(
-            sectionName = "Obsada:"
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        when {
-            isLoading -> {
-                Text(
-                    text = "Ładowanie obsady...",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(
-                        alpha = 0.6f
-                    )
-                )
-            }
-
-            cast != null -> when{
-
-                cast.isEmpty() -> {
-                    Text(
-                        text = "Brak informacji o obsadzie.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(
-                            alpha = 0.6f
-                        )
-                    )
-                }
-
-                else -> {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = cast,
-                            key = { member -> member.id }
-                        ) { member ->
-                            CastMemberItem(
-                                castMember = member
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MovieCrewSection(
-    crew: List<CrewMember>?,
-    isLoading: Boolean,
-    modifier: Modifier = Modifier
-){
-    val crewItems = remember(crew) {
-        crew?.toCrewUiItems()
-    }
-
-    Column(
-        modifier = modifier.fillMaxWidth()
-    ) {
-        SmallSectionHeader(
-            sectionName = "Twórcy:"
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        when {
-            isLoading -> {
-                Text(
-                    text = "Ładowanie twórców...",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(
-                        alpha = 0.6f
-                    )
-                )
-            }
-
-            crewItems != null -> when {
-
-                crewItems.isEmpty() -> {
-                    Text(
-                        text = "Brak informacji o twórcach.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(
-                            alpha = 0.6f
-                        )
-                    )
-                }
-
-                else -> {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(
-                            items = crewItems,
-                            key = { item: CrewUiItem -> item.personId }
-                        ) { item: CrewUiItem ->
-                            CrewMemberItem(
-                                item = item
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun MovieDetailsTopGradient(
     visible: Boolean,
     modifier: Modifier = Modifier
@@ -445,7 +365,7 @@ private fun MovieDetailsTopGradient(
                         )
                     )
                 )
-        ) {}
+        ){}
     }
 }
 

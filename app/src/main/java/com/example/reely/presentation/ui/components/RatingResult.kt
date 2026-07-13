@@ -53,7 +53,7 @@ fun RatingResults(
                     withStyle(
                         SpanStyle(
                             baselineShift = BaselineShift.Superscript,
-                            fontSize = 12.sp
+                            fontSize = 10.sp
                         )
                     ) {
                         append(rating)
@@ -64,7 +64,7 @@ fun RatingResults(
                     withStyle(
                         SpanStyle(
                             baselineShift = BaselineShift.Subscript,
-                            fontSize = 12.sp
+                            fontSize = 10.sp
                         )
                     ) {
                         append("10")

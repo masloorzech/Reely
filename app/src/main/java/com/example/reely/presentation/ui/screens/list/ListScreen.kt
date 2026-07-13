@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +46,7 @@ import com.composables.icons.lucide.ArrowUp
 import com.composables.icons.lucide.Bookmark
 import com.composables.icons.lucide.Clapperboard
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Funnel
 import com.composables.icons.lucide.Grid2x2
 import com.composables.icons.lucide.Grid3x2
 import com.composables.icons.lucide.Grip
@@ -54,6 +56,8 @@ import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.TvMinimalPlay
 import com.example.reely.domain.model.Movie
 import com.example.reely.presentation.theme.ReelyTheme
+import com.example.reely.presentation.ui.components.ReelyButton
+import com.example.reely.presentation.ui.components.ReelyDialog
 import com.example.reely.presentation.ui.components.ReelyIconButton
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.components.ReelyListTabs
@@ -180,7 +184,9 @@ fun ListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row() {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 ReelyMenuButton(
                     selectedOption = state.selectedSort,
                     options = MovieSortOption.entries,
@@ -188,7 +194,20 @@ fun ListScreen(
                     optionIcon = { it.icon },
                     onOptionSelected = { vm.switchSort(it)}
                 )
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = "Filmy: ${state.moviesList.size}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                )
                 Spacer(Modifier.weight(1f))
+                ReelyIconButton(
+                    onClick = {
+                        vm.showFilterDialog()
+                    },
+                    icon = Lucide.Funnel
+                )
+                Spacer(Modifier.width(4.dp))
                 ReelyIconButton(
                     onClick = {vm.toggleDisplayStyle()},
                     icon = state.displayStyle.icon
@@ -235,5 +254,25 @@ fun ListScreen(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ){}
+
+        if (state.showFilterDialog) {
+            ReelyDialog(
+                onDismiss = {
+                    vm.hideFilterDialog()
+                },
+            ) {
+                Row() {
+                    ReelyButton(
+                        modifier = Modifier.weight(1f),
+                        text = "Anuluj",
+                        overrideContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        onClick = {
+                            vm.hideFilterDialog()
+                        }
+                    )
+                }
+
+            }
+        }
     }
 }

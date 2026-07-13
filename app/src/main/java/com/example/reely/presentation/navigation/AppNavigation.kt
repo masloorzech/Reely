@@ -1,5 +1,7 @@
 package com.example.reely.presentation.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -98,7 +100,20 @@ fun AppNavigation(
                 )
             }
 
-            composable<MovieDetailsRoute> {
+            composable<MovieDetailsRoute>(
+                enterTransition = {
+                    slideIntoContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                        animationSpec = tween(250)
+                    )
+                },
+                popExitTransition = {
+                    slideOutOfContainer(
+                        towards = AnimatedContentTransitionScope.SlideDirection.End,
+                        animationSpec = tween(250)
+                    )
+                }
+            ) {
                 MovieDetailsScreen(
                     viewModel = hiltViewModel(),
                     onBack = {

@@ -19,6 +19,7 @@ data class ListScreenUiState(
     val selectedTab: MovieListTab = MovieListTab.WATCHLIST,
     val displayStyle: MovieDisplayStyle = MovieDisplayStyle.LIST,
     val searchQuery: String = "",
+    val showFilterDialog: Boolean = false,
     val moviesList: List<Movie> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
@@ -70,6 +71,21 @@ class ListScreenViewModel @Inject constructor(
                         )
                     }
                 }
+        }
+    }
+
+    fun showFilterDialog(){
+        _state.update {
+            it.copy(
+                showFilterDialog = true
+            )
+        }
+    }
+    fun hideFilterDialog(){
+        _state.update {
+            it.copy(
+                showFilterDialog = false
+            )
         }
     }
 
