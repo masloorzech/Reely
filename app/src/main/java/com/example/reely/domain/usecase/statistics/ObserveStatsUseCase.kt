@@ -15,29 +15,26 @@ class ObserveStatsUseCase @Inject constructor(
     private val usersRepository: UsersRepository,
     private val moviesRepository: MoviesRepository
 ) {
-
     operator fun invoke(): Flow<StatsOverview> {
         return combine(
             usersRepository.observeUsers(),
             moviesRepository.observeWatchedMovies()
         ) { users, watchedMovies ->
 
-            val allRatings = watchedMovies
-                .flatMap { movie ->
-                    movie.userWatches.values
-                }
-                .mapNotNull { userWatch ->
-                    userWatch.rating
-                }
+            val mainUser = users.firstOrNull()
+                ?: return@combine StatsOverview()
 
-            val allGenres = watchedMovies
-                .flatMap { movie ->
-                    movie.userWatches.keys.flatMap {
-                        movie.genres
-                    }
-                }
+            val mainUserMovies = watchedMovies.filter { movie ->
+                movie.userWatches.containsKey(mainUser.id)
+            }
 
-            val genreStats = allGenres.buildGenreStats()
+            val mainUserRatings = mainUserMovies.mapNotNull { movie ->
+                movie.userWatches[mainUser.id]?.rating
+            }
+
+            val totalWatchTimeMinutes = mainUserMovies.sumOf { movie ->
+                movie.runtime ?: 0
+            }
 
             val userStats = users.map { user ->
                 val userWatchedMovies = watchedMovies.filter { movie ->
@@ -48,31 +45,21 @@ class ObserveStatsUseCase @Inject constructor(
                     movie.userWatches[user.id]?.rating
                 }
 
-                val userGenreStats = userWatchedMovies
-                    .flatMap { movie ->
-                        movie.genres
-                    }
-                    .buildGenreStats()
-
                 UserStatsItem(
                     user = user,
                     watchedCount = userWatchedMovies.size,
                     ratedCount = userRatings.size,
                     averageRating = userRatings.averageOrNull(),
-                    topGenre = userGenreStats.firstOrNull()
+                    topGenre = null
                 )
             }
 
             StatsOverview(
-                totalWatchedMovies = watchedMovies.sumOf { movie ->
-                    movie.userWatches.size
-                },
-                totalRatedMovies = allRatings.size,
-                averageRating = allRatings.averageOrNull(),
-                topGenre = genreStats.firstOrNull(),
+                totalWatchedMovies = mainUserMovies.size,
+                totalWatchTimeMinutes = totalWatchTimeMinutes,
+                averageRating = mainUserRatings.averageOrNull(),
                 userStats = userStats,
-                genreStats = genreStats,
-                ratingDistribution = allRatings.buildRatingDistribution()
+                ratingDistribution = mainUserRatings.buildRatingDistribution()
             )
         }
     }

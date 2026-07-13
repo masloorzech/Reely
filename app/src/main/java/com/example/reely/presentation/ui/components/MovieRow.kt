@@ -43,7 +43,6 @@ import com.example.reely.domain.model.UserId
 import com.example.reely.domain.model.UserMovieWatch
 import com.example.reely.domain.model.runtimeText
 import com.example.reely.presentation.theme.ReelyTheme
-import com.example.reely.presentation.theme.StarFilled
 import com.example.reely.presentation.ui.formatWatchedDate
 import kotlin.math.roundToLong
 

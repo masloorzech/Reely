@@ -111,13 +111,6 @@ class MovieDetailsScreenViewModel @Inject constructor(
 
     private val route = savedStateHandle.toRoute<MovieDetailsRoute>()
 
-    val stats = observeStatsUseCase()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = StatsOverview()
-        )
-
     private val _state = MutableStateFlow(MovieDetailsScreenState())
     val state = _state.asStateFlow()
 

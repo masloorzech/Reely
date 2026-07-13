@@ -88,12 +88,6 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OurStatsSection(
-                userRatingItems = stats.userStats
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
             WatchedMoviesCalendarSection(
                 month = state.calendarMonth,
                 moviesByDate = state.watchedMoviesByDate,

@@ -2,11 +2,9 @@ package com.example.reely.domain.model
 
 data class StatsOverview(
     val totalWatchedMovies: Int = 0,
-    val totalRatedMovies: Int = 0,
+    val totalWatchTimeMinutes: Int = 0,
     val averageRating: Double? = null,
-    val topGenre: GenreStatsItem? = null,
     val userStats: List<UserStatsItem> = emptyList(),
-    val genreStats: List<GenreStatsItem> = emptyList(),
     val ratingDistribution: List<RatingDistributionItem> = emptyList()
 )
 

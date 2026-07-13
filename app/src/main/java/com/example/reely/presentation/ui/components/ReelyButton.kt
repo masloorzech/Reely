@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.example.reely.presentation.theme.PrimaryGradient
 
 @Composable
 fun ReelyButton(
