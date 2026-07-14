@@ -1,7 +1,5 @@
 package com.example.reely.di
 
-import com.example.reely.data.local.UsersLocalDataSource
-import com.example.reely.data.local.room.RoomUsersLocalDataSource
 import com.example.reely.data.repository.UsersRepositoryImpl
 import com.example.reely.domain.repository.UsersRepository
 import dagger.Binds

@@ -1,7 +1,6 @@
 package com.example.reely.data.repository
 
 import com.example.reely.data.local.LocalMediaDataSource
-import com.example.reely.data.local.UsersLocalDataSource
 import com.example.reely.data.local.mapper.toDomain
 import com.example.reely.data.local.model.LocalUser
 import com.example.reely.domain.model.User

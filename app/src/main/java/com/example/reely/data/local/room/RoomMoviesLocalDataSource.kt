@@ -1,217 +1,126 @@
 package com.example.reely.data.local.room
 
-import com.example.reely.data.local.MoviesLocalDataSource
-import com.example.reely.data.local.model.LocalMovie
-import com.example.reely.data.local.model.LocalMovieUserWatch
-import com.example.reely.data.local.model.LocalMovieWithUserData
-import com.example.reely.data.local.model.LocalWatchlistStatus
+import com.example.reely.data.local.MovieLocalDataSource
 import com.example.reely.data.local.room.dao.MovieDao
-import com.example.reely.data.local.room.entity.MovieWatchlistEntity
-import com.example.reely.data.local.room.mapper.toEntity
-import com.example.reely.data.local.room.mapper.toLocalMovie
-import com.example.reely.data.local.room.mapper.toLocalUserWatch
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.example.reely.data.local.room.dao.MovieRatingDao
+import com.example.reely.data.local.room.dao.MovieViewingDao
+import com.example.reely.data.local.room.dao.WatchlistDao
+import com.example.reely.data.local.room.entity.MovieEntity
+import com.example.reely.data.local.room.entity.MovieRatingEntity
+import com.example.reely.data.local.room.entity.MovieViewingEntity
+import com.example.reely.data.local.room.entity.WatchlistEntryEntity
+import com.example.reely.data.local.room.transaction.RoomMovieTransactions
+import com.example.reely.domain.model.MovieDetails
+import com.example.reely.domain.model.Rating
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import java.time.LocalDate
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class RoomMoviesLocalDataSource @Inject constructor(
-    private val movieDao: MovieDao
-) : MoviesLocalDataSource {
+@Singleton
+class RoomMovieLocalDataSource @Inject constructor(
+    private val movieDao: MovieDao,
+    private val watchlistDao: WatchlistDao,
+    private val viewingDao: MovieViewingDao,
+    private val ratingDao: MovieRatingDao,
+    private val movieTransactions: RoomMovieTransactions,
+) : MovieLocalDataSource {
 
-    override suspend fun saveMovieData(movie: LocalMovie) {
-        movieDao.upsertMovie(movie.toEntity())
+    override suspend fun getMovie(
+        movieId: Int,
+    ): MovieEntity? {
+        return movieDao.getById(movieId)
     }
 
-    override suspend fun getMovieData(movieId: Int): LocalMovie? {
-        return movieDao.getMovie(movieId)
-            ?.toLocalMovie()
+    override fun observeMovie(
+        movieId: Int,
+    ): Flow<MovieEntity?> {
+        return movieDao.observeById(movieId)
     }
 
-    override suspend fun getMovieWithUserData(movieId: Int): LocalMovieWithUserData? {
-        val movieEntity = movieDao.getMovie(movieId) ?: return null
-
-        val watchlistItem = movieDao.getWatchlistItem(movieId)
-
-        val userWatches = movieDao.getUserWatchesForMovie(movieId)
-            .associate { entity ->
-                entity.userId to entity.toLocalUserWatch()
-            }
-
-        return LocalMovieWithUserData(
-            movie = movieEntity.toLocalMovie(),
-            watchList = LocalWatchlistStatus(watchlistItem != null, watchlistItem?.addedAt),
-            userWatches = userWatches
-        )
+    override fun observeWatchlistEntries():
+            Flow<List<WatchlistEntryEntity>> {
+        return watchlistDao.observeAll()
     }
 
-    override suspend fun getUserMovies(): List<LocalMovieWithUserData> {
-        val movieEntities = movieDao.getUserMovieEntities()
-
-        if (movieEntities.isEmpty()) {
-            return emptyList()
-        }
-
-        val movieIds = movieEntities.map { it.id }
-
-        val watchlistByMovieId = movieDao
-            .getWatchlistItemsForMovies(movieIds)
-            .associateBy { it.movieId }
-
-        val userWatchesByMovieId = movieDao
-            .getUserWatchesForMovies(movieIds)
-            .groupBy { it.movieId }
-
-        return movieEntities.map { movieEntity ->
-            val watchlistItem = watchlistByMovieId[movieEntity.id]
-
-            val userWatches = userWatchesByMovieId[movieEntity.id]
-                .orEmpty()
-                .associate { watchEntity ->
-                    watchEntity.userId to watchEntity.toLocalUserWatch()
-                }
-
-            LocalMovieWithUserData(
-                movie = movieEntity.toLocalMovie(),
-                watchList = LocalWatchlistStatus(
-                    isAdded = watchlistItem != null,
-                    addedAt = watchlistItem?.addedAt
-                ),
-                userWatches = userWatches
-            )
-        }
+    override fun observeViewings():
+            Flow<List<MovieViewingEntity>> {
+        return viewingDao.observeAll()
     }
 
+    override fun observeViewingsForMovie(
+        movieId: Int,
+    ): Flow<List<MovieViewingEntity>> {
+        return viewingDao.observeForMovie(movieId)
+    }
 
-    override suspend fun getRecentWatched(
-        userId: Int
-    ): List<LocalMovieWithUserData> {
-        val movieEntities = movieDao.getRecentWatchedMovies(userId)
+    override fun observeRatingsForMovie(
+        movieId: Int,
+    ): Flow<List<MovieRatingEntity>> {
+        return ratingDao.observeForMovie(movieId)
+    }
 
-        if (movieEntities.isEmpty()) {
-            return emptyList()
-        }
-
-        val movieIds = movieEntities.map { it.id }
-
-        val userWatchesByMovieId = movieDao
-            .getUserWatchesForMovies(movieIds)
-            .groupBy { it.movieId }
-
-        val watchlistByMovieId = movieDao
-            .getWatchlistItemsForMovies(movieIds)
-            .associateBy { it.movieId }
-
-        return movieEntities.map { movieEntity ->
-            val watchlistItem = watchlistByMovieId[movieEntity.id]
-
-            val userWatches = userWatchesByMovieId[movieEntity.id]
-                .orEmpty()
-                .associate { watchEntity ->
-                    watchEntity.userId to watchEntity.toLocalUserWatch()
-                }
-
-            LocalMovieWithUserData(
-                movie = movieEntity.toLocalMovie(),
-                watchList = LocalWatchlistStatus(
-                    isAdded = watchlistItem != null,
-                    addedAt = watchlistItem?.addedAt
-                ),
-                userWatches = userWatches
-            )
-        }
+    override suspend fun isOnWatchlist(
+        movieId: Int,
+    ): Boolean {
+        return watchlistDao.contains(movieId)
     }
 
     override suspend fun addToWatchlist(
-        movieId: Int,
-        addedAt: String?,
-        addedByUserId: Int?
-    ) {
-        movieDao.upsertWatchlistItem(
-            MovieWatchlistEntity(
-                movieId = movieId,
-                addedAt = addedAt,
-                addedByUserId = addedByUserId
-            )
+        movie: MovieDetails,
+    ): Boolean {
+        return movieTransactions.addToWatchlist(movie)
+    }
+
+    override suspend fun markAsWatched(
+        movie: MovieDetails,
+        watchedAt: LocalDate,
+        firstProfileRating: Rating,
+        secondProfileRating: Rating,
+    ): Long {
+        return movieTransactions.markAsWatched(
+            movie = movie,
+            watchedAt = watchedAt,
+            firstProfileRating = firstProfileRating,
+            secondProfileRating = secondProfileRating,
         )
     }
 
-    override suspend fun removeFromWatchlist(movieId: Int) {
-        movieDao.deleteWatchlistItem(movieId)
-    }
-
-    override suspend fun upsertUserWatch(
-        movieId: Int,
-        userId: Int,
-        userWatch: LocalMovieUserWatch
-    ) {
-        movieDao.upsertUserWatch(
-            userWatch.toEntity(
-                movieId = movieId,
-                userId = userId
-            )
+    override suspend fun rewatchMovie(
+        movie: MovieDetails,
+        watchedAt: LocalDate,
+        firstProfileRating: Rating,
+        secondProfileRating: Rating,
+    ): Long {
+        return movieTransactions.rewatchMovie(
+            movie = movie,
+            watchedAt = watchedAt,
+            firstProfileRating = firstProfileRating,
+            secondProfileRating = secondProfileRating,
         )
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observeWatchedMovies(): Flow<List<LocalMovieWithUserData>> {
-        return movieDao.observeWatchedMovieEntities()
-            .flatMapLatest { movieEntities ->
-                if (movieEntities.isEmpty()) {
-                    flowOf(emptyList())
-                } else {
-                    val movieIds = movieEntities.map { it.id }
-
-                    combine(
-                        movieDao.observeUserWatchesForMovies(movieIds),
-                        movieDao.observeWatchlistItemsForMovies(movieIds)
-                    ) { userWatchEntities, watchlistEntities ->
-
-                        val userWatchesByMovieId = userWatchEntities
-                            .groupBy { it.movieId }
-
-                        val watchlistByMovieId = watchlistEntities
-                            .associateBy { it.movieId }
-
-                        movieEntities.map { movieEntity ->
-                            val watchlistItem =
-                                watchlistByMovieId[movieEntity.id]
-
-                            val userWatches = userWatchesByMovieId[movieEntity.id]
-                                .orEmpty()
-                                .associate { watchEntity ->
-                                    watchEntity.userId to watchEntity.toLocalUserWatch()
-                                }
-
-                            LocalMovieWithUserData(
-                                movie = movieEntity.toLocalMovie(),
-                                watchList = LocalWatchlistStatus(
-                                    isAdded = watchlistItem != null,
-                                    addedAt = watchlistItem?.addedAt
-                                ),
-                                userWatches = userWatches
-                            )
-                        }
-                    }
-                }
-            }
-    }
-
-    override suspend fun deleteUserWatch(
+    override suspend fun updateRatings(
         movieId: Int,
-        userId: Int
+        firstProfileRating: Rating,
+        secondProfileRating: Rating,
     ) {
-        movieDao.deleteUserWatch(
+        movieTransactions.updateRatings(
             movieId = movieId,
-            userId = userId
+            firstProfileRating = firstProfileRating,
+            secondProfileRating = secondProfileRating,
         )
     }
 
-    override suspend fun deleteUserWatchesForMovie(movieId: Int) {
-        movieDao.deleteUserWatchesForMovie(movieId)
+    override suspend fun removeFromWatchlist(
+        movieId: Int,
+    ): Boolean {
+        return movieTransactions.removeFromWatchlist(movieId)
     }
 
-
+    override suspend fun deleteViewing(
+        viewingId: Long,
+    ): Boolean {
+        return movieTransactions.deleteViewing(viewingId)
+    }
 }

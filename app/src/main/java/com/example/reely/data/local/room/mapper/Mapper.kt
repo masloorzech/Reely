@@ -1,78 +1,33 @@
 package com.example.reely.data.local.room.mapper
 
-
-
-import com.example.reely.data.local.model.LocalMovie
-import com.example.reely.data.local.model.LocalMovieUserWatch
-import com.example.reely.data.local.model.LocalUser
+import com.example.reely.data.local.room.entity.GenreEntity
 import com.example.reely.data.local.room.entity.MovieEntity
-import com.example.reely.data.local.room.entity.MovieUserWatchEntity
-import com.example.reely.data.local.room.entity.UserEntity
+import com.example.reely.domain.model.MovieDetails
+import java.time.Instant
 
-fun LocalMovie.toEntity(): MovieEntity {
+fun MovieDetails.toEntity(
+    syncedAt: Instant,
+): MovieEntity {
     return MovieEntity(
         id = id,
         title = title,
+        originalTitle = originalTitle,
         overview = overview,
-        localPosterPath = localPosterPath,
-        remotePosterPath = remotePosterPath,
+        posterPath = posterPath,
         backdropPath = backdropPath,
         releaseDate = releaseDate,
-        rating = rating,
-        voteCount = voteCount,
-        popularity = popularity,
-        runtime = runtime
+        runtimeMinutes = runtimeMinutes,
+        originalLanguage = originalLanguage,
+        publicRating = publicRating,
+        publicVoteCount = publicVoteCount,
+        lastSyncedAt = syncedAt,
     )
 }
 
-fun MovieEntity.toLocalMovie(): LocalMovie {
-    return LocalMovie(
-        id = id,
-        title = title,
-        overview = overview,
-        localPosterPath = localPosterPath,
-        remotePosterPath = remotePosterPath,
-        backdropPath = backdropPath,
-        releaseDate = releaseDate,
-        rating = rating,
-        voteCount = voteCount,
-        popularity = popularity,
-        runtime = runtime,
-        genres = emptyList()
-    )
-}
-
-fun LocalMovieUserWatch.toEntity(
-    movieId: Int,
-    userId: Int
-): MovieUserWatchEntity {
-    return MovieUserWatchEntity(
-        movieId = movieId,
-        userId = userId,
-        watchedAt = watchedAt,
-        rating = rating
-    )
-}
-
-fun MovieUserWatchEntity.toLocalUserWatch(): LocalMovieUserWatch {
-    return LocalMovieUserWatch(
-        watchedAt = watchedAt,
-        rating = rating
-    )
-}
-
-fun UserEntity.toLocalUser(): LocalUser {
-    return LocalUser(
-        id = id,
-        nickname = nickname,
-        avatarPath = avatarPath
-    )
-}
-
-fun LocalUser.toEntity(): UserEntity {
-    return UserEntity(
-        id = id,
-        nickname = nickname,
-        avatarPath = avatarPath
-    )
-}
+fun MovieDetails.toGenreEntities(): List<GenreEntity> =
+    genres.map { genre ->
+        GenreEntity(
+            id = genre.id,
+            name = genre.name,
+        )
+    }
