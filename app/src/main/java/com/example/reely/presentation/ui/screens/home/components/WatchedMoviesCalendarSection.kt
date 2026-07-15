@@ -26,8 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.getAvailablePosterPath
+import com.example.reely.domain.model.MoviePreview
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import java.time.LocalDate
 import java.time.YearMonth
@@ -47,7 +46,7 @@ private val WEEKDAY_NAMES = listOf(
 @Composable
 fun WatchedMoviesCalendarSection(
     month: YearMonth,
-    moviesByDate: Map<LocalDate, List<Movie>>,
+    moviesByDate: Map<LocalDate, List<MoviePreview>>,
     modifier: Modifier = Modifier
 ) {
     val calendarCells = remember(month) {
@@ -116,11 +115,11 @@ fun WatchedMoviesCalendarSection(
 @Composable
 private fun WatchedCalendarDay(
     date: LocalDate,
-    movies: List<Movie>,
+    movies: List<MoviePreview>,
     modifier: Modifier = Modifier
 ) {
     val movie = movies.firstOrNull()
-    val posterPath = movie?.getAvailablePosterPath()
+    val posterPath = movie?.posterPath
     val isToday = date == LocalDate.now()
 
     Box(

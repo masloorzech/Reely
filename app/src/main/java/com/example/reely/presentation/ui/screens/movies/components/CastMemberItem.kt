@@ -26,12 +26,7 @@ fun CastMemberItem(
     castMember: CastMember,
     modifier: Modifier = Modifier
 ) {
-    val profilePath = castMember.profilePaths
-        ?.localProfilePath
-        ?.takeIf { path -> path.isNotBlank() }
-        ?: castMember.profilePaths
-            ?.remoteProfilePath
-            ?.takeIf { path -> path.isNotBlank() }
+    val profilePath = castMember.profilePath
 
     Column(
         modifier = modifier.width(104.dp)

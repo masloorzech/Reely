@@ -9,10 +9,15 @@ import com.example.reely.data.local.room.entity.MovieEntity
 import com.example.reely.data.local.room.entity.MovieRatingEntity
 import com.example.reely.data.local.room.entity.MovieViewingEntity
 import com.example.reely.data.local.room.entity.WatchlistEntryEntity
+import com.example.reely.data.local.room.mapper.toDomain
+import com.example.reely.data.local.room.model.RecentWatchedMovieRow
+import com.example.reely.data.local.room.model.WatchlistEntryRow
 import com.example.reely.data.local.room.transaction.RoomMovieTransactions
 import com.example.reely.domain.model.MovieDetails
 import com.example.reely.domain.model.Rating
+import com.example.reely.domain.model.RecentWatchedMovie
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -38,14 +43,24 @@ class RoomMovieLocalDataSource @Inject constructor(
         return movieDao.observeById(movieId)
     }
 
-    override fun observeWatchlistEntries():
-            Flow<List<WatchlistEntryEntity>> {
-        return watchlistDao.observeAll()
+    override fun observeWatchlist(): Flow<List<WatchlistEntryRow>> {
+        return watchlistDao.observeWatchlist()
     }
 
     override fun observeViewings():
             Flow<List<MovieViewingEntity>> {
         return viewingDao.observeAll()
+    }
+
+    override fun observeWatchedMovies():
+            Flow<List<RecentWatchedMovie>> {
+        return viewingDao
+            .observeWatchedMovies()
+            .map { rows ->
+                rows.map { row ->
+                    row.toDomain()
+                }
+            }
     }
 
     override fun observeViewingsForMovie(
@@ -123,4 +138,17 @@ class RoomMovieLocalDataSource @Inject constructor(
     ): Boolean {
         return movieTransactions.deleteViewing(viewingId)
     }
+
+    override fun observeRecentWatchedMovies(
+        limit: Int,
+    ): Flow<List<RecentWatchedMovieRow>> {
+        return viewingDao.observeRecentWatchedMovies(limit)
+    }
+
+    override suspend fun removeFromWatched(
+        movieId: Int,
+    ): Boolean {
+        return ratingDao.deleteByMovieId(movieId) > 0
+    }
+
 }

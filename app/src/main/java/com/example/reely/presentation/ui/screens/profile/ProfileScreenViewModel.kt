@@ -2,233 +2,197 @@ package com.example.reely.presentation.ui.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.reely.domain.model.StatsOverview
-import com.example.reely.domain.model.User
-import com.example.reely.domain.model.UserId
-import com.example.reely.domain.usecase.statistics.ObserveStatsUseCase
-import com.example.reely.domain.usecase.user.CreateUserUseCase
-import com.example.reely.domain.usecase.user.GetAllUsersUseCase
-import com.example.reely.domain.usecase.user.GetMainUserUseCase
-import com.example.reely.domain.usecase.user.UpdateUserUseCase
+import com.example.reely.domain.model.Profile
+import com.example.reely.domain.model.ProfileId
+import com.example.reely.domain.usecase.user.ObserveProfilesUseCase
+import com.example.reely.domain.usecase.user.UpdateProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class ProfileScreenState(
-    val isLoading: Boolean = false,
-
-    val mainUser: User = User(
-        id = UserId(-1),
-        nickname = "",
-        avatarPath = null
-    ),
-    val mainUserError: String? = null,
-
-    val allUsers: List<User> = emptyList(),
-    val allUsersError: String? = null,
-
-    val userDialog: UserDialogState? = null
-)
-
-data class UserDialogState(
-    val mode: UserDialogMode,
-    val userId: UserId? = null,
-    val nickname: String = "",
-    val avatarPath: String? = null,
+    val profiles: List<Profile> = emptyList(),
+    val isLoading: Boolean = true,
     val error: String? = null,
-    val isSaving: Boolean = false
+    val profileDialog: ProfileDialogState? = null,
 )
 
-enum class UserDialogMode {
-    Create,
-    Edit
-}
+data class ProfileDialogState(
+    val profileId: ProfileId,
+    val name: String,
+    val avatarPath: String?,
+    val error: String? = null,
+    val isSaving: Boolean = false,
+)
 
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
-    private val getAllUsersUseCase: GetAllUsersUseCase,
-    private val getMainUserUseCase: GetMainUserUseCase,
-    private val createUserUseCase: CreateUserUseCase,
-    private val updateUserUseCase: UpdateUserUseCase,
-    observeStatsUseCase: ObserveStatsUseCase
+    private val observeProfilesUseCase: ObserveProfilesUseCase,
+    private val updateProfileUseCase: UpdateProfileUseCase,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(ProfileScreenState())
+    private val _state =
+        MutableStateFlow(ProfileScreenState())
+
     val state = _state.asStateFlow()
 
-    val stats = observeStatsUseCase()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = StatsOverview()
-        )
-
     init {
-        loadUserData()
+        observeProfiles()
     }
 
-    fun loadUserData() {
+    private fun observeProfiles() {
         viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true,
-                    allUsersError = null,
-                    mainUserError = null
-                )
-            }
-
-            val usersResult = getAllUsersUseCase()
-            val mainUserResult = getMainUserUseCase()
-
-            _state.update { currentState ->
-                currentState.copy(
-                    isLoading = false,
-
-                    allUsers = usersResult.getOrDefault(
-                        currentState.allUsers
-                    ),
-                    allUsersError = usersResult
-                        .exceptionOrNull()
-                        ?.message,
-
-                    mainUser = mainUserResult.getOrDefault(
-                        currentState.mainUser
-                    ),
-                    mainUserError = mainUserResult
-                        .exceptionOrNull()
-                        ?.message
-                )
-            }
+            observeProfilesUseCase()
+                .catch { error ->
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = error.message
+                                ?: "Nie udało się wczytać profili",
+                        )
+                    }
+                }
+                .collect { profiles ->
+                    _state.update {
+                        it.copy(
+                            profiles = profiles.sortedBy {
+                                    profile -> profile.position.ordinal
+                            },
+                            isLoading = false,
+                            error = null,
+                        )
+                    }
+                }
         }
     }
 
-    fun openCreateUserDialog() {
+    fun openEditProfileDialog(
+        profile: Profile,
+    ) {
         _state.update {
             it.copy(
-                userDialog = UserDialogState(
-                    mode = UserDialogMode.Create
-                )
+                profileDialog = ProfileDialogState(
+                    profileId = profile.id,
+                    name = profile.name,
+                    avatarPath = profile.avatarPath,
+                ),
             )
         }
     }
 
-    fun openEditUserDialog(user: User) {
+    fun dismissProfileDialog() {
+        if (
+            _state.value
+                .profileDialog
+                ?.isSaving == true
+        ) {
+            return
+        }
+
         _state.update {
-            it.copy(
-                userDialog = UserDialogState(
-                    mode = UserDialogMode.Edit,
-                    userId = user.id,
-                    nickname = user.nickname,
-                    avatarPath = user.avatarPath
-                )
-            )
+            it.copy(profileDialog = null)
         }
     }
 
-    fun dismissUserDialog() {
-        if (_state.value.userDialog?.isSaving == true) return
-
-        _state.update {
-            it.copy(userDialog = null)
-        }
-    }
-
-    fun onDialogNicknameChange(nickname: String) {
+    fun onDialogNameChange(
+        name: String,
+    ) {
         _state.update { currentState ->
-            val dialog = currentState.userDialog
+            val dialog = currentState.profileDialog
                 ?: return@update currentState
 
             currentState.copy(
-                userDialog = dialog.copy(
-                    nickname = nickname,
-                    error = null
-                )
+                profileDialog = dialog.copy(
+                    name = name,
+                    error = null,
+                ),
             )
         }
     }
 
-    fun onDialogAvatarPicked(avatarPath: String?) {
-        if (avatarPath.isNullOrBlank()) return
+    fun onDialogAvatarPicked(
+        avatarPath: String?,
+    ) {
+        if (avatarPath.isNullOrBlank()) {
+            return
+        }
 
         _state.update { currentState ->
-            val dialog = currentState.userDialog
+            val dialog = currentState.profileDialog
                 ?: return@update currentState
 
             currentState.copy(
-                userDialog = dialog.copy(
+                profileDialog = dialog.copy(
                     avatarPath = avatarPath,
-                    error = null
-                )
+                    error = null,
+                ),
             )
         }
     }
 
-    fun confirmUserDialog() {
-        val dialog = _state.value.userDialog ?: return
-        val nickname = dialog.nickname.trim()
+    fun confirmProfileDialog() {
+        val dialog = _state.value.profileDialog
+            ?: return
 
-        if (nickname.isBlank()) {
+        if (dialog.isSaving) {
+            return
+        }
+
+        val normalizedName = dialog.name.trim()
+
+        if (normalizedName.isBlank()) {
             _state.update { currentState ->
                 currentState.copy(
-                    userDialog = dialog.copy(
-                        error = "Nazwa użytkownika nie może być pusta"
-                    )
+                    profileDialog = dialog.copy(
+                        error = "Nazwa profilu nie może być pusta",
+                    ),
                 )
             }
+
             return
         }
 
         viewModelScope.launch {
             _state.update { currentState ->
                 currentState.copy(
-                    userDialog = dialog.copy(
-                        isSaving = true
-                    )
+                    profileDialog = dialog.copy(
+                        name = normalizedName,
+                        isSaving = true,
+                        error = null,
+                    ),
                 )
             }
 
-            runCatching {
-                when (dialog.mode) {
-                    UserDialogMode.Create -> {
-                        createUserUseCase(
-                            nickname = nickname,
-                            avatarPath = dialog.avatarPath
-                        )
-                    }
-
-                    UserDialogMode.Edit -> {
-                        updateUserUseCase(
-                            userId = requireNotNull(dialog.userId),
-                            nickname = nickname,
-                            avatarPath = dialog.avatarPath
-                        )
+            updateProfileUseCase(
+                profileId = dialog.profileId,
+                name = normalizedName,
+                avatarPath = dialog.avatarPath,
+            )
+                .onSuccess {
+                    _state.update {
+                        it.copy(profileDialog = null)
                     }
                 }
-            }.onSuccess {
-                _state.update {
-                    it.copy(userDialog = null)
-                }
+                .onFailure { error ->
+                    _state.update { currentState ->
+                        val currentDialog =
+                            currentState.profileDialog
+                                ?: return@update currentState
 
-                loadUserData()
-            }.onFailure { error ->
-                _state.update { currentState ->
-                    val currentDialog = currentState.userDialog
-                        ?: return@update currentState
-
-                    currentState.copy(
-                        userDialog = currentDialog.copy(
-                            isSaving = false,
-                            error = error.message
-                                ?: "Nie udało się zapisać użytkownika"
+                        currentState.copy(
+                            profileDialog =
+                                currentDialog.copy(
+                                    isSaving = false,
+                                    error = error.message
+                                        ?: "Nie udało się zapisać profilu",
+                                ),
                         )
-                    )
+                    }
                 }
-            }
         }
     }
 }

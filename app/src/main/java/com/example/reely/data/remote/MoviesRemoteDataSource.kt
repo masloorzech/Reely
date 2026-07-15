@@ -1,16 +1,27 @@
 package com.example.reely.data.remote
 
-import com.example.reely.data.remote.model.RemoteCastMember
-import com.example.reely.data.remote.model.RemoteMovie
-import com.example.reely.data.remote.model.RemoteMovieCredits
-import com.example.reely.data.remote.model.RemoteMovieWatchProviders
+import com.example.reely.domain.model.MovieCredits
+import com.example.reely.domain.model.MovieDetails
+import com.example.reely.domain.model.MoviePreview
+import com.example.reely.domain.model.MovieWatchProviders
 
 interface MoviesRemoteDataSource {
-    suspend fun getPopularMovies(): List<RemoteMovie>
-    suspend fun search(query: String): List<RemoteMovie>
-    suspend fun getMovieDetails(id: Int): RemoteMovie
 
-    suspend fun getMovieCastMembers(movieId : Int): RemoteMovieCredits
+    suspend fun getPopularMovies(): List<MoviePreview>
 
-    suspend fun getMovieProviders(movieId: Int): RemoteMovieWatchProviders
+    suspend fun search(
+        query: String,
+    ): List<MoviePreview>
+
+    suspend fun getMovieDetails(
+        id: Int,
+    ): MovieDetails
+
+    suspend fun getMovieCredits(
+        movieId: Int,
+    ): MovieCredits
+
+    suspend fun getMovieProviders(
+        movieId: Int,
+    ): MovieWatchProviders
 }

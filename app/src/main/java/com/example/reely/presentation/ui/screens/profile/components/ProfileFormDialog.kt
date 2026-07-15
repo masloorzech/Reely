@@ -24,22 +24,20 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.reely.presentation.ui.components.ReelyButton
 import com.example.reely.presentation.ui.components.ReelyTextField
-import com.example.reely.presentation.ui.screens.profile.UserDialogMode
 
 @Composable
-fun UserFormDialog(
-    mode: UserDialogMode,
-    nickname: String,
+fun ProfileFormDialog(
+    name: String,
     avatarPath: String?,
     error: String?,
     isLoading: Boolean,
-    onNicknameChange: (String) -> Unit,
+    onNameChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onAvatarClick: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
 ) {
-    val isEditMode = mode == UserDialogMode.Edit
-    val canConfirm = nickname.trim().isNotEmpty() && !isLoading
+    val canConfirm =
+        name.trim().isNotEmpty() && !isLoading
 
     Dialog(
         onDismissRequest = {
@@ -48,12 +46,12 @@ fun UserFormDialog(
             }
         },
         properties = DialogProperties(
-            usePlatformDefaultWidth = false
-        )
+            usePlatformDefaultWidth = false,
+        ),
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.BottomCenter
+            contentAlignment = Alignment.BottomCenter,
         ) {
             Surface(
                 modifier = Modifier
@@ -63,81 +61,99 @@ fun UserFormDialog(
                     .navigationBarsPadding(),
                 shape = RoundedCornerShape(30.dp),
                 color = MaterialTheme.colorScheme.background,
-                tonalElevation = 6.dp
+                tonalElevation = 6.dp,
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 18.dp),
-                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                        .padding(
+                            horizontal = 20.dp,
+                            vertical = 18.dp,
+                        ),
+                    verticalArrangement =
+                        Arrangement.spacedBy(18.dp),
                 ) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .size(width = 36.dp, height = 4.dp)
+                            .size(
+                                width = 36.dp,
+                                height = 4.dp,
+                            )
                             .clip(RoundedCornerShape(999.dp))
                             .background(
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.18f)
-                            )
+                                MaterialTheme.colorScheme
+                                    .onSurface
+                                    .copy(alpha = 0.18f),
+                            ),
                     )
 
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement =
+                            Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
-                            text = if (isEditMode) "Edytuj profil" else "Nowy profil",
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface
+                            text = "Edytuj profil",
+                            style =
+                                MaterialTheme.typography.headlineSmall,
+                            color =
+                                MaterialTheme.colorScheme.onSurface,
                         )
 
                         Text(
-                            text = if (isEditMode) {
-                                "Zmień nazwę użytkownika lub zdjęcie profilu."
-                            } else {
-                                "Dodaj nazwę użytkownika i opcjonalne zdjęcie profilu."
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "Zmień nazwę lub zdjęcie profilu.",
+                            style =
+                                MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme
+                                .colorScheme
+                                .onSurfaceVariant,
                         )
                     }
 
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally,
+                        verticalArrangement =
+                            Arrangement.spacedBy(10.dp),
                     ) {
                         AvatarImage(
                             imagePath = avatarPath,
-                            size = 84.dp
+                            size = 84.dp,
                         )
 
                         ReelyButton(
-                            text = if (avatarPath.isNullOrBlank()) {
+                            text = if (
+                                avatarPath.isNullOrBlank()
+                            ) {
                                 "Dodaj zdjęcie"
                             } else {
                                 "Zmień zdjęcie"
                             },
-                            overrideContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            onClick = {
-                                if (!isLoading) {
-                                    onAvatarClick()
-                                }
-                            }
+                            enabled = !isLoading,
+                            overrideContainerColor =
+                                MaterialTheme
+                                    .colorScheme
+                                    .surfaceVariant,
+                            onClick = onAvatarClick,
                         )
                     }
 
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement =
+                            Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = "Nazwa użytkownika",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface
+                            text = "Nazwa profilu",
+                            style =
+                                MaterialTheme.typography.titleSmall,
+                            color =
+                                MaterialTheme.colorScheme.onSurface,
                         )
 
                         ReelyTextField(
-                            value = nickname,
-                            onValueChange = onNicknameChange,
+                            value = name,
+                            onValueChange = onNameChange,
                             placeholder = "Np. Bartek",
                             enabled = !isLoading,
                             imeAction = ImeAction.Done,
@@ -145,48 +161,47 @@ fun UserFormDialog(
                                 if (canConfirm) {
                                     onConfirm()
                                 }
-                            }
+                            },
                         )
 
                         if (!error.isNullOrBlank()) {
                             Text(
                                 text = error,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error
+                                style =
+                                    MaterialTheme.typography.bodySmall,
+                                color =
+                                    MaterialTheme.colorScheme.error,
                             )
                         }
                     }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        horizontalArrangement =
+                            Arrangement.spacedBy(10.dp),
+                        verticalAlignment =
+                            Alignment.CenterVertically,
                     ) {
                         ReelyButton(
                             modifier = Modifier.weight(1f),
                             text = "Anuluj",
-                            overrideContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            onClick = {
-                                if (!isLoading) {
-                                    onDismiss()
-                                }
-                            }
+                            enabled = !isLoading,
+                            overrideContainerColor =
+                                MaterialTheme
+                                    .colorScheme
+                                    .surfaceVariant,
+                            onClick = onDismiss,
                         )
 
                         ReelyButton(
                             modifier = Modifier.weight(1f),
                             text = if (isLoading) {
                                 "Zapisywanie..."
-                            } else if (isEditMode) {
-                                "Zapisz"
                             } else {
-                                "Utwórz"
+                                "Zapisz"
                             },
-                            onClick = {
-                                if (canConfirm) {
-                                    onConfirm()
-                                }
-                            }
+                            enabled = canConfirm,
+                            onClick = onConfirm,
                         )
                     }
                 }

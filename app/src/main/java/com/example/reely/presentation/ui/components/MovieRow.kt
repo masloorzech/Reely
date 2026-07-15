@@ -29,29 +29,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.composables.icons.lucide.Calendar
 import com.composables.icons.lucide.Clock
-import com.composables.icons.lucide.EllipsisVertical
 import com.composables.icons.lucide.Lucide
 import com.example.reely.R
-import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.PosterPaths
-import com.example.reely.domain.model.PublicRating
-import com.example.reely.domain.model.UserId
-import com.example.reely.domain.model.UserMovieWatch
-import com.example.reely.domain.model.runtimeText
-import com.example.reely.presentation.theme.ReelyTheme
-import com.example.reely.presentation.ui.formatWatchedDate
-import kotlin.math.roundToLong
+import com.example.reely.presentation.ui.screens.list.ListMovieItem
+import com.example.reely.presentation.ui.screens.list.toPreview
+import com.example.reely.presentation.ui.screens.movies.toPolishDate
+import com.example.reely.presentation.ui.toRuntimeText
 
 @SuppressLint("DefaultLocale")
 @Composable
 fun MovieRow(
     modifier: Modifier = Modifier,
-    movie: Movie,
-    onMovieClicked: (Movie) -> Unit = {}
+    movie: ListMovieItem,
+    onMovieClicked: (Int) -> Unit = {}
 ){
     val isPreview = LocalInspectionMode.current
 
@@ -65,7 +58,7 @@ fun MovieRow(
             .clip(RoundedCornerShape(12.dp))
             .clickable(
                 onClick = {
-                    onMovieClicked(movie)
+                    onMovieClicked(movie.id)
                 }
             )
             .fillMaxWidth()
@@ -83,7 +76,7 @@ fun MovieRow(
                 contentScale = ContentScale.Fit
             )
         } else {
-            MoviePoster(movie = movie)
+            MoviePoster(movie = movie.toPreview())
         }
 
         Spacer(Modifier.width(8.dp))
@@ -108,7 +101,7 @@ fun MovieRow(
                     modifier = Modifier.size(16.dp).padding(end = 4.dp)
                 )
                 Text(
-                    text = movie.releaseDate.formatWatchedDate(),
+                    text = movie.releaseDate?.toPolishDate().toString(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -129,7 +122,7 @@ fun MovieRow(
                     modifier = Modifier.size(16.dp).padding(end = 4.dp)
                 )
                 Text(
-                    text = movie.runtimeText() ?: "Brak danych",
+                    text = movie.runtime?.toRuntimeText() ?: "Brak danych",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -144,14 +137,14 @@ fun MovieRow(
                 )
 
                 Text(
-                    text = String.format("%.1f/10", movie.publicRating?.average),
+                    text = String.format("%.1f/10", movie.publicRating),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.tertiary
                 )
             }
 
             Text(
-                text = movie.overview,
+                text = movie.overview?: "Brak opisu",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                 maxLines = 3

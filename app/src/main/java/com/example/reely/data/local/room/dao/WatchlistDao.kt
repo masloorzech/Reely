@@ -4,7 +4,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.example.reely.data.local.room.entity.WatchlistEntryEntity
+import com.example.reely.data.local.room.model.WatchlistEntryRow
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -18,6 +20,20 @@ interface WatchlistDao {
         """
     )
     fun observeAll(): Flow<List<WatchlistEntryEntity>>
+
+    @Transaction
+    @Query(
+        """
+    SELECT
+        movies.*,
+        watchlist_entries.addedAt AS addedAt
+    FROM watchlist_entries
+    INNER JOIN movies
+        ON movies.id = watchlist_entries.movieId
+    ORDER BY watchlist_entries.addedAt DESC
+    """
+    )
+    fun observeWatchlist(): Flow<List<WatchlistEntryRow>>
 
     @Query(
         """

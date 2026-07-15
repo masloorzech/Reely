@@ -110,4 +110,15 @@ interface MovieRatingDao {
         """
     )
     suspend fun deleteForMovie(movieId: Int): Int
+
+    @Query(
+        """
+    DELETE FROM movie_ratings
+    WHERE movieId = :movieId
+    """
+    )
+    suspend fun deleteByMovieId(
+        movieId: Int,
+    ): Int
+
 }

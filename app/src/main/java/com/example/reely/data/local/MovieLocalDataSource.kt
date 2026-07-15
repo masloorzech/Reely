@@ -4,8 +4,11 @@ import com.example.reely.data.local.room.entity.MovieEntity
 import com.example.reely.data.local.room.entity.MovieRatingEntity
 import com.example.reely.data.local.room.entity.MovieViewingEntity
 import com.example.reely.data.local.room.entity.WatchlistEntryEntity
+import com.example.reely.data.local.room.model.RecentWatchedMovieRow
+import com.example.reely.data.local.room.model.WatchlistEntryRow
 import com.example.reely.domain.model.MovieDetails
 import com.example.reely.domain.model.Rating
+import com.example.reely.domain.model.RecentWatchedMovie
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -19,11 +22,13 @@ interface MovieLocalDataSource {
         movieId: Int,
     ): Flow<MovieEntity?>
 
-    fun observeWatchlistEntries():
-            Flow<List<WatchlistEntryEntity>>
+    fun observeWatchlist(): Flow<List<WatchlistEntryRow>>
 
     fun observeViewings():
             Flow<List<MovieViewingEntity>>
+
+    fun observeWatchedMovies():
+            Flow<List<RecentWatchedMovie>>
 
     fun observeViewingsForMovie(
         movieId: Int,
@@ -68,4 +73,13 @@ interface MovieLocalDataSource {
     suspend fun deleteViewing(
         viewingId: Long,
     ): Boolean
+
+    fun observeRecentWatchedMovies(
+        limit: Int,
+    ): Flow<List<RecentWatchedMovieRow>>
+
+    suspend fun removeFromWatched(
+        movieId: Int,
+    ): Boolean
+
 }

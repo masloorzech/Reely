@@ -1,11 +1,11 @@
 package com.example.reely.domain.usecase.movie
 
-import com.example.reely.domain.repository.MoviesRepository
+import com.example.reely.domain.repository.MovieRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class ObserveRecentSearchesUseCase @Inject constructor(
-    private val repository: MoviesRepository
+    private val repository: MovieRepository
 ) {
 
     operator fun invoke() : Flow<List<String>> {

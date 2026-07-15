@@ -1,172 +1,291 @@
 package com.example.reely.data.repository
 
-import com.example.reely.data.local.MoviesLocalDataSource
+import com.example.reely.data.local.MovieLocalDataSource
+import com.example.reely.data.local.PopularMovieCacheLocalDataSource
 import com.example.reely.data.local.RecentSearchesLocalDataSource
-import com.example.reely.data.local.mapper.toDomain
-import com.example.reely.data.local.mapper.toLocal
+import com.example.reely.data.local.room.mapper.toCacheEntity
+import com.example.reely.data.local.room.mapper.toDomain
 import com.example.reely.data.remote.MoviesRemoteDataSource
-import com.example.reely.data.remote.mapper.toDomain
-import com.example.reely.data.remote.model.toDomain
-import com.example.reely.domain.model.Movie
 import com.example.reely.domain.model.MovieCredits
+import com.example.reely.domain.model.MovieDetails
+import com.example.reely.domain.model.MoviePreview
+import com.example.reely.domain.model.MovieRating
+import com.example.reely.domain.model.MovieViewing
 import com.example.reely.domain.model.MovieWatchProviders
-import com.example.reely.domain.model.UserId
-import com.example.reely.domain.model.UserMovieWatch
-import com.example.reely.domain.model.UserWatchListStatus
-import com.example.reely.domain.repository.MoviesRepository
+import com.example.reely.domain.model.Rating
+import com.example.reely.domain.model.RecentWatchedMovie
+import com.example.reely.domain.model.WatchlistEntry
+import com.example.reely.domain.repository.MovieRepository
+import java.time.Clock
+import java.time.LocalDate
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
-class MoviesRepositoryImpl @Inject constructor(
+@Singleton
+class MovieRepositoryImpl @Inject constructor(
+    private val localDataSource: MovieLocalDataSource,
+    private val recentSearchesLocalDataSource: RecentSearchesLocalDataSource,
+    private val popularCacheDataSource: PopularMovieCacheLocalDataSource,
     private val remoteDataSource: MoviesRemoteDataSource,
-    private val localDataSource: MoviesLocalDataSource,
-    private val searchesLocalDataSource: RecentSearchesLocalDataSource,
-) : MoviesRepository {
+    private val clock: Clock,
+) : MovieRepository {
 
-    override suspend fun getPopularMovies(): Result<List<Movie>> {
-        return runCatching {
-            remoteDataSource.getPopularMovies()
-                .map { it.toDomain() }
-        }
-    }
-
-    override suspend fun search(query: String): Result<List<Movie>> {
-        return runCatching {
-            searchesLocalDataSource.add(query)
-            remoteDataSource.search(query)
-                .map { it.toDomain() }
-        }
-    }
-
-    override suspend fun getMovieDetails(id: Int): Result<Movie> {
-        return runCatching {
-            val remoteMovie = remoteDataSource.getMovieDetails(id)
-                .toDomain()
-
-            val localMovieWithUserData = localDataSource.getMovieWithUserData(id)
-
-            if (localMovieWithUserData == null) {
-                remoteMovie
-            } else {
-                remoteMovie.copy(
-                    userWatchlistStatus = UserWatchListStatus(
-                        localMovieWithUserData.watchList.isAdded,
-                        addedAt = localMovieWithUserData.watchList.addedAt
-                    ),
-                    userWatches = localMovieWithUserData.userWatches
-                        .mapKeys { entry ->
-                            UserId(entry.key)
-                        }
-                        .mapValues { entry ->
-                            entry.value.toDomain()
-                        }
-                )
-            }
-        }
-    }
-
-    override suspend fun saveMovieData(movie: Movie): Result<Unit> {
-        return runCatching {
-            localDataSource.saveMovieData(movie.toLocal())
-        }
-    }
-
-    override suspend fun getMovieCast(movieId: Int): Result<MovieCredits> {
-        return runCatching {
-            remoteDataSource.getMovieCastMembers(movieId).toDomain()
-        }
-    }
-
-    override suspend fun getMovieWatchProviders(movieId: Int): Result<MovieWatchProviders> {
-        return runCatching {
-            remoteDataSource.getMovieProviders(movieId).toDomain()
-        }
-    }
-
-    override fun observeWatchedMovies(): Flow<List<Movie>> {
-        return localDataSource.observeWatchedMovies()
-            .map { movies ->
-                movies.map { movie ->
-                    movie.toDomain()
+    override fun observePopularMovies(): Flow<List<MoviePreview>> {
+        return popularCacheDataSource
+            .observeMovies()
+            .map { entities ->
+                entities.map { entity ->
+                    entity.toDomain()
                 }
             }
     }
 
-    @OptIn(ExperimentalTime::class)
-    override suspend fun addMovieToWatchlist(movie: Movie): Result<Unit> {
-        return runCatching {
-            localDataSource.saveMovieData(movie.toLocal())
+    override fun observeRecentSearches() : Flow<List<String>>{
+        return recentSearchesLocalDataSource.observeRecentSearches()
+    }
 
-            localDataSource.addToWatchlist(
-                movieId = movie.id,
-                addedAt = Clock.System.now().toString()
+
+    override suspend fun refreshPopularMovies(
+        forceRefresh: Boolean,
+    ): Result<Unit> {
+        return runCatching {
+            val now = clock.millis()
+            val lastFetchedAt =
+                popularCacheDataSource.getLatestFetchedAt()
+
+            val cacheIsFresh =
+                lastFetchedAt != null &&
+                        now - lastFetchedAt < POPULAR_CACHE_TTL_MILLIS
+
+            if (!forceRefresh && cacheIsFresh) {
+                return@runCatching
+            }
+
+            val movies = remoteDataSource.getPopularMovies()
+
+            if (movies.isEmpty()) {
+                return@runCatching
+            }
+
+            val cacheEntries = movies.mapIndexed { index, movie ->
+                movie.toCacheEntity(
+                    position = index,
+                    fetchedAt = now,
+                )
+            }
+
+            popularCacheDataSource.replaceMovies(cacheEntries)
+        }
+    }
+
+    override suspend fun searchMovies(
+        query: String,
+    ): Result<List<MoviePreview>> {
+        val normalizedQuery = query.trim()
+
+        if (normalizedQuery.isBlank()) {
+            return Result.success(emptyList())
+        }
+
+        recentSearchesLocalDataSource.add(query)
+
+        return runCatching {
+            remoteDataSource.search(normalizedQuery)
+        }
+    }
+
+    override suspend fun getMovieDetails(
+        movieId: Int,
+    ): Result<MovieDetails> {
+        if (movieId <= 0) {
+            return Result.failure(
+                IllegalArgumentException("Movie ID must be positive")
+            )
+        }
+
+        return runCatching {
+            remoteDataSource.getMovieDetails(movieId)
+        }
+    }
+
+    override suspend fun getMovieCredits(
+        movieId: Int,
+    ): Result<MovieCredits> {
+        if (movieId <= 0) {
+            return Result.failure(
+                IllegalArgumentException("Movie ID must be positive")
+            )
+        }
+
+        return runCatching {
+            remoteDataSource.getMovieCredits(movieId)
+        }
+    }
+
+    override suspend fun getMovieProviders(
+        movieId: Int,
+    ): Result<MovieWatchProviders> {
+        if (movieId <= 0) {
+            return Result.failure(
+                IllegalArgumentException("Movie ID must be positive")
+            )
+        }
+
+        return runCatching {
+            remoteDataSource.getMovieProviders(movieId)
+        }
+    }
+
+    override fun observeWatchlist(): Flow<List<WatchlistEntry>> {
+        return localDataSource
+            .observeWatchlist()
+            .map { rows ->
+                rows.map { row ->
+                    row.toDomain()
+                }
+            }
+    }
+
+    override fun observeViewings():
+            Flow<List<MovieViewing>> {
+        return localDataSource
+            .observeViewings()
+            .map { entities ->
+                entities.map { entity ->
+                    entity.toDomain()
+                }
+            }
+    }
+
+    override fun observeViewingsForMovie(
+        movieId: Int,
+    ): Flow<List<MovieViewing>> {
+        return localDataSource
+            .observeViewingsForMovie(movieId)
+            .map { entities ->
+                entities.map { entity ->
+                    entity.toDomain()
+                }
+            }
+    }
+
+    override fun observeRatingsForMovie(
+        movieId: Int,
+    ): Flow<List<MovieRating>> {
+        return localDataSource
+            .observeRatingsForMovie(movieId)
+            .map { entities ->
+                entities.map { entity ->
+                    entity.toDomain()
+                }
+            }
+    }
+
+    override suspend fun isOnWatchlist(
+        movieId: Int,
+    ): Boolean {
+        return localDataSource.isOnWatchlist(movieId)
+    }
+
+    override suspend fun addToWatchlist(
+        movie: MovieDetails,
+    ): Result<Boolean> {
+        return runCatching {
+            localDataSource.addToWatchlist(movie)
+        }
+    }
+
+    override suspend fun markAsWatched(
+        movie: MovieDetails,
+        watchedAt: LocalDate,
+        firstProfileRating: Rating,
+        secondProfileRating: Rating,
+    ): Result<Long> {
+        return runCatching {
+            localDataSource.markAsWatched(
+                movie = movie,
+                watchedAt = watchedAt,
+                firstProfileRating = firstProfileRating,
+                secondProfileRating = secondProfileRating,
             )
         }
     }
 
-    override suspend fun removeMovieFromWatchlist(movieId: Int): Result<Unit> {
+    override suspend fun rewatchMovie(
+        movie: MovieDetails,
+        watchedAt: LocalDate,
+        firstProfileRating: Rating,
+        secondProfileRating: Rating,
+    ): Result<Long> {
+        return runCatching {
+            localDataSource.rewatchMovie(
+                movie = movie,
+                watchedAt = watchedAt,
+                firstProfileRating = firstProfileRating,
+                secondProfileRating = secondProfileRating,
+            )
+        }
+    }
+
+    override suspend fun updateRatings(
+        movieId: Int,
+        firstProfileRating: Rating,
+        secondProfileRating: Rating,
+    ): Result<Unit> {
+        return runCatching {
+            localDataSource.updateRatings(
+                movieId = movieId,
+                firstProfileRating = firstProfileRating,
+                secondProfileRating = secondProfileRating,
+            )
+        }
+    }
+
+    override suspend fun removeFromWatchlist(
+        movieId: Int,
+    ): Result<Boolean> {
         return runCatching {
             localDataSource.removeFromWatchlist(movieId)
         }
     }
 
-    override suspend fun getRecentWatchedMovies(userId: UserId): Result<List<Movie>> {
-
+    override suspend fun deleteViewing(
+        viewingId: Long,
+    ): Result<Boolean> {
         return runCatching {
-            localDataSource.getRecentWatched(userId.value).map{ it.toDomain() }
-        }
-
-    }
-
-    override suspend fun getUserMovies(): Result<List<Movie>> {
-        return runCatching {
-            localDataSource.getUserMovies()
-                .map { it.toDomain() }
+            localDataSource.deleteViewing(viewingId)
         }
     }
 
-    override suspend fun markMovieAsWatched(
-        movie: Movie,
-        userWatches: Map<UserId, UserMovieWatch>
-    ): Result<Unit> {
-        return runCatching {
-            localDataSource.saveMovieData(movie.toLocal())
-
-            userWatches.forEach { entry ->
-                localDataSource.upsertUserWatch(
-                    movieId = movie.id,
-                    userId = entry.key.value,
-                    userWatch = entry.value.toLocal()
-                )
+    override fun observeRecentWatchedMovies(
+        limit: Int,
+    ): Flow<List<RecentWatchedMovie>> {
+        return localDataSource
+            .observeRecentWatchedMovies(limit)
+            .map { rows ->
+                rows.map { row ->
+                    row.toDomain()
+                }
             }
-
-            localDataSource.removeFromWatchlist(movie.id)
-        }
     }
 
-    override suspend fun updateMovieWatches(
+    override suspend fun removeFromWatched(
         movieId: Int,
-        userWatches: Map<UserId, UserMovieWatch>
-    ): Result<Unit> {
+    ): Result<Boolean> {
         return runCatching {
-            userWatches.forEach { entry ->
-                localDataSource.upsertUserWatch(
-                    movieId = movieId,
-                    userId = entry.key.value,
-                    userWatch = entry.value.toLocal()
-                )
-            }
+            localDataSource.removeFromWatched(movieId)
         }
     }
 
-    override suspend fun removeMovieFromWatched(movieId: Int): Result<Unit> {
-        return runCatching {
-            localDataSource.deleteUserWatchesForMovie(movieId)
-        }
+    override fun observeWatchedMovies():
+            Flow<List<RecentWatchedMovie>> {
+        return localDataSource.observeWatchedMovies()
     }
 
-    override fun observeRecentSearches(): Flow<List<String>> = searchesLocalDataSource.observeRecentSearches()
+    private companion object {
+        const val POPULAR_CACHE_TTL_MILLIS =
+            6L * 60L * 60L * 1_000L
+    }
 }

@@ -18,7 +18,15 @@ interface PopularMovieCacheDao {
             ORDER BY position ASC
         """
     )
-    fun observeAll(): Flow<List<PopularMovieCacheDao>>
+    fun observeAll(): Flow<List<PopularMovieCacheEntity>>
+
+    @Query(
+        """
+            SELECT *
+            FROM popular_movie_cache
+        """
+    )
+    fun getAll(): List<PopularMovieCacheEntity>
 
     @Query(
         """

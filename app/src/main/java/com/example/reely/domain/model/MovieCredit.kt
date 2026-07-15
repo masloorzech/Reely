@@ -2,30 +2,25 @@ package com.example.reely.domain.model
 
 data class MovieCredits(
     val movieId: Int,
-    val cast: List<CastMember> = emptyList(),
-    val crew: List<CrewMember> = emptyList()
+    val cast: List<CastMember>,
+    val crew: List<CrewMember>,
 )
 
 data class CastMember(
     val id: Int,
     val name: String,
-    val originalName: String? = null,
-    val profilePaths: ProfilePaths? = null,
-    val character: String? = null,
-    val order: Int? = null
+    val originalName: String?,
+    val profilePath: String?,
+    val character: String?,
+    val order: Int?,
 )
 
 data class CrewMember(
     val id: Int,
     val name: String,
     val originalName: String?,
-    val profilePath: ProfilePaths?,
+    val profilePath: String?,
     val department: String?,
     val job: String?,
-    val creditId: String?
-)
-
-data class ProfilePaths(
-    val localProfilePath: String? = null,
-    val remoteProfilePath: String? = null
+    val creditId: String?,
 )
