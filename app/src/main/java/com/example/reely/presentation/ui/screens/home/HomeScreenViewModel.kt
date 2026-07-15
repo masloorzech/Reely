@@ -12,10 +12,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import java.time.LocalDate
+import java.time.YearMonth
 
 data class HomeScreenUiState(
     val profiles: List<Profile> = emptyList(),
+
     val recentSeenMovies: List<RecentWatchedMovie> = emptyList(),
+
+    val calendarMonth: YearMonth = YearMonth.now(),
+
+    val watchedMoviesByDate:
+    Map<LocalDate, List<RecentWatchedMovie>> = emptyMap(),
+
     val isLoading: Boolean = true,
     val error: String? = null,
 )
@@ -30,10 +39,23 @@ class HomeScreenViewModel @Inject constructor(
         combine(
             observeProfilesUseCase(),
             observeRecentWatchedMoviesUseCase(limit = 10),
-        ) { profiles, recentMovies ->
+            observeRecentWatchedMoviesUseCase(limit = Int.MAX_VALUE)
+        ) { profiles, recentMovies, viewingHistory  ->
+
+            val calendarMonth = YearMonth.now()
+
             HomeScreenUiState(
                 profiles = profiles,
                 recentSeenMovies = recentMovies,
+                calendarMonth = calendarMonth,
+                watchedMoviesByDate = viewingHistory
+                    .filter { movie ->
+                        YearMonth.from(movie.watchedAt) ==
+                                calendarMonth
+                    }
+                    .groupBy { movie ->
+                        movie.watchedAt
+                    },
                 isLoading = false,
             )
         }

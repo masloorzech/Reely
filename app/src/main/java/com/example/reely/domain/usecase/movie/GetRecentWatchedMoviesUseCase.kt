@@ -9,7 +9,7 @@ class ObserveRecentWatchedMoviesUseCase @Inject constructor(
     private val repository: MovieRepository,
 ) {
     operator fun invoke(
-        limit: Int = 10,
+        limit: Int,
     ): Flow<List<RecentWatchedMovie>> {
         require(limit > 0) {
             "Limit must be greater than zero"

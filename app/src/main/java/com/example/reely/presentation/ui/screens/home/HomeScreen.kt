@@ -22,6 +22,7 @@ import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.screens.home.components.HelloSection
 import com.example.reely.presentation.ui.screens.home.components.LastSeenSection
 import com.example.reely.presentation.ui.screens.home.components.RandomFilmCard
+import com.example.reely.presentation.ui.screens.home.components.WatchedMoviesCalendarSection
 
 @Composable
 fun HomeScreen(
@@ -54,14 +55,14 @@ fun HomeScreen(
 
             RandomFilmCard(
                 onClick = {
-                    // Losowanie z watchlisty podepniemy później.
+                    //TODO
                 },
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             LastSeenSection(
-                lastSeenMoviesList = state.recentSeenMovies,
+                lastSeenMoviesList = state.recentSeenMovies.distinctBy{it.movieId},
                 onMovieClick = { movie ->
                     onMovieClick(movie.id)
                 },
@@ -78,6 +79,11 @@ fun HomeScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+
+            WatchedMoviesCalendarSection(
+                month = state.calendarMonth,
+                moviesByDate = state.watchedMoviesByDate,
+            )
         }
     }
 }

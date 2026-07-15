@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.reely.domain.model.MoviePreview
+import com.example.reely.domain.model.RecentWatchedMovie
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import java.time.LocalDate
 import java.time.YearMonth
@@ -46,7 +47,7 @@ private val WEEKDAY_NAMES = listOf(
 @Composable
 fun WatchedMoviesCalendarSection(
     month: YearMonth,
-    moviesByDate: Map<LocalDate, List<MoviePreview>>,
+    moviesByDate: Map<LocalDate, List<RecentWatchedMovie>>,
     modifier: Modifier = Modifier
 ) {
     val calendarCells = remember(month) {
@@ -115,7 +116,7 @@ fun WatchedMoviesCalendarSection(
 @Composable
 private fun WatchedCalendarDay(
     date: LocalDate,
-    movies: List<MoviePreview>,
+    movies: List<RecentWatchedMovie>,
     modifier: Modifier = Modifier
 ) {
     val movie = movies.firstOrNull()
