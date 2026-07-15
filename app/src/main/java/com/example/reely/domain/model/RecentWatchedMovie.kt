@@ -9,6 +9,7 @@ data class RecentWatchedMovie(
     val posterPath: String?,
     val releaseDate: LocalDate?,
     val watchedAt: LocalDate,
+    val publicRating: Double?,
     val runtime: Int?,
     val overview: String,
     val averageUserRating: Double?,

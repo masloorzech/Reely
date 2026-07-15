@@ -134,6 +134,7 @@ fun RecentWatchedMovieRow.toDomain(): RecentWatchedMovie {
         averageUserRating = averageUserRating,
         releaseDate = movie.releaseDate,
         runtime = movie.runtimeMinutes,
+        publicRating = movie.publicRating,
         overview = movie.overview,
         genres = genres.map { Genre(it.id, it.name) }
     )

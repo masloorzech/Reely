@@ -53,7 +53,7 @@ internal fun RecentWatchedMovie.toListMovieItem(): ListMovieItem {
         posterPath = posterPath,
         genres = genres,
         releaseDate = releaseDate,
-        publicRating = null,
+        publicRating = publicRating,
         userRating = averageUserRating,
         addedAt = null,
         runtime = runtime,

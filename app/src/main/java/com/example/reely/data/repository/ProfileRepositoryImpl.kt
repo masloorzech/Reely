@@ -1,5 +1,6 @@
 package com.example.reely.data.repository
 
+import com.example.reely.data.local.LocalMediaDataSource
 import com.example.reely.data.local.ProfileLocalDataSource
 import com.example.reely.data.local.room.mapper.toDomain
 import com.example.reely.domain.model.Profile
@@ -13,7 +14,8 @@ import kotlinx.coroutines.flow.map
 @Singleton
 class ProfileRepositoryImpl @Inject constructor(
     private val localDataSource: ProfileLocalDataSource,
-) : ProfileRepository {
+    private val localMediaDataSource: LocalMediaDataSource,
+    ) : ProfileRepository {
 
     override fun observeProfiles(): Flow<List<Profile>> {
         return localDataSource
@@ -55,15 +57,33 @@ class ProfileRepositoryImpl @Inject constructor(
         avatarPath: String?,
     ): Result<Unit> {
         return runCatching {
+            val storedAvatarPath = when {
+                avatarPath.isNullOrBlank() -> null
+
+                avatarPath.startsWith("content://") -> {
+                    localMediaDataSource.copyImageToAppStorage(
+                        sourceUri = avatarPath,
+                        directoryName = PROFILE_AVATARS_DIRECTORY,
+                    )
+                }
+
+                else -> {
+                    avatarPath
+                }
+            }
+
             val updated = localDataSource.updateProfile(
                 profileId = profileId.value,
-                name = name,
-                avatarPath = avatarPath,
+                name = name.trim(),
+                avatarPath = storedAvatarPath,
             )
 
             check(updated) {
                 "Profile ${profileId.value} could not be updated"
             }
         }
+    }
+    private companion object {
+        const val PROFILE_AVATARS_DIRECTORY = "profile_avatars"
     }
 }
