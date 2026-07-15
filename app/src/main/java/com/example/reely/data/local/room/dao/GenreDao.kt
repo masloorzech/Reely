@@ -13,11 +13,11 @@ import com.example.reely.data.local.room.entity.MovieGenreCrossRef
 interface GenreDao {
 
     @Upsert
-    suspend fun upsertAll(genres: List<com.example.reely.data.local.room.entity.GenreEntity>)
+    suspend fun upsertAll(genres: List<GenreEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCrossReferences(
-        references: List<com.example.reely.data.local.room.entity.MovieGenreCrossRef>,
+        references: List<MovieGenreCrossRef>,
     )
 
     @Query(
@@ -38,7 +38,7 @@ interface GenreDao {
         ORDER BY genres.name ASC
         """
     )
-    suspend fun getForMovie(movieId: Int): List<com.example.reely.data.local.room.entity.GenreEntity>
+    suspend fun getForMovie(movieId: Int): List<GenreEntity>
 
     @Query(
         """
@@ -55,7 +55,7 @@ interface GenreDao {
     @Transaction
     suspend fun replaceForMovie(
         movieId: Int,
-        genres: List<com.example.reely.data.local.room.entity.GenreEntity>,
+        genres: List<GenreEntity>,
     ) {
         upsertAll(genres)
         deleteCrossReferences(movieId)
@@ -63,7 +63,7 @@ interface GenreDao {
         if (genres.isNotEmpty()) {
             insertCrossReferences(
                 genres.map { genre ->
-                    _root_ide_package_.com.example.reely.data.local.room.entity.MovieGenreCrossRef(
+                    MovieGenreCrossRef(
                         movieId = movieId,
                         genreId = genre.id,
                     )

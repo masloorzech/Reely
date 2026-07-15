@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.Flow
 interface MovieDao {
 
     @Upsert
-    suspend fun upsert(movie: com.example.reely.data.local.room.entity.MovieEntity)
+    suspend fun upsert(movie: MovieEntity)
 
     @Query(
         """
@@ -20,7 +20,7 @@ interface MovieDao {
         LIMIT 1
         """
     )
-    suspend fun getById(movieId: Int): com.example.reely.data.local.room.entity.MovieEntity?
+    suspend fun getById(movieId: Int): MovieEntity?
 
     @Query(
         """
@@ -30,7 +30,7 @@ interface MovieDao {
         LIMIT 1
         """
     )
-    fun observeById(movieId: Int): Flow<com.example.reely.data.local.room.entity.MovieEntity?>
+    fun observeById(movieId: Int): Flow<MovieEntity?>
 
     @Query(
         """

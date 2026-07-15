@@ -3,9 +3,11 @@ package com.example.reely.di
 import android.content.Context
 import android.content.SharedPreferences
 import com.example.reely.data.local.LocalMediaDataSource
+import com.example.reely.data.local.MovieLocalDataSource
 import com.example.reely.data.local.MoviesLocalDataSource
 import com.example.reely.data.local.RecentSearchesLocalDataSource
 import com.example.reely.data.local.recentSearches.SharedPrefsRecentSearchesLocalDataSource
+import com.example.reely.data.local.room.RoomMovieLocalDataSource
 import com.example.reely.data.local.room.RoomMoviesLocalDataSource
 import com.example.reely.data.local.storage.AndroidLocalMediaDataSource
 import com.example.reely.data.remote.MoviesRemoteDataSource
@@ -32,15 +34,21 @@ abstract class MoviesModule {
 
     @Binds
     @Singleton
-    abstract fun bindMoviesLocalDataSource(
-        impl: RoomMoviesLocalDataSource
-    ): MoviesLocalDataSource
-
-    @Binds
-    @Singleton
     abstract fun bindMoviesRepository(
         impl: MoviesRepositoryImpl
     ): MoviesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMovieLocalDataSource(
+        implementation: RoomMovieLocalDataSource,
+    ): MovieLocalDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindPopularMovieCacheLocalDataSource(
+        implementation: RoomPopularMovieCacheLocalDataSource,
+    ): PopularMovieCacheLocalDataSource
 
     @Binds
     @Singleton

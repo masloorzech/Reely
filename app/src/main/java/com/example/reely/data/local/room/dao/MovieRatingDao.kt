@@ -22,7 +22,7 @@ interface MovieRatingDao {
     )
     fun observeForMovie(
         movieId: Int,
-    ): Flow<List<com.example.reely.data.local.room.entity.MovieRatingEntity>>
+    ): Flow<List<MovieRatingEntity>>
 
     @Query(
         """
@@ -34,7 +34,7 @@ interface MovieRatingDao {
     )
     suspend fun getForMovie(
         movieId: Int,
-    ): List<com.example.reely.data.local.room.entity.MovieRatingEntity>
+    ): List<MovieRatingEntity>
 
     @Query(
         """
@@ -48,11 +48,11 @@ interface MovieRatingDao {
     suspend fun get(
         movieId: Int,
         profileId: Int,
-    ): com.example.reely.data.local.room.entity.MovieRatingEntity?
+    ): MovieRatingEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnore(
-        rating: com.example.reely.data.local.room.entity.MovieRatingEntity,
+        rating: MovieRatingEntity,
     ): Long
 
     @Query(
@@ -72,7 +72,7 @@ interface MovieRatingDao {
     ): Int
 
     @Transaction
-    suspend fun save(rating: com.example.reely.data.local.room.entity.MovieRatingEntity) {
+    suspend fun save(rating: MovieRatingEntity) {
         val insertedRowId = insertIgnore(rating)
 
         if (insertedRowId == -1L) {
@@ -87,7 +87,7 @@ interface MovieRatingDao {
 
     @Transaction
     suspend fun saveAll(
-        ratings: List<com.example.reely.data.local.room.entity.MovieRatingEntity>,
+        ratings: List<MovieRatingEntity>,
     ) {
         ratings.forEach { rating ->
             val insertedRowId = insertIgnore(rating)

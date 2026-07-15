@@ -23,7 +23,7 @@ interface ProfileDao {
         END
         """
     )
-    fun observeAll(): Flow<List<com.example.reely.data.local.room.entity.ProfileEntity>>
+    fun observeAll(): Flow<List<ProfileEntity>>
 
     @Query(
         """
@@ -36,7 +36,7 @@ interface ProfileDao {
         END
         """
     )
-    suspend fun getAll(): List<com.example.reely.data.local.room.entity.ProfileEntity>
+    suspend fun getAll(): List<ProfileEntity>
 
     @Query(
         """
@@ -46,13 +46,13 @@ interface ProfileDao {
         LIMIT 1
         """
     )
-    suspend fun getById(profileId: Int): com.example.reely.data.local.room.entity.ProfileEntity?
+    suspend fun getById(profileId: Int): ProfileEntity?
 
     @Query("SELECT COUNT(*) FROM profiles")
     suspend fun count(): Int
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertAll(profiles: List<com.example.reely.data.local.room.entity.ProfileEntity>)
+    suspend fun insertAll(profiles: List<ProfileEntity>)
 
     @Query(
         """
@@ -80,6 +80,6 @@ interface ProfileDao {
     )
     suspend fun getByPosition(
         position: ProfilePosition,
-    ): com.example.reely.data.local.room.entity.ProfileEntity?
+    ): ProfileEntity?
 
 }

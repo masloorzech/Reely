@@ -30,7 +30,7 @@ interface PopularMovieCacheDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(
-        entries: List<com.example.reely.data.local.room.entity.PopularMovieCacheEntity>,
+        entries: List<PopularMovieCacheEntity>,
     )
 
 
@@ -47,7 +47,7 @@ interface PopularMovieCacheDao {
 
     @Transaction
     suspend fun replaceAll(
-        entries: List<com.example.reely.data.local.room.entity.PopularMovieCacheEntity>,
+        entries: List<PopularMovieCacheEntity>,
     ) {
         clear()
         insertAll(entries)

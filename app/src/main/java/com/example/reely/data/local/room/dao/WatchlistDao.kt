@@ -17,7 +17,7 @@ interface WatchlistDao {
         ORDER BY addedAt DESC
         """
     )
-    fun observeAll(): Flow<List<com.example.reely.data.local.room.entity.WatchlistEntryEntity>>
+    fun observeAll(): Flow<List<WatchlistEntryEntity>>
 
     @Query(
         """
@@ -29,11 +29,11 @@ interface WatchlistDao {
     )
     suspend fun getByMovieId(
         movieId: Int,
-    ): com.example.reely.data.local.room.entity.WatchlistEntryEntity?
+    ): WatchlistEntryEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(
-        entry: com.example.reely.data.local.room.entity.WatchlistEntryEntity,
+        entry: WatchlistEntryEntity,
     ): Long
 
     @Query(

@@ -11,7 +11,7 @@ interface MovieViewingDao {
 
     @Insert
     suspend fun insert(
-        viewing: com.example.reely.data.local.room.entity.MovieViewingEntity,
+        viewing: MovieViewingEntity,
     ): Long
 
     @Query(
@@ -21,7 +21,7 @@ interface MovieViewingDao {
         ORDER BY watchedAt DESC, id DESC
         """
     )
-    fun observeAll(): Flow<List<com.example.reely.data.local.room.entity.MovieViewingEntity>>
+    fun observeAll(): Flow<List<MovieViewingEntity>>
 
     @Query(
         """
@@ -33,7 +33,7 @@ interface MovieViewingDao {
     )
     fun observeForMovie(
         movieId: Int,
-    ): Flow<List<com.example.reely.data.local.room.entity.MovieViewingEntity>>
+    ): Flow<List<MovieViewingEntity>>
 
     @Query(
         """
@@ -45,7 +45,7 @@ interface MovieViewingDao {
     )
     suspend fun getForMovie(
         movieId: Int,
-    ): List<com.example.reely.data.local.room.entity.MovieViewingEntity>
+    ): List<MovieViewingEntity>
 
     @Query(
         """
@@ -57,7 +57,7 @@ interface MovieViewingDao {
     )
     suspend fun getById(
         viewingId: Long,
-    ): com.example.reely.data.local.room.entity.MovieViewingEntity?
+    ): MovieViewingEntity?
 
     @Query(
         """
