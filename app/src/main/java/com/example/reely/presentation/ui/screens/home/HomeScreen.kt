@@ -13,6 +13,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -22,6 +25,7 @@ import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.screens.home.components.HelloSection
 import com.example.reely.presentation.ui.screens.home.components.LastSeenSection
 import com.example.reely.presentation.ui.screens.home.components.RandomFilmCard
+import com.example.reely.presentation.ui.screens.home.components.RandomMovieSheet
 import com.example.reely.presentation.ui.screens.home.components.WatchedMoviesCalendarSection
 
 @Composable
@@ -32,6 +36,14 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    var showRandomMovieSheet by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var lastRandomMovieId by rememberSaveable {
+        mutableStateOf<Int?>(null)
+    }
 
     Box(
         modifier = modifier
@@ -55,7 +67,7 @@ fun HomeScreen(
 
             RandomFilmCard(
                 onClick = {
-                    //TODO
+                    showRandomMovieSheet = true
                 },
             )
 
@@ -83,6 +95,22 @@ fun HomeScreen(
             WatchedMoviesCalendarSection(
                 month = state.calendarMonth,
                 moviesByDate = state.watchedMoviesByDate,
+            )
+        }
+        if (showRandomMovieSheet) {
+            RandomMovieSheet(
+                moviesToRoll = state.watchlist,
+                previousMovieId = lastRandomMovieId,
+                onMovieDrawn = { selectedEntry ->
+                    lastRandomMovieId = selectedEntry.movie.id
+                },
+                onMovieClick = { movieId ->
+                    showRandomMovieSheet = false
+                    onMovieClick(movieId)
+                },
+                onDismiss = {
+                    showRandomMovieSheet = false
+                },
             )
         }
     }

@@ -3,7 +3,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.Profile
 import com.example.reely.domain.model.RecentWatchedMovie
+import com.example.reely.domain.model.WatchlistEntry
 import com.example.reely.domain.usecase.movie.ObserveRecentWatchedMoviesUseCase
+import com.example.reely.domain.usecase.movie.ObserveWatchlistUseCase
 import com.example.reely.domain.usecase.user.ObserveProfilesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
@@ -20,6 +22,8 @@ data class HomeScreenUiState(
 
     val recentSeenMovies: List<RecentWatchedMovie> = emptyList(),
 
+    val watchlist: List<WatchlistEntry> = emptyList(),
+
     val calendarMonth: YearMonth = YearMonth.now(),
 
     val watchedMoviesByDate:
@@ -33,14 +37,16 @@ data class HomeScreenUiState(
 class HomeScreenViewModel @Inject constructor(
     observeProfilesUseCase: ObserveProfilesUseCase,
     observeRecentWatchedMoviesUseCase: ObserveRecentWatchedMoviesUseCase,
+    observeWatchlistUseCase: ObserveWatchlistUseCase,
 ) : ViewModel() {
 
     val state: StateFlow<HomeScreenUiState> =
         combine(
             observeProfilesUseCase(),
             observeRecentWatchedMoviesUseCase(limit = 10),
-            observeRecentWatchedMoviesUseCase(limit = Int.MAX_VALUE)
-        ) { profiles, recentMovies, viewingHistory  ->
+            observeRecentWatchedMoviesUseCase(limit = Int.MAX_VALUE),
+            observeWatchlistUseCase()
+        ) { profiles, recentMovies, viewingHistory, watchlist   ->
 
             val calendarMonth = YearMonth.now()
 
@@ -48,6 +54,7 @@ class HomeScreenViewModel @Inject constructor(
                 profiles = profiles,
                 recentSeenMovies = recentMovies,
                 calendarMonth = calendarMonth,
+                watchlist = watchlist,
                 watchedMoviesByDate = viewingHistory
                     .filter { movie ->
                         YearMonth.from(movie.watchedAt) ==

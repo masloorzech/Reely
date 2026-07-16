@@ -124,6 +124,7 @@ fun MarkAsWatchedDialog(
                         ),
                     verticalArrangement =
                         Arrangement.spacedBy(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     DialogHandle()
 
