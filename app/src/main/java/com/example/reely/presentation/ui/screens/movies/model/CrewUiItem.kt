@@ -22,8 +22,7 @@ fun List<CrewMember>.toCrewUiItems(): List<CrewUiItem> {
                 name = credits.first().name,
                 profilePath = credits
                     .firstNotNullOfOrNull { member ->
-                        member.profilePath?.localProfilePath
-                            ?: member.profilePath?.remoteProfilePath
+                        member.profilePath
                     },
                 roles = jobs.map(::crewJobText),
                 priority = credits.minOfOrNull(::crewPriority)

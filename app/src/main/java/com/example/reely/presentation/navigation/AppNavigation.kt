@@ -67,9 +67,9 @@ fun AppNavigation(
 
             composable<HomeScreenRoute>{
                 HomeScreen(
-                    vm = hiltViewModel(),
-                    onMovieClick = { movie ->
-                        navController.navigate(MovieDetailsRoute(movie.id))
+                    viewModel = hiltViewModel(),
+                    onMovieClick = { id ->
+                        navController.navigate(MovieDetailsRoute(id))
                     },
                     onSeeMoreClick = {
                         navController.navigate(ListScreenRoute) {

@@ -3,6 +3,7 @@ package com.example.reely.presentation.ui
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.example.reely.domain.model.MovieDetails
 
 fun String?.formatWatchedDate(): String {
     if (this.isNullOrBlank()) return "Data nieznana"
@@ -17,5 +18,44 @@ fun String?.formatWatchedDate(): String {
         date.format(formatter)
     }.getOrElse {
         this
+    }
+}
+
+
+fun MovieDetails.runtimeText(): String? {
+    val totalMinutes = runtimeMinutes
+        ?.takeIf { it > 0 }
+        ?: return null
+
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+
+    return when {
+        hours == 0 -> "$minutes min"
+        minutes == 0 -> "$hours godz."
+        else -> "$hours godz. $minutes min"
+    }
+}
+
+fun MovieDetails.genresText(): String? {
+    return genres
+        .map { genre -> genre.name.trim() }
+        .filter { name -> name.isNotEmpty() }
+        .takeIf { names -> names.isNotEmpty() }
+        ?.joinToString(separator = " • ")
+}
+
+
+fun Int.toRuntimeText(): String? {
+    val totalMinutes = takeIf { it > 0 }
+        ?: return null
+
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+
+    return when {
+        hours == 0 -> "$minutes min"
+        minutes == 0 -> "$hours godz."
+        else -> "$hours godz. $minutes min"
     }
 }

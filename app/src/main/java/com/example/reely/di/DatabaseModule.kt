@@ -3,13 +3,19 @@ package com.example.reely.di
 import android.content.Context
 import androidx.room.Room
 import com.example.reely.data.local.room.ReelyDatabase
+import com.example.reely.data.local.room.dao.GenreDao
 import com.example.reely.data.local.room.dao.MovieDao
-import com.example.reely.data.local.room.dao.UserDao
+import com.example.reely.data.local.room.dao.MovieRatingDao
+import com.example.reely.data.local.room.dao.MovieViewingDao
+import com.example.reely.data.local.room.dao.PopularMovieCacheDao
+import com.example.reely.data.local.room.dao.ProfileDao
+import com.example.reely.data.local.room.dao.WatchlistDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
@@ -19,29 +25,53 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideReelyDatabase(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
     ): ReelyDatabase {
         return Room.databaseBuilder(
             context,
             ReelyDatabase::class.java,
-            "reely_database"
-        )
-            .build()
+            "reely_database_v2",
+        ).build()
     }
 
     @Provides
-    @Singleton
+    fun provideProfileDao(
+        database: ReelyDatabase,
+    ): ProfileDao = database.profileDao()
+
+    @Provides
     fun provideMovieDao(
-        database: ReelyDatabase
-    ): MovieDao {
-        return database.movieDao()
-    }
+        database: ReelyDatabase,
+    ): MovieDao = database.movieDao()
+
+    @Provides
+    fun provideGenreDao(
+        database: ReelyDatabase,
+    ): GenreDao = database.genreDao()
+
+    @Provides
+    fun provideWatchlistDao(
+        database: ReelyDatabase,
+    ): WatchlistDao = database.watchlistDao()
+
+    @Provides
+    fun provideMovieViewingDao(
+        database: ReelyDatabase,
+    ): MovieViewingDao = database.movieViewingDao()
+
+    @Provides
+    fun provideMovieRatingDao(
+        database: ReelyDatabase,
+    ): MovieRatingDao = database.movieRatingDao()
+
+    @Provides
+    fun providePopularMovieCacheDao(
+        database: ReelyDatabase,
+    ): PopularMovieCacheDao =
+        database.popularMovieCacheDao()
 
     @Provides
     @Singleton
-    fun provideUserDao(
-        database: ReelyDatabase
-    ): UserDao {
-        return database.userDao()
-    }
+    fun provideClock(): Clock =
+        Clock.systemUTC()
 }

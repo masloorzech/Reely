@@ -14,15 +14,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.reely.presentation.ui.components.ReelySearchField
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import com.example.reely.presentation.ui.components.TopBar
@@ -31,12 +31,15 @@ import com.example.reely.presentation.ui.screens.search.components.RecentSearche
 
 @Composable
 fun SearchScreen(
-    modifier : Modifier = Modifier,
-    onMovieClick : (Int) -> Unit,
-    viewModel: SearchScreenViewModel = viewModel()
+    modifier: Modifier = Modifier,
+    onMovieClick: (Int) -> Unit,
+    viewModel: SearchScreenViewModel = hiltViewModel(),
 ) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val recentSearches by
+    viewModel.recentSearches.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is SearchEvent.NavigateToMovieDetails -> {
@@ -46,78 +49,76 @@ fun SearchScreen(
         }
     }
 
-    val recentSearches = viewModel.recentSearches.collectAsState().value
-
-    val state = viewModel.state.collectAsState().value
-
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(16.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
         ) {
-
             TopBar(
-                sectionName = "Szukaj"
+                sectionName = "Szukaj",
             )
 
-            Spacer(modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             ReelySearchField(
                 value = state.searchQuery,
                 onValueChange = viewModel::onQueryChange,
                 placeholder = "Szukaj filmu...",
-                onSearchClick = viewModel::search
+                onSearchClick = viewModel::search,
             )
 
-            Spacer(modifier.height(16.dp))
+            if (recentSearches.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            RecentSearchesSection(
-                recentSearches = recentSearches,
-                onClick = viewModel::onQueryChange
+                RecentSearchesSection(
+                    recentSearches = recentSearches,
+                    onClick = viewModel::onRecentSearchClick,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SmallSectionHeader(
+                sectionName = state.section.title,
             )
-
-            Spacer(modifier.height(16.dp))
-
-            SmallSectionHeader(state.searchSectionName)
 
             Spacer(modifier = Modifier.height(16.dp))
 
             MovieGrid(
                 movies = state.movies,
-                isLoading = state.isLoading || state.error!=null,
-                onMovieClick = viewModel::onMovieSelected
+                isLoading = state.isLoading,
+                onMovieClick = viewModel::onMovieSelected,
             )
-            Spacer(modifier = Modifier.height(16.dp))
 
+            Spacer(modifier = Modifier.height(16.dp))
         }
-        Row(
-            modifier = Modifier
-                .height(64.dp)
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            MaterialTheme.colorScheme.background,
-                        )
+
+        state.error?.let { error ->
+            Row(
+                modifier = Modifier
+                    .height(64.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.background,
+                            ),
+                        ),
                     ),
-                ),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            //TODO Remove
-            if (state.error != null) {
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
-                    text = "O nie pojawił się błąd \uD83D\uDE31\n${state.error}",
+                    text = error,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
                 )
             }
         }

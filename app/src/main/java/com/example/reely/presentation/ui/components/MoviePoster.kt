@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,29 +33,14 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.Clapperboard
 import com.composables.icons.lucide.Lucide
-import com.example.reely.domain.model.Movie
-import java.io.File
+import com.example.reely.domain.model.MoviePreview
 
 @Composable
 fun MoviePoster(
-    movie: Movie,
+    movie: MoviePreview,
     content: @Composable  BoxScope.() -> Unit = {},
-    onClick : (Movie) -> Unit = {}
+    onClick : (MoviePreview) -> Unit = {}
 ){
-
-    val posterModel = remember(movie.posterPaths) {
-        val localFile = movie.posterPaths
-            ?.localPosterPath
-            ?.let { File(it) }
-            ?.takeIf { it.exists() }
-
-        localFile ?: movie.posterPaths?.remotePosterPath
-    }
-
-    Log.d("MoviePoster", "movie=${movie.title}")
-    Log.d("MoviePoster", "localPosterPath=${movie.posterPaths?.localPosterPath}")
-    Log.d("MoviePoster", "remotePosterPath=${movie.posterPaths?.remotePosterPath}")
-    Log.d("MoviePoster", "posterModel=$posterModel")
 
     Box(
         contentAlignment = Alignment.Center,
@@ -76,25 +60,15 @@ fun MoviePoster(
                 }
             )
     ) {
-        if (posterModel != null) {
+
+        Log.d("PosterPath: ", movie.posterPath.toString())
+
+        if (movie.posterPath != null) {
             AsyncImage(
-                model = posterModel,
+                model = movie.posterPath,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                onLoading = {
-                    Log.d("MoviePoster", "LOADING: ${movie.title} | model=$posterModel")
-                },
-                onSuccess = {
-                    Log.d("MoviePoster", "SUCCESS: ${movie.title} | model=$posterModel")
-                },
-                onError = { error ->
-                    Log.e(
-                        "MoviePoster",
-                        "ERROR: ${movie.title} | model=$posterModel",
-                        error.result.throwable
-                    )
-                }
             )
         } else {
             Column(

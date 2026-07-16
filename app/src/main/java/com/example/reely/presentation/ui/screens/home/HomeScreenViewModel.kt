@@ -1,124 +1,76 @@
-package com.example.reely.presentation.ui.screens.home.components
-
+package com.example.reely.presentation.ui.screens.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.StatsOverview
-import com.example.reely.domain.model.User
-import com.example.reely.domain.model.UserId
-import com.example.reely.domain.usecase.movie.GetRecentWatchedMoviesUseCase
-import com.example.reely.domain.usecase.statistics.ObserveMonthlyWatchedMoviesUseCase
-import com.example.reely.domain.usecase.statistics.ObserveStatsUseCase
-import com.example.reely.domain.usecase.user.GetAllUsersUseCase
+import com.example.reely.domain.model.Profile
+import com.example.reely.domain.model.RecentWatchedMovie
+import com.example.reely.domain.usecase.movie.ObserveRecentWatchedMoviesUseCase
+import com.example.reely.domain.usecase.user.ObserveProfilesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import okhttp3.internal.userAgent
 import java.time.LocalDate
 import java.time.YearMonth
 
-data class HomeScreenUIState(
+data class HomeScreenUiState(
+    val profiles: List<Profile> = emptyList(),
 
-    val users: List<User> = emptyList(),
-    val recentSeenMovies: List<Movie> = emptyList(),
-    val watchedMoviesByDate: Map<LocalDate, List<Movie>> = emptyMap(),
+    val recentSeenMovies: List<RecentWatchedMovie> = emptyList(),
+
     val calendarMonth: YearMonth = YearMonth.now(),
 
-    val error: String? = null,
+    val watchedMoviesByDate:
+    Map<LocalDate, List<RecentWatchedMovie>> = emptyMap(),
 
-    )
+    val isLoading: Boolean = true,
+    val error: String? = null,
+)
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val getAllUsersUseCase: GetAllUsersUseCase,
-    private val getRecentWatchedMoviesUseCase: GetRecentWatchedMoviesUseCase,
-    private val observeStatsUseCase: ObserveStatsUseCase,
-    private val observeMonthlyWatchedMoviesUseCase: ObserveMonthlyWatchedMoviesUseCase
-) : ViewModel(){
+    observeProfilesUseCase: ObserveProfilesUseCase,
+    observeRecentWatchedMoviesUseCase: ObserveRecentWatchedMoviesUseCase,
+) : ViewModel() {
 
-    val stats = observeStatsUseCase()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = StatsOverview()
-        )
+    val state: StateFlow<HomeScreenUiState> =
+        combine(
+            observeProfilesUseCase(),
+            observeRecentWatchedMoviesUseCase(limit = 10),
+            observeRecentWatchedMoviesUseCase(limit = Int.MAX_VALUE)
+        ) { profiles, recentMovies, viewingHistory  ->
 
-    private val _state = MutableStateFlow(HomeScreenUIState())
+            val calendarMonth = YearMonth.now()
 
-    val state = _state.asStateFlow()
-
-    private var calendarJob: Job? = null
-
-    init {
-        loadInitialData()
-    }
-    private fun loadInitialData() {
-        viewModelScope.launch {
-            getAllUsersUseCase()
-                .onSuccess { users ->
-                    _state.update { it.copy(users = users) }
-
-                    users.firstOrNull()?.let { mainUser ->
-                        loadRecentMovies(mainUser.id)
-                        observeMonthlyCalendar(mainUser.id)
+            HomeScreenUiState(
+                profiles = profiles,
+                recentSeenMovies = recentMovies,
+                calendarMonth = calendarMonth,
+                watchedMoviesByDate = viewingHistory
+                    .filter { movie ->
+                        YearMonth.from(movie.watchedAt) ==
+                                calendarMonth
                     }
-                }
-                .onFailure { error ->
-                    _state.update { it.copy(error = error.message) }
-                }
+                    .groupBy { movie ->
+                        movie.watchedAt
+                    },
+                isLoading = false,
+            )
         }
-    }
-
-    fun refreshRecentMovies() {
-        val mainUser = state.value.users.firstOrNull() ?: return
-        loadRecentMovies(mainUser.id)
-    }
-
-    private fun observeMonthlyCalendar(userId: UserId) {
-        calendarJob?.cancel()
-
-        val month = YearMonth.now()
-
-        _state.update {
-            it.copy(calendarMonth = month)
-        }
-
-        calendarJob = viewModelScope.launch {
-            observeMonthlyWatchedMoviesUseCase(
-                userId = userId,
-                month = month
-            ).collect { moviesByDate ->
-                _state.update {
-                    it.copy(
-                        watchedMoviesByDate = moviesByDate
+            .catch { exception ->
+                emit(
+                    HomeScreenUiState(
+                        isLoading = false,
+                        error = exception.message
+                            ?: "Nie udało się wczytać ekranu głównego",
                     )
-                }
+                )
             }
-        }
-    }
-
-    private fun loadRecentMovies(userId: UserId) {
-        viewModelScope.launch {
-            getRecentWatchedMoviesUseCase(userId)
-                .onSuccess { movies ->
-                    _state.update {
-                        it.copy(
-                            recentSeenMovies = movies,
-                            error = null
-                        )
-                    }
-                }
-                .onFailure { error ->
-                    _state.update {
-                        it.copy(error = error.message)
-                    }
-                }
-        }
-    }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = HomeScreenUiState(),
+            )
 }

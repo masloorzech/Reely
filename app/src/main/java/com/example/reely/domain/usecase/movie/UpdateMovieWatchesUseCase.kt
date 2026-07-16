@@ -1,20 +1,27 @@
 package com.example.reely.domain.usecase.movie
 
-import com.example.reely.domain.model.UserId
-import com.example.reely.domain.model.UserMovieWatch
-import com.example.reely.domain.repository.MoviesRepository
+import com.example.reely.domain.model.Rating
+import com.example.reely.domain.repository.MovieRepository
 import jakarta.inject.Inject
 
-class UpdateMovieWatchesUseCase @Inject constructor(
-    private val repository: MoviesRepository
+
+class UpdateMovieRatingsUseCase @Inject constructor(
+    private val repository: MovieRepository,
 ) {
+
     suspend operator fun invoke(
         movieId: Int,
-        userWatches: Map<UserId, UserMovieWatch>
+        firstProfileRating: Rating,
+        secondProfileRating: Rating,
     ): Result<Unit> {
-        return repository.updateMovieWatches(
+        require(movieId > 0) {
+            "Movie ID must be positive"
+        }
+
+        return repository.updateRatings(
             movieId = movieId,
-            userWatches = userWatches
+            firstProfileRating = firstProfileRating,
+            secondProfileRating = secondProfileRating,
         )
     }
 }

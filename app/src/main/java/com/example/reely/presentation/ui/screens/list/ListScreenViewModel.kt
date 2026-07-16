@@ -2,204 +2,264 @@ package com.example.reely.presentation.ui.screens.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.isWatched
-import com.example.reely.domain.model.latestWatchedAt
-import com.example.reely.domain.model.ourAverageRatingRounded
-import com.example.reely.domain.usecase.movie.GetUserMoviesUseCase
+import com.example.reely.domain.usecase.movie.ObserveWatchedMoviesUseCase
+import com.example.reely.domain.usecase.movie.ObserveWatchlistUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.ZoneOffset
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class ListScreenUiState(
-    val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
-    val selectedTab: MovieListTab = MovieListTab.WATCHLIST,
-    val displayStyle: MovieDisplayStyle = MovieDisplayStyle.LIST,
+    val selectedSort: MovieSortOption =
+        MovieSortOption.RATING_DESC,
+    val selectedTab: MovieListTab =
+        MovieListTab.WATCHLIST,
+    val displayStyle: MovieDisplayStyle =
+        MovieDisplayStyle.LIST,
     val searchQuery: String = "",
-    val showFilterDialog: Boolean = false,
-    val moviesList: List<Movie> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
+    val moviesList: List<ListMovieItem> = emptyList(),
+    val isLoading: Boolean = true,
+    val error: String? = null,
 )
 
 @HiltViewModel
 class ListScreenViewModel @Inject constructor(
-    private val getUserMoviesUseCase: GetUserMoviesUseCase
+    private val observeWatchlistUseCase:
+    ObserveWatchlistUseCase,
+    private val observeWatchedMoviesUseCase: ObserveWatchedMoviesUseCase,
 ) : ViewModel() {
 
-    private var allMovies: List<Movie> = emptyList()
+    private var watchlistMovies:
+            List<ListMovieItem> = emptyList()
 
-    private val _state = MutableStateFlow(ListScreenUiState())
+    private var watchedMovies:
+            List<ListMovieItem> = emptyList()
+
+    private val _state =
+        MutableStateFlow(ListScreenUiState())
+
     val state = _state.asStateFlow()
 
     init {
-        loadMovies()
+        observeMovies()
     }
 
-    fun loadMovies() {
+    private fun observeMovies() {
         viewModelScope.launch {
-            _state.update {
-                it.copy(
-                    isLoading = true,
-                    error = null
+            combine(
+                observeWatchlistUseCase(),
+                observeWatchedMoviesUseCase(),
+            ) { watchlist, watched ->
+                MovieSources(
+                    watchlist = watchlist.map {
+                            entry -> entry.toListMovieItem()
+                    },
+                    watched = watched.map {
+                            movie -> movie.toListMovieItem()
+                    },
                 )
             }
-
-            getUserMoviesUseCase()
-                .onSuccess { movies ->
-                    allMovies = movies
-
-                    _state.update { currentState ->
-                        currentState.copy(
-                            moviesList = movies
-                                .filterByTab(currentState.selectedTab)
-                                .filterBySearch(currentState.searchQuery)
-                                .sortByOption(currentState.selectedSort),
-                            isLoading = false,
-                            error = null
-                        )
-                    }
-                }
-                .onFailure { error ->
+                .catch { error ->
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            error = "Błąd podczas ładowania listy filmów\n${error.message}\n${error.cause}"
+                            error = error.message
+                                ?: "Nie udało się wczytać list filmów",
+                        )
+                    }
+                }
+                .collect { sources ->
+                    watchlistMovies = sources.watchlist
+                    watchedMovies = sources.watched
+
+                    _state.update { currentState ->
+                        currentState.copy(
+                            moviesList = getVisibleMovies(
+                                state = currentState,
+                            ),
+                            isLoading = false,
+                            error = null,
                         )
                     }
                 }
         }
     }
 
-    fun showFilterDialog(){
-        _state.update {
-            it.copy(
-                showFilterDialog = true
-            )
-        }
-    }
-    fun hideFilterDialog(){
-        _state.update {
-            it.copy(
-                showFilterDialog = false
-            )
-        }
-    }
-
-    fun refresh() {
-        loadMovies()
-        refreshVisibleMovies()
-    }
-
     fun toggleDisplayStyle() {
-        _state.update {
-            it.copy(
-                displayStyle = when (it.displayStyle) {
-                    MovieDisplayStyle.GRID -> MovieDisplayStyle.LIST
-                    MovieDisplayStyle.LIST -> MovieDisplayStyle.GRID
+        _state.update { currentState ->
+            currentState.copy(
+                displayStyle = when (
+                    currentState.displayStyle
+                ) {
+                    MovieDisplayStyle.GRID ->
+                        MovieDisplayStyle.LIST
+
+                    MovieDisplayStyle.LIST ->
+                        MovieDisplayStyle.GRID
+                },
+            )
+        }
+    }
+
+    fun switchTab(
+        tab: MovieListTab,
+    ) {
+        _state.update { currentState ->
+            val updatedState = currentState.copy(
+                selectedTab = tab,
+            )
+
+            updatedState.copy(
+                moviesList = getVisibleMovies(
+                    state = updatedState,
+                ),
+            )
+        }
+    }
+
+    fun switchSort(
+        sortOption: MovieSortOption,
+    ) {
+        _state.update { currentState ->
+            val updatedState = currentState.copy(
+                selectedSort = sortOption,
+            )
+
+            updatedState.copy(
+                moviesList = getVisibleMovies(
+                    state = updatedState,
+                ),
+            )
+        }
+    }
+
+    fun changeSearchQuery(
+        query: String,
+    ) {
+        _state.update { currentState ->
+            val updatedState = currentState.copy(
+                searchQuery = query,
+            )
+
+            updatedState.copy(
+                moviesList = getVisibleMovies(
+                    state = updatedState,
+                ),
+            )
+        }
+    }
+
+    private fun getVisibleMovies(
+        state: ListScreenUiState,
+    ): List<ListMovieItem> {
+        val source = when (state.selectedTab) {
+            MovieListTab.WATCHLIST ->
+                watchlistMovies
+
+            MovieListTab.WATCHED ->
+                watchedMovies
+        }
+
+        return source
+            .filterBySearch(state.searchQuery)
+            .sortByOption(state.selectedSort)
+    }
+}
+
+private data class MovieSources(
+    val watchlist: List<ListMovieItem>,
+    val watched: List<ListMovieItem>,
+)
+
+private fun List<ListMovieItem>.filterBySearch(
+    query: String,
+): List<ListMovieItem> {
+    val normalizedQuery = query.trim()
+
+    if (normalizedQuery.isBlank()) {
+        return this
+    }
+
+    return filter { movie ->
+        movie.title.contains(
+            other = normalizedQuery,
+            ignoreCase = true,
+        ) || movie.genres.any { genre ->
+            genre.name.contains(
+                other = normalizedQuery,
+                ignoreCase = true,
+            )
+        }
+    }
+}
+
+private fun List<ListMovieItem>.sortByOption(
+    sort: MovieSortOption,
+): List<ListMovieItem> {
+    return when (sort) {
+        MovieSortOption.RATING_DESC -> {
+            sortedWith(
+                compareByDescending<ListMovieItem> {
+                        movie ->
+                    movie.displayedRating ?: 0.0
+                }.thenBy { movie ->
+                    movie.title.lowercase()
+                }
+            )
+        }
+
+        MovieSortOption.NEWEST -> {
+            sortedWith(
+                compareByDescending<ListMovieItem> {
+                        movie ->
+                    movie.releaseDate?.toEpochDay()
+                        ?: Long.MIN_VALUE
+                }.thenBy { movie ->
+                    movie.title.lowercase()
+                }
+            )
+        }
+
+        MovieSortOption.OLDEST -> {
+            sortedWith(
+                compareBy<ListMovieItem> { movie ->
+                    movie.releaseDate?.toEpochDay()
+                        ?: Long.MAX_VALUE
+                }.thenBy { movie ->
+                    movie.title.lowercase()
+                }
+            )
+        }
+
+        MovieSortOption.TITLE_ASC -> {
+            sortedBy { movie ->
+                movie.title.lowercase()
+            }
+        }
+
+        MovieSortOption.ADDING_TIME -> {
+            sortedWith(
+                compareByDescending<ListMovieItem> {
+                        movie ->
+                    movie.activityTimeMillis()
+                }.thenBy { movie ->
+                    movie.title.lowercase()
                 }
             )
         }
     }
-
-    fun switchTab(tab: MovieListTab) {
-        _state.update {
-            it.copy(selectedTab = tab)
-        }
-
-        refresh()
-    }
-
-    fun switchSort(sortType: MovieSortOption) {
-        _state.update {
-            it.copy(selectedSort = sortType)
-        }
-
-        refresh()
-    }
-
-    fun changeSearchQuery(query: String) {
-        _state.update {
-            it.copy(searchQuery = query)
-        }
-
-        refresh()
-    }
-
-    private fun refreshVisibleMovies() {
-        _state.update { currentState ->
-            currentState.copy(
-                moviesList = allMovies
-                    .filterByTab(currentState.selectedTab)
-                    .filterBySearch(currentState.searchQuery)
-                    .sortByOption(currentState.selectedSort)
-            )
-        }
-    }
 }
 
-private fun List<Movie>.filterByTab(tab: MovieListTab): List<Movie> {
-    return when (tab) {
-        MovieListTab.WATCHED -> filter { movie ->
-            movie.isWatched()
-        }
-
-        MovieListTab.WATCHLIST -> filter { movie ->
-            movie.userWatchlistStatus.isInWatchlist && !movie.isWatched()
-        }
-
-    }
-}
-
-private fun List<Movie>.filterBySearch(query: String): List<Movie> {
-    val normalizedQuery = query.trim()
-
-    if (normalizedQuery.isBlank()) return this
-
-    return filter { movie ->
-        movie.title.contains(normalizedQuery, ignoreCase = true)
-    }
-}
-
-private fun List<Movie>.sortByOption(sort: MovieSortOption): List<Movie> {
-    return when (sort) {
-        MovieSortOption.RATING_DESC -> sortedWith(
-            compareByDescending<Movie> { movie ->
-                movie.ourAverageRatingRounded() ?: movie.publicRating?.average ?: 0.0
-            }.thenBy { movie ->
-                movie.title.lowercase()
-            }
-        )
-
-        MovieSortOption.NEWEST -> sortedWith(
-            compareByDescending<Movie> { movie ->
-                movie.latestWatchedAt() ?: movie.releaseDate.orEmpty()
-            }.thenBy { movie ->
-                movie.title.lowercase()
-            }
-        )
-
-        MovieSortOption.OLDEST -> sortedWith(
-            compareBy<Movie> { movie ->
-                movie.latestWatchedAt() ?: movie.releaseDate.orEmpty()
-            }.thenBy { movie ->
-                movie.title.lowercase()
-            }
-        )
-
-        MovieSortOption.TITLE_ASC -> sortedBy { movie ->
-            movie.title.lowercase()
-        }
-
-        MovieSortOption.ADDING_TIME -> sortedWith(
-            compareByDescending<Movie> { movie ->
-                movie.userWatchlistStatus.addedAt ?: movie.latestWatchedAt()
-            }.thenBy { movie ->
-                movie.title.lowercase()
-            }
-        )
-    }
+private fun ListMovieItem.activityTimeMillis(): Long {
+    return addedAt?.toEpochMilli()
+        ?: watchedAt
+            ?.atStartOfDay(ZoneOffset.UTC)
+            ?.toInstant()
+            ?.toEpochMilli()
+        ?: Long.MIN_VALUE
 }

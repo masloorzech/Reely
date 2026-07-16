@@ -13,16 +13,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.example.reely.domain.model.Movie
+import com.example.reely.domain.model.MoviePreview
 import com.example.reely.presentation.ui.components.MoviePoster
 import com.example.reely.presentation.ui.components.MoviePosterSkeleton
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 
 @Composable
 fun MovieGrid(
-    movies : List<Movie> = emptyList(),
+    movies : List<MoviePreview> = emptyList(),
     isLoading: Boolean = false,
-    onMovieClick: (Movie) -> Unit = {}
+    onMovieClick: (MoviePreview) -> Unit = {}
 ){
 
     LazyVerticalGrid(

@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ContentTransform
@@ -33,7 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -49,7 +47,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.composables.icons.lucide.ArrowLeft
 import com.composables.icons.lucide.Clock
@@ -62,29 +61,28 @@ import com.composables.icons.lucide.Tv
 import com.composables.icons.lucide.TvMinimalPlay
 import com.example.reely.domain.model.CastMember
 import com.example.reely.domain.model.CrewMember
-import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.User
+import com.example.reely.domain.model.MovieDetails
+import com.example.reely.domain.model.MovieRating
+import com.example.reely.domain.model.MovieViewing
+import com.example.reely.domain.model.Profile
+import com.example.reely.domain.model.ProfilePosition
 import com.example.reely.domain.model.WatchProvider
-import com.example.reely.domain.model.genresText
-import com.example.reely.domain.model.getAvailablePosterPath
-import com.example.reely.domain.model.getAvaliable
-import com.example.reely.domain.model.isWatched
-import com.example.reely.domain.model.ourAverageRatingRounded
-import com.example.reely.domain.model.runtimeText
-import com.example.reely.presentation.ui.components.RatingResults
 import com.example.reely.presentation.ui.components.ReelyButton
 import com.example.reely.presentation.ui.components.ReelyIconButton
 import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyTab
 import com.example.reely.presentation.ui.components.SmallSectionHeader
-import com.example.reely.presentation.ui.formatWatchedDate
-import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
+import com.example.reely.presentation.ui.genresText
+import com.example.reely.presentation.ui.runtimeText
 import com.example.reely.presentation.ui.screens.movies.components.MarkAsWatchedDialog
 import com.example.reely.presentation.ui.screens.movies.components.MovieCastSection
 import com.example.reely.presentation.ui.screens.movies.components.MovieCrewSection
 import com.example.reely.presentation.ui.screens.movies.components.PosterHeader
 import com.example.reely.presentation.ui.screens.movies.components.StarRating
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.collections.sortedBy
 
 private enum class WatchProviderTab(
     val type: ProviderSectionType,
@@ -114,33 +112,38 @@ private enum class MovieAction {
 @Composable
 fun MovieDetailsScreen(
     onBack: () -> Unit = {},
-    viewModel: MovieDetailsScreenViewModel = viewModel()
+    viewModel: MovieDetailsScreenViewModel = hiltViewModel(),
 ) {
-    val state = viewModel.state.collectAsState().value
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val movie = state.movie
 
     val movieAction = when {
         movie == null -> MovieAction.Hidden
-        movie.isWatched() -> MovieAction.RemoveFromWatched
-        movie.userWatchlistStatus.isInWatchlist ->
+
+        state.isWatched ->
+            MovieAction.RemoveFromWatched
+
+        state.isOnWatchlist ->
             MovieAction.RemoveFromWatchlist
 
-        else -> MovieAction.Hidden
+        else ->
+            MovieAction.Hidden
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column {
             PosterHeader(
                 isLoading = state.isMovieLoading,
-                posterPath = movie?.getAvailablePosterPath(),
+                posterPath = movie?.posterPath,
                 title = movie?.title,
-                releaseDate = movie?.releaseDate,
+                releaseDate = movie?.releaseDate?.toString()
+                    ?: "Data nieznana",
                 duration = movie?.runtimeText(),
-                genres = movie?.genresText()
+                genres = movie?.genresText(),
             )
 
             Spacer(Modifier.height(8.dp))
@@ -148,150 +151,256 @@ fun MovieDetailsScreen(
             if (movie != null) {
                 MovieDetailsContent(
                     movie = movie,
-                    isMovieProvidersLoading = state.isMovieProvidersLoading,
-                    availableProviderSections = state.availableProviderSections,
-                    selectedProviderSection = state.selectedProviderSection,
-                    selectedProviders = state.selectedProviders,
-                    onProviderSectionSelected = viewModel::changeProvidersType,
+                    viewings = state.viewings,
+                    isMovieProvidersLoading =
+                        state.isMovieProvidersLoading,
+                    availableProviderSections =
+                        state.availableProviderSections,
+                    selectedProviderSection =
+                        state.selectedProviderSection,
+                    selectedProviders =
+                        state.selectedProviders,
+                    onProviderSectionSelected =
+                        viewModel::changeProvidersType,
                     cast = state.movieCredits?.cast,
                     crew = state.movieCredits?.crew,
-                    isCastLoading = state.isMovieCreditsLoading
+                    isCastLoading =
+                        state.isMovieCreditsLoading,
                 ) {
                     when {
-                        movie.isWatched() -> {
+                        state.isWatched -> {
                             WatchedTopSection(
                                 movie = movie,
-                                users = state.users,
+                                profiles = state.profiles,
+                                ratings = state.ratings,
+                                averageUserRating =
+                                    state.averageUserRating,
+                                isSavingRatings =
+                                    state.isSavingRatings,
+                                onEditRatingsClick =
+                                    viewModel::showEditRatingsDialog,
                             )
                         }
 
-                        movie.userWatchlistStatus.isInWatchlist -> {
+                        state.isOnWatchlist -> {
                             WatchlistTopSection(
                                 movie = movie,
-                                onMarkAsWatchedClick = viewModel::showRatingDialog,
+                                isLoading =
+                                    state.isSavingRatings,
+                                onMarkAsWatchedClick =
+                                    viewModel::showRecordViewingDialog,
                             )
                         }
 
                         else -> {
                             NotWatchedTopSection(
                                 movie = movie,
-                                onAddToWatchlistClick = viewModel::addToWatchlist
+                                isLoading =
+                                    state.isAddingToWatchlist,
+                                onAddToWatchlistClick =
+                                    viewModel::addToWatchlist,
                             )
                         }
                     }
                 }
             }
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(16.dp)
-        ) {
-            ReelyIconButton(
-                icon = Lucide.ArrowLeft,
-                onClick = onBack
-            )
 
-            Spacer(Modifier.weight(1f))
+        MovieDetailsTopActions(
+            movieAction = movieAction,
+            state = state,
+            onBack = onBack,
+            onRemoveFromWatched =
+                viewModel::removeFromWatched,
+            onRemoveFromWatchlist =
+                viewModel::removeFromWatchlist,
+        )
 
-            AnimatedContent(
-                targetState = movieAction,
-                contentAlignment = Alignment.CenterEnd,
-                transitionSpec = {
-                    ContentTransform(
-                        targetContentEnter =
-                            fadeIn(animationSpec = tween(220)) +
-                                    scaleIn(
-                                        animationSpec = tween(220),
-                                        initialScale = 0.92f
-                                    ),
-                        initialContentExit =
-                            fadeOut(animationSpec = tween(140)) +
-                                    scaleOut(
-                                        animationSpec = tween(140),
-                                        targetScale = 0.92f
-                                    ),
-                        sizeTransform = SizeTransform(clip = false)
+        state.error?.let { error ->
+            Text(
+                text = error,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        MaterialTheme.colorScheme.errorContainer,
                     )
-                },
-                label = "movieActionButton"
-            ) { action ->
-                when (action) {
-                    MovieAction.RemoveFromWatched -> {
-                        ReelyButton(
-                            text = "Usuń z obejrzanych",
-                            onClick = viewModel::removeFromWatched,
-                            overrideContainerColor =
-                                MaterialTheme.colorScheme.surface,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Lucide.Trash,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onBackground,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        )
-                    }
-
-                    MovieAction.RemoveFromWatchlist -> {
-                        ReelyButton(
-                            text = "Usuń z listy",
-                            onClick = viewModel::removeFromWatchlist,
-                            overrideContainerColor =
-                                MaterialTheme.colorScheme.surface,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Lucide.Trash,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onBackground,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
-                        )
-                    }
-
-                    MovieAction.Hidden -> {
-                        Spacer(Modifier)
-                    }
-                }
-            }
+                    .padding(
+                        horizontal = 16.dp,
+                        vertical = 10.dp,
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color =
+                    MaterialTheme.colorScheme.onErrorContainer,
+                textAlign = TextAlign.Center,
+            )
         }
-        if (state.isRatingDialogVisible) {
+
+        state.ratingDialogMode?.let { mode ->
             MarkAsWatchedDialog(
-                users = state.users,
-                initialRatings = movie?.userWatches
-                    ?.mapValues { entry -> entry.value.rating }
-                    .orEmpty(),
-                isLoading = state.isMarkingAsWatched,
+                profiles = state.profiles,
+                initialWatchedAt = when (mode) {
+                    RatingDialogMode.RECORD_VIEWING ->
+                        LocalDate.now()
+
+                    RatingDialogMode.EDIT_RATINGS ->
+                        state.latestWatchedAt
+                            ?: LocalDate.now()
+                },
+                initialFirstRating = state.ratingFor(
+                    ProfilePosition.FIRST,
+                ),
+                initialSecondRating = state.ratingFor(
+                    ProfilePosition.SECOND,
+                ),
+                showWatchedDate =
+                    mode == RatingDialogMode.RECORD_VIEWING,
+                isLoading = state.isSavingRatings,
                 onDismiss = viewModel::hideRatingDialog,
-                onConfirm = viewModel::markAsWatched
+                onConfirm =
+                    viewModel::confirmRatingDialog,
             )
         }
     }
 }
 
 @Composable
+private fun MovieDetailsTopActions(
+    movieAction: MovieAction,
+    state: MovieDetailsScreenState,
+    onBack: () -> Unit,
+    onRemoveFromWatched: () -> Unit,
+    onRemoveFromWatchlist: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(16.dp),
+    ) {
+        ReelyIconButton(
+            icon = Lucide.ArrowLeft,
+            onClick = onBack,
+        )
+
+        Spacer(Modifier.weight(1f))
+
+        AnimatedContent(
+            targetState = movieAction,
+            contentAlignment = Alignment.CenterEnd,
+            transitionSpec = {
+                ContentTransform(
+                    targetContentEnter =
+                        fadeIn(
+                            animationSpec = tween(220),
+                        ) + scaleIn(
+                            animationSpec = tween(220),
+                            initialScale = 0.92f,
+                        ),
+                    initialContentExit =
+                        fadeOut(
+                            animationSpec = tween(140),
+                        ) + scaleOut(
+                            animationSpec = tween(140),
+                            targetScale = 0.92f,
+                        ),
+                    sizeTransform =
+                        SizeTransform(clip = false),
+                )
+            },
+            label = "movieActionButton",
+        ) { action ->
+            when (action) {
+                MovieAction.RemoveFromWatched -> {
+                    ReelyButton(
+                        text = if (
+                            state.isRemovingFromWatched
+                        ) {
+                            "Usuwanie..."
+                        } else {
+                            "Usuń z obejrzanych"
+                        },
+                        enabled =
+                            !state.isRemovingFromWatched,
+                        onClick = onRemoveFromWatched,
+                        overrideContainerColor =
+                            MaterialTheme.colorScheme.surface,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Lucide.Trash,
+                                contentDescription = null,
+                                tint = MaterialTheme
+                                    .colorScheme
+                                    .onBackground,
+                                modifier =
+                                    Modifier.size(16.dp),
+                            )
+                        },
+                    )
+                }
+
+                MovieAction.RemoveFromWatchlist -> {
+                    ReelyButton(
+                        text = if (
+                            state.isRemovingFromWatchlist
+                        ) {
+                            "Usuwanie..."
+                        } else {
+                            "Usuń z listy"
+                        },
+                        enabled =
+                            !state.isRemovingFromWatchlist,
+                        onClick = onRemoveFromWatchlist,
+                        overrideContainerColor =
+                            MaterialTheme.colorScheme.surface,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Lucide.Trash,
+                                contentDescription = null,
+                                tint = MaterialTheme
+                                    .colorScheme
+                                    .onBackground,
+                                modifier =
+                                    Modifier.size(16.dp),
+                            )
+                        },
+                    )
+                }
+
+                MovieAction.Hidden -> {
+                    Spacer(Modifier.width(1.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun MovieDetailsContent(
-    movie: Movie,
+    movie: MovieDetails,
+    viewings: List<MovieViewing>,
     isMovieProvidersLoading: Boolean,
-    availableProviderSections: List<ProviderSectionType>,
-    selectedProviderSection: ProviderSectionType,
+    availableProviderSections:
+    List<ProviderSectionType>,
+    selectedProviderSection:
+    ProviderSectionType,
     cast: List<CastMember>?,
     crew: List<CrewMember>?,
     isCastLoading: Boolean,
     selectedProviders: List<WatchProvider>,
-    onProviderSectionSelected: (ProviderSectionType) -> Unit,
-    topSection: @Composable ColumnScope.() -> Unit
+    onProviderSectionSelected:
+        (ProviderSectionType) -> Unit,
+    topSection: @Composable ColumnScope.() -> Unit,
 ) {
     val verticalScroll = rememberScrollState()
     val density = LocalDensity.current
 
     val showTopGradient by remember {
         derivedStateOf {
-            verticalScroll.value > with(density) { 8.dp.roundToPx() }
+            verticalScroll.value >
+                    with(density) { 8.dp.roundToPx() }
         }
     }
 
@@ -300,44 +409,58 @@ private fun MovieDetailsContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
-                .verticalScroll(verticalScroll)
+                .verticalScroll(verticalScroll),
         ) {
             topSection()
+
+            if (viewings.isNotEmpty()) {
+                Spacer(Modifier.height(16.dp))
+
+                ViewingHistorySection(
+                    viewings = viewings,
+                )
+            }
 
             Spacer(Modifier.height(16.dp))
 
             WatchProvidersSection(
                 isLoading = isMovieProvidersLoading,
                 sections = availableProviderSections,
-                selectedSection = selectedProviderSection,
+                selectedSection =
+                    selectedProviderSection,
                 selectedProviders = selectedProviders,
-                onSectionSelected = onProviderSectionSelected
+                onSectionSelected =
+                    onProviderSectionSelected,
             )
 
             Spacer(Modifier.height(16.dp))
 
             MovieDescriptionSection(
-                description = movie.overview
+                description = movie.overview,
             )
 
             Spacer(Modifier.height(16.dp))
 
             MovieCastSection(
                 cast = cast,
-                isLoading = isCastLoading
+                isLoading = isCastLoading,
             )
 
             Spacer(Modifier.height(16.dp))
 
             MovieCrewSection(
                 crew = crew,
-                isLoading = isCastLoading
+                isLoading = isCastLoading,
             )
+
+            Spacer(Modifier.height(32.dp))
         }
 
         MovieDetailsTopGradient(
             visible = showTopGradient,
-            modifier = Modifier.align(Alignment.TopCenter)
+            modifier = Modifier.align(
+                Alignment.TopCenter,
+            ),
         )
     }
 }
@@ -371,39 +494,13 @@ private fun MovieDetailsTopGradient(
 
 @Composable
 private fun NotWatchedTopSection(
-    movie: Movie,
-    onAddToWatchlistClick: () -> Unit
+    movie: MovieDetails,
+    isLoading: Boolean,
+    onAddToWatchlistClick: () -> Unit,
 ) {
     GlobalRatingSection(
-        averageRating = movie.publicRating?.average,
-        userCount = movie.publicRating?.voteCount
-    )
-
-    Spacer(Modifier.height(16.dp))
-
-    Row {
-        ReelyButton(
-            leadingIcon = {
-                Icon(
-                    imageVector = Lucide.TvMinimalPlay,
-                    tint = Color.White,
-                    contentDescription = null
-                )
-            },
-            text = "Dodaj do listy",
-            onClick = onAddToWatchlistClick
-        )
-    }
-}
-
-@Composable
-private fun WatchlistTopSection(
-    movie: Movie,
-    onMarkAsWatchedClick: () -> Unit,
-) {
-    GlobalRatingSection(
-        averageRating = movie.publicRating?.average,
-        userCount = movie.publicRating?.voteCount
+        averageRating = movie.publicRating,
+        userCount = movie.publicVoteCount,
     )
 
     Spacer(Modifier.height(16.dp))
@@ -413,116 +510,260 @@ private fun WatchlistTopSection(
             Icon(
                 imageVector = Lucide.TvMinimalPlay,
                 tint = Color.White,
-                contentDescription = null
+                contentDescription = null,
             )
         },
-        text = "Obejrzany",
-        onClick = onMarkAsWatchedClick
+        text = if (isLoading) {
+            "Dodawanie..."
+        } else {
+            "Dodaj do listy"
+        },
+        enabled = !isLoading,
+        onClick = onAddToWatchlistClick,
     )
-
 }
 
 @Composable
-private fun WatchedTopSection(
-    movie: Movie,
-    users: List<User>,
+private fun WatchlistTopSection(
+    movie: MovieDetails,
+    isLoading: Boolean,
+    onMarkAsWatchedClick: () -> Unit,
 ) {
-    val usersById = users.associateBy { user ->
-        user.id
-    }
-
-    Column(
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        if (movie.userWatches.isNotEmpty()) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-
-                RatingResults(
-                    movie = movie,
-                    style = MaterialTheme.typography.labelLarge
-                )
-
-                Spacer(Modifier.width(8.dp))
-
-
-                StarRating(
-                    score = movie.ourAverageRatingRounded()
-                )
-
-            }
-        }
-
-        movie.publicRating?.let { publicRating ->
-            if (publicRating.average != null && publicRating.voteCount != null) {
-                Spacer(Modifier.height(8.dp))
-
-                Text(
-                    text = String.format(
-                        Locale.US,
-                        "Globalne oceny: %.1f · %,d ocen",
-                        publicRating.average,
-                        publicRating.voteCount
-                    ),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
-            }
-        }
-    }
-
-    Spacer(Modifier.height(8.dp))
-
-    OurStatsSection(
-        textOverride = "Wasze oceny",
-        userRatingItems = movie.toUserStatItemsForMovie(users)
+    GlobalRatingSection(
+        averageRating = movie.publicRating,
+        userCount = movie.publicVoteCount,
     )
 
     Spacer(Modifier.height(16.dp))
 
-    Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        movie.userWatches.entries.forEach { userData ->
-            val user = usersById[userData.key]
-            val watchedAt = userData.value.watchedAt
-            val rating = userData.value.rating
+    ReelyButton(
+        leadingIcon = {
+            Icon(
+                imageVector = Lucide.TvMinimalPlay,
+                tint = Color.White,
+                contentDescription = null,
+            )
+        },
+        text = "Obejrzany",
+        enabled = !isLoading,
+        onClick = onMarkAsWatchedClick,
+    )
+}
 
+@Composable
+private fun WatchedTopSection(
+    movie: MovieDetails,
+    profiles: List<Profile>,
+    ratings: List<MovieRating>,
+    averageUserRating: Double?,
+    isSavingRatings: Boolean,
+    onEditRatingsClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment =
+            Alignment.CenterHorizontally,
+    ) {
+        averageUserRating?.let { average ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically,
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                Text(
+                    text = String.format(
+                        Locale.US,
+                        "%.1f",
+                        average,
+                    ),
+                    style =
+                        MaterialTheme.typography.labelLarge,
+                    color =
+                        MaterialTheme.colorScheme.onBackground,
+                )
+
+                Spacer(Modifier.width(8.dp))
+
+                StarRating(
+                    score = average,
+                )
+            }
+        }
+
+        if (
+            movie.publicRating != null &&
+            movie.publicVoteCount != null
+        ) {
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = String.format(
+                    Locale.US,
+                    "Globalne oceny: %.1f · %,d ocen",
+                    movie.publicRating,
+                    movie.publicVoteCount,
+                ),
+                style =
+                    MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme
+                    .onBackground
+                    .copy(alpha = 0.6f),
+            )
+        }
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    SmallSectionHeader(
+        sectionName = "Wasze oceny",
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    Column(
+        verticalArrangement =
+            Arrangement.spacedBy(8.dp),
+    ) {
+        profiles
+            .sortedBy { profile ->
+                profile.position.ordinal
+            }
+            .forEach { profile ->
+                val rating = ratings
+                    .firstOrNull { movieRating ->
+                        movieRating.profileId == profile.id
+                    }
+                    ?.rating
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            MaterialTheme.colorScheme.surface,
+                        )
+                        .padding(
+                            horizontal = 12.dp,
+                            vertical = 10.dp,
+                        ),
+                    verticalAlignment =
+                        Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = user?.nickname ?: "User ${userData.key.value}",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onBackground
+                        text = profile.name,
+                        style =
+                            MaterialTheme.typography.labelLarge,
+                        color =
+                            MaterialTheme.colorScheme.onSurface,
                     )
 
-                    Text(
-                        text = watchedAt.formatWatchedDate(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f)
-                    )
-                }
+                    Spacer(Modifier.weight(1f))
 
-                Spacer(Modifier.weight(1f))
-
-                if (rating != null) {
                     Text(
-                        text = String.format(Locale.US, "%.1f", rating),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurface
+                        text = rating?.let {
+                            "${it.value}/10"
+                        } ?: "Brak oceny",
+                        style =
+                            MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme
+                            .colorScheme
+                            .tertiary,
                     )
                 }
             }
-        }
     }
+
+    Spacer(Modifier.height(16.dp))
+
+    ReelyButton(
+        text = if (isSavingRatings) {
+            "Zapisywanie..."
+        } else {
+            "Edytuj oceny"
+        },
+        enabled = !isSavingRatings,
+        onClick = onEditRatingsClick,
+    )
+}
+
+@Composable
+private fun ViewingHistorySection(
+    viewings: List<MovieViewing>,
+) {
+    SmallSectionHeader(
+        sectionName = "Historia oglądania",
+    )
+
+    Spacer(Modifier.height(8.dp))
+
+    Column(
+        verticalArrangement =
+            Arrangement.spacedBy(8.dp),
+    ) {
+        viewings
+            .sortedWith(
+                compareByDescending<MovieViewing> {
+                    it.watchedAt
+                }.thenByDescending {
+                    it.id
+                },
+            )
+            .forEachIndexed { index, viewing ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            MaterialTheme.colorScheme.surface,
+                        )
+                        .padding(
+                            horizontal = 12.dp,
+                            vertical = 10.dp,
+                        ),
+                    verticalAlignment =
+                        Alignment.CenterVertically,
+                ) {
+                    Column(
+                        verticalArrangement =
+                            Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            text = if (index == 0) {
+                                "Ostatnie oglądanie"
+                            } else {
+                                "Poprzednie oglądanie"
+                            },
+                            style = MaterialTheme
+                                .typography
+                                .labelMedium,
+                            color = MaterialTheme
+                                .colorScheme
+                                .onSurface,
+                        )
+
+                        Text(
+                            text = viewing.watchedAt
+                                .toPolishDate(),
+                            style = MaterialTheme
+                                .typography
+                                .bodySmall,
+                            color = MaterialTheme
+                                .colorScheme
+                                .onSurface
+                                .copy(alpha = 0.6f),
+                        )
+                    }
+                }
+            }
+    }
+}
+
+fun LocalDate.toPolishDate(): String {
+    return format(
+        DateTimeFormatter.ofPattern(
+            "d MMMM yyyy",
+            Locale.forLanguageTag("pl-PL"),
+        )
+    )
 }
 
 @Composable
@@ -612,7 +853,7 @@ fun WatchProvidersSection(
                         contentAlignment = Alignment.Center
                     ) {
                         AsyncImage(
-                            model = provider.logoPaths?.getAvaliable(),
+                            model = provider.logoPath,
                             contentDescription = provider.providerName,
                             modifier = Modifier
                                 .fillMaxSize()

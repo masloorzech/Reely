@@ -7,98 +7,84 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.reely.domain.model.Movie
-import com.example.reely.domain.model.User
-import com.example.reely.domain.usecase.user.GetAllUsersUseCase
 import com.example.reely.presentation.theme.ReelyTheme
 import com.example.reely.presentation.ui.screens.home.components.HelloSection
-import com.example.reely.presentation.ui.screens.home.components.HomeScreenViewModel
 import com.example.reely.presentation.ui.screens.home.components.LastSeenSection
-import com.example.reely.presentation.ui.screens.home.components.OurStatsSection
 import com.example.reely.presentation.ui.screens.home.components.RandomFilmCard
 import com.example.reely.presentation.ui.screens.home.components.WatchedMoviesCalendarSection
-import dagger.hilt.android.lifecycle.HiltViewModel
-import jakarta.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
-    onMovieClick : (Movie) -> Unit = {},
-    onSeeMoreClick : () -> Unit = {},
-    vm : HomeScreenViewModel = viewModel()
+    onMovieClick: (movieId: Int) -> Unit = {},
+    onSeeMoreClick: () -> Unit = {},
+    viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
-
-    val state = vm.state.collectAsStateWithLifecycle().value
-
-    val stats by vm.stats.collectAsStateWithLifecycle()
-
-    LaunchedEffect(stats) {
-        vm.refreshRecentMovies()
-    }
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        )
-        {
+                .verticalScroll(rememberScrollState()),
+        ) {
             HelloSection(
-                firstAvatarPath = state.users.firstOrNull()?.avatarPath,
-                secondAvatarPath = state.users.getOrNull(1)?.avatarPath
+                firstAvatarPath =
+                    state.profiles.firstOrNull()?.avatarPath,
+                secondAvatarPath =
+                    state.profiles.getOrNull(1)?.avatarPath,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             RandomFilmCard(
-                onClick = {}
+                onClick = {
+                    //TODO
+                },
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             LastSeenSection(
-                state.recentSeenMovies,
-                onMovieClick = onMovieClick,
-                onSeeMoreClick = onSeeMoreClick
+                lastSeenMoviesList = state.recentSeenMovies.distinctBy{it.movieId},
+                onMovieClick = { movie ->
+                    onMovieClick(movie.id)
+                },
+                onSeeMoreClick = onSeeMoreClick,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            state.error?.let { message ->
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             WatchedMoviesCalendarSection(
                 month = state.calendarMonth,
                 moviesByDate = state.watchedMoviesByDate,
             )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-
         }
-
-
     }
 }
 

@@ -11,29 +11,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CornerBasedShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.reely.domain.model.Movie
+import com.example.reely.domain.model.MoviePreview
+import com.example.reely.domain.model.RecentWatchedMovie
+import com.example.reely.domain.model.toPreview
 import com.example.reely.presentation.ui.components.MoviePoster
 import com.example.reely.presentation.ui.components.MoviePosterEmpty
 import com.example.reely.presentation.ui.components.RatingResults
 
 @Composable
 fun LastSeenSection(
-    lastSeenFilmsList: List<Movie>,
-    onMovieClick: (Movie) -> Unit = {},
+    lastSeenMoviesList: List<RecentWatchedMovie>,
+    onMovieClick: (MoviePreview) -> Unit = {},
     onSeeMoreClick: () -> Unit = {}
 ){
 
@@ -64,7 +63,7 @@ fun LastSeenSection(
         }
         Spacer(Modifier.height(8.dp))
 
-        if (lastSeenFilmsList.isEmpty()){
+        if (lastSeenMoviesList.isEmpty()){
 
             Box(
 
@@ -91,7 +90,7 @@ fun LastSeenSection(
 
         }else {
             FiledLastSeenMoviesList(
-                lastSeenFilmsList = lastSeenFilmsList,
+                lastSeenMoviesList = lastSeenMoviesList,
                 onMovieClick = onMovieClick
             )
         }
@@ -102,13 +101,13 @@ fun LastSeenSection(
 
 @Composable
 fun FiledLastSeenMoviesList(
-    lastSeenFilmsList : List<Movie>,
-    onMovieClick: (Movie) -> Unit
+    lastSeenMoviesList : List<RecentWatchedMovie>,
+    onMovieClick: (MoviePreview) -> Unit
 ){
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-        items(lastSeenFilmsList) { movie ->
+        items(lastSeenMoviesList) { movie ->
             MovieCard(
                 movie = movie,
                 onClick = onMovieClick
@@ -121,8 +120,8 @@ fun FiledLastSeenMoviesList(
 
 @Composable
 fun MovieCard(
-    movie: Movie,
-    onClick : (Movie) -> Unit = {}
+    movie: RecentWatchedMovie,
+    onClick : (MoviePreview) -> Unit = {}
 ){
 
     Column(
@@ -132,11 +131,13 @@ fun MovieCard(
         Text(
             text = movie.title,
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            modifier = Modifier.width(100.dp)
         )
 
         MoviePoster(
-            movie = movie,
+            movie = movie.toPreview(),
             onClick = onClick,
             content = {
                 Box (
