@@ -218,7 +218,7 @@ fun MovieDetailsScreen(
 
         state.error?.let { error ->
             Text(
-                text = error,
+                text = "Coś poszło nie tak.\nPowód: $error",
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(16.dp)
