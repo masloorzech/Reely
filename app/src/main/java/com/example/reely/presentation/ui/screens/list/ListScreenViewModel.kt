@@ -1,7 +1,9 @@
 package com.example.reely.presentation.ui.screens.list
 
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.reely.domain.model.Genre
 import com.example.reely.domain.usecase.movie.ObserveWatchedMoviesUseCase
 import com.example.reely.domain.usecase.movie.ObserveWatchlistUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,14 +15,14 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.collections.plus
 
 data class ListScreenUiState(
-    val selectedSort: MovieSortOption =
-        MovieSortOption.RATING_DESC,
-    val selectedTab: MovieListTab =
-        MovieListTab.WATCHLIST,
-    val displayStyle: MovieDisplayStyle =
-        MovieDisplayStyle.LIST,
+    val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
+    val selectedTab: MovieListTab = MovieListTab.WATCHLIST,
+    val displayStyle: MovieDisplayStyle = MovieDisplayStyle.LIST,
+    val selectedGenreIds: Set<Int> = emptySet(),
+    val genres: List<Genre> = emptyList(),
     val searchQuery: String = "",
     val moviesList: List<ListMovieItem> = emptyList(),
     val isLoading: Boolean = true,
@@ -34,20 +36,18 @@ class ListScreenViewModel @Inject constructor(
     private val observeWatchedMoviesUseCase: ObserveWatchedMoviesUseCase,
 ) : ViewModel() {
 
-    private var watchlistMovies:
-            List<ListMovieItem> = emptyList()
+    private var watchlistMovies: List<ListMovieItem> = emptyList()
 
-    private var watchedMovies:
-            List<ListMovieItem> = emptyList()
+    private var watchedMovies: List<ListMovieItem> = emptyList()
 
-    private val _state =
-        MutableStateFlow(ListScreenUiState())
+    private val _state = MutableStateFlow(ListScreenUiState())
 
     val state = _state.asStateFlow()
 
     init {
         observeMovies()
     }
+
 
     private fun observeMovies() {
         viewModelScope.launch {
@@ -56,11 +56,11 @@ class ListScreenViewModel @Inject constructor(
                 observeWatchedMoviesUseCase(),
             ) { watchlist, watched ->
                 MovieSources(
-                    watchlist = watchlist.map {
-                            entry -> entry.toListMovieItem()
+                    watchlist = watchlist.map { entry ->
+                        entry.toListMovieItem()
                     },
-                    watched = watched.map {
-                            movie -> movie.toListMovieItem()
+                    watched = watched.map { movie ->
+                        movie.toListMovieItem()
                     },
                 )
             }
@@ -78,15 +78,68 @@ class ListScreenViewModel @Inject constructor(
                     watchedMovies = sources.watched
 
                     _state.update { currentState ->
-                        currentState.copy(
+                        val sourceMovies = getMoviesForTab(
+                            tab = currentState.selectedTab,
+                        )
+
+                        val availableGenres = sourceMovies
+                            .flatMap { movie -> movie.genres }
+                            .distinctBy { genre -> genre.id }
+                            .sortedBy { genre -> genre.name }
+
+                        val stateWithGenres = currentState.copy(
+                            genres = availableGenres,
+                        )
+
+                        stateWithGenres.copy(
                             moviesList = getVisibleMovies(
-                                state = currentState,
+                                state = stateWithGenres,
                             ),
                             isLoading = false,
                             error = null,
                         )
                     }
                 }
+        }
+    }
+
+    private fun getMoviesForTab(
+        tab: MovieListTab,
+    ): List<ListMovieItem> {
+        return when (tab) {
+            MovieListTab.WATCHLIST -> watchlistMovies
+            MovieListTab.WATCHED -> watchedMovies
+        }
+    }
+
+    fun clearFilters() {
+        _state.update { currentState ->
+            val updatedState = currentState.copy(
+                selectedGenreIds = emptySet(),
+            )
+
+            updatedState.copy(
+                moviesList = getVisibleMovies(updatedState),
+            )
+        }
+    }
+
+    fun toggleGenre(genre: Genre) {
+        _state.update { currentState ->
+            val updatedSelectedGenreIds =
+                if (genre.id in currentState.selectedGenreIds) {
+                    currentState.selectedGenreIds - genre.id
+                } else {
+                    currentState.selectedGenreIds + genre.id
+                }
+
+            val updatedState = currentState.copy(
+                selectedGenreIds = updatedSelectedGenreIds,
+            )
+
+            updatedState.copy(
+                moviesList = getVisibleMovies(updatedState),
+            )
         }
     }
 
@@ -157,15 +210,8 @@ class ListScreenViewModel @Inject constructor(
     private fun getVisibleMovies(
         state: ListScreenUiState,
     ): List<ListMovieItem> {
-        val source = when (state.selectedTab) {
-            MovieListTab.WATCHLIST ->
-                watchlistMovies
-
-            MovieListTab.WATCHED ->
-                watchedMovies
-        }
-
-        return source
+        return getMoviesForTab(state.selectedTab)
+            .filterByGenres(state.selectedGenreIds)
             .filterBySearch(state.searchQuery)
             .sortByOption(state.selectedSort)
     }
@@ -262,4 +308,18 @@ private fun ListMovieItem.activityTimeMillis(): Long {
             ?.toInstant()
             ?.toEpochMilli()
         ?: Long.MIN_VALUE
+}
+
+private fun List<ListMovieItem>.filterByGenres(
+    selectedGenreIds: Set<Int>,
+): List<ListMovieItem> {
+    if (selectedGenreIds.isEmpty()) {
+        return this
+    }
+
+    return filter { movie ->
+        movie.genres.any { genre ->
+            genre.id in selectedGenreIds
+        }
+    }
 }

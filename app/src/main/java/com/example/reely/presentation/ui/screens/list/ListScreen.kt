@@ -1,6 +1,8 @@
 package com.example.reely.presentation.ui.screens.list
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,13 +10,22 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -26,11 +37,16 @@ import com.composables.icons.lucide.ArrowDownAZ
 import com.composables.icons.lucide.ArrowUp
 import com.composables.icons.lucide.Clapperboard
 import com.composables.icons.lucide.Clock
+import com.composables.icons.lucide.Funnel
 import com.composables.icons.lucide.Grid3x2
 import com.composables.icons.lucide.List
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Star
 import com.composables.icons.lucide.TvMinimalPlay
+import com.example.reely.domain.model.Genre
+import com.example.reely.presentation.ui.components.ReelyButton
+import com.example.reely.presentation.ui.components.ReelyChip
+import com.example.reely.presentation.ui.components.ReelyFilterMenu
 import com.example.reely.presentation.ui.components.ReelyIconButton
 import com.example.reely.presentation.ui.components.ReelyListTabs
 import com.example.reely.presentation.ui.components.ReelyMenuButton
@@ -99,8 +115,9 @@ fun ListScreen(
     viewModel: ListScreenViewModel = hiltViewModel(),
     onMovieClick: (movieId: Int) -> Unit = {},
 ) {
-    val state by
-    viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    var filterExpanded by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -172,6 +189,72 @@ fun ListScreen(
 
                 Spacer(Modifier.weight(1f))
 
+                ReelyFilterMenu(
+                    expanded = filterExpanded,
+                    onExpandedChange = {
+                        filterExpanded = it
+                    },
+                    trigger = { onClick ->
+                        BadgedBox(
+                            badge = {
+                                if (state.selectedGenreIds.isNotEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .offset(x = 2.dp, y = (-2).dp)
+                                            .background(
+                                                color = MaterialTheme.colorScheme.primary,
+                                                shape = RoundedCornerShape(100)
+                                            )
+                                            .size(20.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = state.selectedGenreIds.size.toString(),
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onPrimary
+                                        )
+                                    }
+                                }
+                            }
+                        ) {
+                            ReelyIconButton(
+                                icon = Lucide.Funnel,
+                                onClick = onClick
+                            )
+                        }
+                    },
+                    content = {
+                        Row() {
+                            ReelyButton(
+                                text = "Wyczyść filtry",
+                                overrideContainerColor = MaterialTheme.colorScheme.background.copy(
+                                    alpha = 0.6f
+                                ),
+                                onClick = {
+                                    viewModel.clearFilters()
+                                    filterExpanded = false
+                                }
+                            )
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        HorizontalDivider()
+
+                        Spacer(Modifier.height(4.dp))
+
+                        GenreFilters(
+                            genres = state.genres,
+                            selectedGenreIds = state.selectedGenreIds,
+                            onToggle = viewModel::toggleGenre
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+
+
+                    }
+                )
+                Spacer(Modifier.width(8.dp))
                 ReelyIconButton(
                     onClick =
                         viewModel::toggleDisplayStyle,
@@ -186,6 +269,58 @@ fun ListScreen(
                 state = state,
                 onMovieClick = onMovieClick,
             )
+        }
+    }
+}
+
+@Composable
+private fun GenreFilters(
+    genres: List<Genre> = emptyList(),
+    selectedGenreIds: Set<Int> = emptySet(),
+    onToggle: (Genre) -> Unit
+){
+    Column() {
+        Text(
+            text = "Gatunki",
+            style = MaterialTheme.typography.labelMedium,
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        val rowsCount = 2
+
+        val genreRows = remember(genres) {
+            List(rowsCount) { rowIndex ->
+                genres.filterIndexed { index, _ ->
+                    index % rowsCount == rowIndex
+                }
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                genreRows.forEach { rowGenres ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowGenres.forEach { genre ->
+                            ReelyChip(
+                                text = genre.name,
+                                selected = genre.id in selectedGenreIds,
+                                onClick = {
+                                    onToggle(genre)
+                                }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
