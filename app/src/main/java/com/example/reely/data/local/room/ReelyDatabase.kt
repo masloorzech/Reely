@@ -10,6 +10,7 @@ import com.example.reely.data.local.room.dao.MovieRatingDao
 import com.example.reely.data.local.room.dao.MovieViewingDao
 import com.example.reely.data.local.room.dao.PopularMovieCacheDao
 import com.example.reely.data.local.room.dao.ProfileDao
+import com.example.reely.data.local.room.dao.StatisticsDao
 import com.example.reely.data.local.room.dao.WatchProviderDao
 import com.example.reely.data.local.room.dao.WatchlistDao
 import com.example.reely.data.local.room.entity.GenreEntity
@@ -64,4 +65,5 @@ abstract class ReelyDatabase : RoomDatabase() {
 
     abstract fun watchProviderDao(): WatchProviderDao
 
+    abstract fun statisticsDao(): StatisticsDao
 }

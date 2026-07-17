@@ -9,6 +9,7 @@ import com.example.reely.data.local.room.dao.MovieRatingDao
 import com.example.reely.data.local.room.dao.MovieViewingDao
 import com.example.reely.data.local.room.dao.PopularMovieCacheDao
 import com.example.reely.data.local.room.dao.ProfileDao
+import com.example.reely.data.local.room.dao.StatisticsDao
 import com.example.reely.data.local.room.dao.WatchProviderDao
 import com.example.reely.data.local.room.dao.WatchlistDao
 import dagger.Module
@@ -78,6 +79,13 @@ object DatabaseModule {
         database: ReelyDatabase,
     ): WatchProviderDao {
         return database.watchProviderDao()
+    }
+
+    @Provides
+    fun provideStatisticsDao(
+        database: ReelyDatabase,
+    ): StatisticsDao {
+        return database.statisticsDao()
     }
 
     @Provides

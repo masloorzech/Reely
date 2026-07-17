@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.reely.domain.model.Profile
 import com.example.reely.domain.model.ProfilePosition
@@ -85,6 +86,7 @@ fun ProfileUsersSection(
                     ) { profile ->
                         ProfileItem(
                             profile = profile,
+                            userColor = if (profile.position == ProfilePosition.FIRST) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                             onClick = {
                                 onProfileClick(profile)
                             },
@@ -110,6 +112,7 @@ fun ProfileUsersSection(
 @Composable
 private fun ProfileItem(
     profile: Profile,
+    userColor: Color,
     onClick: () -> Unit,
 ) {
     Column(
@@ -126,9 +129,7 @@ private fun ProfileItem(
             size = 88.dp,
             modifier = Modifier.border(
                 width = 2.dp,
-                color = MaterialTheme.colorScheme
-                    .primary
-                    .copy(alpha = 0.5f),
+                color = userColor.copy(alpha = 0.5f),
                 shape = CircleShape,
             ),
         )

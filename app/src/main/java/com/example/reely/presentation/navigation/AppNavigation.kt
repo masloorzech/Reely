@@ -17,6 +17,7 @@ import com.example.reely.presentation.ui.screens.list.ListScreen
 import com.example.reely.presentation.ui.screens.movies.MovieDetailsScreen
 import com.example.reely.presentation.ui.screens.profile.ProfileScreen
 import com.example.reely.presentation.ui.screens.search.SearchScreen
+import com.example.reely.presentation.ui.screens.statistics.StatisticsScreen
 
 @Composable
 fun AppNavigation(
@@ -43,9 +44,9 @@ fun AppNavigation(
                     navController = navController,
                     items = listOf(
                         HomeScreenDestination,
+                        StatisticsScreenDestination,
                         SearchScreenDestination,
                         ListScreenDestination,
-                        //StatisticsScreenDestination,
                         ProfileScreenDestination
                     ),
                 )
@@ -117,6 +118,17 @@ fun AppNavigation(
                     onBack = {
                         navController.popBackStack()
                     }
+                )
+            }
+
+            composable<StatisticsScreenRoute> {
+                StatisticsScreen(
+                    viewModel = hiltViewModel(),
+                    onMovieClick = { movieId ->
+                        navController.navigate(
+                            MovieDetailsRoute(movieId),
+                        )
+                    },
                 )
             }
 

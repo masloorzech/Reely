@@ -42,18 +42,10 @@ fun HomeScreen(
         mutableStateOf(false)
     }
 
-    /*
-     * Informuje, że kliknięto losowanie i po otrzymaniu
-     * wyniku należy otworzyć sheet.
-     */
     var waitingForRandomMovie by rememberSaveable {
         mutableStateOf(false)
     }
 
-    /*
-     * Otwieramy sheet dopiero po zakończeniu losowania
-     * w ViewModelu.
-     */
     LaunchedEffect(
         waitingForRandomMovie,
         state.isRandomizingMovie,
