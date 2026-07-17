@@ -193,10 +193,4 @@ class HomeScreenViewModel @Inject constructor(
                 }
         }
     }
-
-    fun clearRandomMovieError() {
-        randomMovieState.update {
-            it.copy(error = null)
-        }
-    }
 }

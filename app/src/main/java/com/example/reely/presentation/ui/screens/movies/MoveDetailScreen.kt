@@ -423,7 +423,6 @@ private fun MovieDetailsContent(
             Spacer(Modifier.height(16.dp))
 
             WatchProvidersSection(
-                isLoading = isMovieProvidersLoading,
                 sections = availableProviderSections,
                 selectedSection =
                     selectedProviderSection,
@@ -788,7 +787,6 @@ private fun GlobalRatingSection(
 
 @Composable
 fun WatchProvidersSection(
-    isLoading: Boolean,
     sections: List<ProviderSectionType>,
     selectedSection: ProviderSectionType,
     selectedProviders: List<WatchProvider>,

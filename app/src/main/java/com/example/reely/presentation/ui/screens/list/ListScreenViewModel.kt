@@ -320,16 +320,6 @@ class ListScreenViewModel @Inject constructor(
         }
     }
 
-
-    fun clearGenreFilters() {
-        updateVisibleState { currentState ->
-            currentState.copy(
-                selectedGenreIds =
-                    emptySet(),
-            )
-        }
-    }
-
     fun toggleGenre(
         genre: Genre,
     ) {
@@ -392,26 +382,6 @@ class ListScreenViewModel @Inject constructor(
         }
     }
 
-    fun showProviderFilters() {
-        _state.update { currentState ->
-            currentState.copy(
-                isProviderFilterDialogVisible =
-                    true,
-
-                providerMessage =
-                    null,
-            )
-        }
-    }
-
-    fun dismissProviderFilters() {
-        _state.update { currentState ->
-            currentState.copy(
-                isProviderFilterDialogVisible =
-                    false,
-            )
-        }
-    }
 
     fun setProviderFilterEnabled(
         enabled: Boolean,
@@ -481,20 +451,6 @@ class ListScreenViewModel @Inject constructor(
         }
     }
 
-    fun clearProviderFilter() {
-        filterTypesCustomized = false
-
-        updateVisibleState { currentState ->
-            currentState.copy(
-                providerFilter =
-                    MovieProviderFilter(
-                        monetizationTypes =
-                            defaultProviderTypes,
-                    ),
-            )
-        }
-    }
-
     fun refreshProviders() {
         if (_state.value.isRefreshingProviders) {
             return
@@ -551,14 +507,6 @@ class ListScreenViewModel @Inject constructor(
                         )
                     }
                 }
-        }
-    }
-
-    fun clearProviderMessage() {
-        _state.update { currentState ->
-            currentState.copy(
-                providerMessage = null,
-            )
         }
     }
 

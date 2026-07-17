@@ -71,6 +71,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 
 private enum class RandomMoviePhase {
     PREPARING,
@@ -112,7 +113,7 @@ fun RandomMovieSheet(
         phase = RandomMoviePhase.PREPARING
         displayedEntry = null
 
-        delay(600)
+        delay(600.milliseconds)
 
         phase = RandomMoviePhase.ROLLING
 
@@ -124,7 +125,7 @@ fun RandomMovieSheet(
         if (animationMovies.size == 1) {
             displayedEntry = targetMovie
 
-            delay(850)
+            delay(850.milliseconds)
         } else {
             repeat(15) { step ->
                 displayedEntry =
@@ -136,7 +137,7 @@ fun RandomMovieSheet(
                     )
 
                 delay(
-                    65L + step * 12L,
+                    (65L + step * 12L).milliseconds,
                 )
             }
 
@@ -146,7 +147,7 @@ fun RandomMovieSheet(
              */
             displayedEntry = targetMovie
 
-            delay(220)
+            delay(220.milliseconds)
         }
 
         phase = RandomMoviePhase.RESULT

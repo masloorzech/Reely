@@ -115,9 +115,6 @@ data class MovieDetailsScreenState(
             }
         }
 
-    val isRatingDialogVisible: Boolean
-        get() = ratingDialogMode != null
-
     val latestWatchedAt: LocalDate?
         get() = viewings
             .maxWithOrNull(

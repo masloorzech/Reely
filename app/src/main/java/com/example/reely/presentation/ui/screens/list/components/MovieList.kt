@@ -17,6 +17,7 @@ fun MovieList(
 ) {
 
     LazyColumn(
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(bottom = 16.dp),
         ) {
