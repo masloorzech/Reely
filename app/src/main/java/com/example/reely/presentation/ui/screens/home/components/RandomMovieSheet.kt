@@ -141,10 +141,6 @@ fun RandomMovieSheet(
                 )
             }
 
-            /*
-             * Końcowy film pochodzi z ViewModelu
-             * i jest już zgodny z providerami.
-             */
             displayedEntry = targetMovie
 
             delay(220.milliseconds)
@@ -236,11 +232,7 @@ fun RandomMovieSheet(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            /*
-             * Surface oraz przycisk są rodzeństwem.
-             * Dzięki temu przycisk znajduje się
-             * pod dialog boxem, a nie wewnątrz niego.
-             */
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -526,9 +518,7 @@ fun RandomMovieSheet(
                     }
                 }
 
-                /*
-                 * Przycisk znajduje się poza Surface.
-                 */
+
                 AnimatedVisibility(
                     visible = isResult,
                     enter =

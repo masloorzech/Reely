@@ -663,11 +663,6 @@ class StatisticsCalculator @Inject constructor() {
             }
         }
 
-        /*
-         * Wybór jest deterministyczny:
-         * ten sam łączny czas zawsze daje ten sam tekst,
-         * więc fakt nie skacze podczas rekompozycji.
-         */
         val selectedIndex = (
                 totalMinutes / FUN_FACT_CHANGE_INTERVAL_MINUTES
                 ).mod(candidates.size.toLong()).toInt()
