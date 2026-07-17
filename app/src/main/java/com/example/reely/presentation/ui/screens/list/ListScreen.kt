@@ -771,7 +771,7 @@ private fun GenreFilters(
     selectedGenreIds: Set<Int> = emptySet(),
     onToggle: (Genre) -> Unit
 ){
-    Column() {
+    Column {
         Text(
             text = "Gatunki",
             style = MaterialTheme.typography.labelMedium,

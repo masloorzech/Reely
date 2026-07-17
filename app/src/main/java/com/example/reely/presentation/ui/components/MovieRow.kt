@@ -76,7 +76,7 @@ fun MovieRow(
 
             Spacer(Modifier.height(4.dp))
 
-            Row() {
+            Row {
 
                 Text(
                     text = "Ocena globalna:",

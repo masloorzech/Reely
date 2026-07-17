@@ -65,15 +65,13 @@ fun LastSeenSection(
 
         if (lastSeenMoviesList.isEmpty()){
 
-            Box(
-
-            ){
+            Box {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     repeat(5){
                         item {
-                            MoviePosterEmpty() {}
+                            MoviePosterEmpty {}
                         }
                     }
                 }

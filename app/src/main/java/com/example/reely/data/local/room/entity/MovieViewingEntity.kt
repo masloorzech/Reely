@@ -11,7 +11,7 @@ import java.time.LocalDate
     tableName = "movie_viewings",
     foreignKeys = [
         ForeignKey(
-            entity = _root_ide_package_.com.example.reely.data.local.room.entity.MovieEntity::class,
+            entity = MovieEntity::class,
             parentColumns = ["id"],
             childColumns = ["movieId"],
             onDelete = ForeignKey.CASCADE,

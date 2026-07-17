@@ -10,13 +10,13 @@ import java.time.Instant
     primaryKeys = ["movieId", "profileId"],
     foreignKeys = [
         ForeignKey(
-            entity = _root_ide_package_.com.example.reely.data.local.room.entity.MovieEntity::class,
+            entity = MovieEntity::class,
             parentColumns = ["id"],
             childColumns = ["movieId"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = _root_ide_package_.com.example.reely.data.local.room.entity.ProfileEntity::class,
+            entity = ProfileEntity::class,
             parentColumns = ["id"],
             childColumns = ["profileId"],
             onDelete = ForeignKey.RESTRICT,
