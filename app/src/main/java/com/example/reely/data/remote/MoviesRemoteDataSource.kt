@@ -4,6 +4,7 @@ import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieDetails
 import com.example.reely.domain.model.MoviePreview
 import com.example.reely.domain.model.MovieWatchProviders
+import com.example.reely.domain.model.WatchProvider
 
 interface MoviesRemoteDataSource {
 
@@ -24,4 +25,9 @@ interface MoviesRemoteDataSource {
     suspend fun getMovieProviders(
         movieId: Int,
     ): MovieWatchProviders
+
+    suspend fun getMovieProviderCatalog(
+        countryCode: String,
+    ): List<WatchProvider>
+
 }

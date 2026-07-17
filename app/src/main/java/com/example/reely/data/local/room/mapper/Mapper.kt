@@ -6,6 +6,7 @@ import com.example.reely.data.local.room.entity.MovieRatingEntity
 import com.example.reely.data.local.room.entity.MovieViewingEntity
 import com.example.reely.data.local.room.entity.PopularMovieCacheEntity
 import com.example.reely.data.local.room.entity.ProfileEntity
+import com.example.reely.data.local.room.entity.WatchProviderEntity
 import com.example.reely.data.local.room.entity.WatchlistEntryEntity
 import com.example.reely.data.local.room.model.RecentWatchedMovieRow
 import com.example.reely.data.local.room.model.WatchlistEntryRow
@@ -18,6 +19,7 @@ import com.example.reely.domain.model.Profile
 import com.example.reely.domain.model.ProfileId
 import com.example.reely.domain.model.Rating
 import com.example.reely.domain.model.RecentWatchedMovie
+import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.model.WatchlistEntry
 import java.time.Instant
 
@@ -137,5 +139,14 @@ fun RecentWatchedMovieRow.toDomain(): RecentWatchedMovie {
         publicRating = movie.publicRating,
         overview = movie.overview,
         genres = genres.map { Genre(it.id, it.name) }
+    )
+}
+
+fun WatchProviderEntity.toDomain(): WatchProvider {
+    return WatchProvider(
+        providerId = providerId,
+        providerName = providerName,
+        logoPath = logoPath,
+        displayPriority = displayPriority,
     )
 }

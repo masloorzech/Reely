@@ -14,6 +14,7 @@ import java.time.LocalDate
 
 interface MovieLocalDataSource {
 
+    suspend fun getAllMovieIds(): List<Int>
     suspend fun getMovie(
         movieId: Int,
     ): MovieEntity?

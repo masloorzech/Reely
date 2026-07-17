@@ -132,9 +132,12 @@ fun MovieCard(
             text = movie.title,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
             maxLines = 1,
             modifier = Modifier.width(100.dp)
         )
+
+        Spacer(Modifier.height(8.dp))
 
         MoviePoster(
             movie = movie.toPreview(),

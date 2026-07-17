@@ -3,6 +3,7 @@ package com.example.reely.presentation.ui.screens.list.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,8 +24,9 @@ fun MovieList(
 ) {
 
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(bottom = 16.dp),
+        ) {
         for (movie in movies) {
             item {
                 MovieRow(

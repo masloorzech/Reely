@@ -1,12 +1,16 @@
 package com.example.reely.domain.repository
+import com.example.reely.domain.model.CachedMovieWatchProviders
 import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieDetails
 import com.example.reely.domain.model.MoviePreview
 import com.example.reely.domain.model.MovieRating
 import com.example.reely.domain.model.MovieViewing
 import com.example.reely.domain.model.MovieWatchProviders
+import com.example.reely.domain.model.ProviderRefreshResult
 import com.example.reely.domain.model.Rating
 import com.example.reely.domain.model.RecentWatchedMovie
+import com.example.reely.domain.model.WatchMonetizationType
+import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.model.WatchlistEntry
 import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
@@ -95,5 +99,34 @@ interface MovieRepository {
     fun observeWatchedMovies():
             Flow<List<RecentWatchedMovie>>
 
+    fun observeWatchProviderCatalog():
+            Flow<List<WatchProvider>>
+
+    fun observeSelectedWatchProviderIds():
+            Flow<Set<Int>>
+
+    fun observeSelectedWatchProviderTypes():
+            Flow<Set<WatchMonetizationType>>
+
+    fun observeCachedMovieProviders():
+            Flow<List<CachedMovieWatchProviders>>
+
+    suspend fun refreshWatchProviderCatalog(
+        forceRefresh: Boolean = false,
+    ): Result<Unit>
+
+    suspend fun refreshMovieProviders(
+        movieId: Int,
+        forceRefresh: Boolean = false,
+    ): Result<Unit>
+
+    suspend fun refreshLibraryProviders(
+        forceRefresh: Boolean = true,
+    ): Result<ProviderRefreshResult>
+
+    suspend fun updateWatchProviderPreferences(
+        providerIds: Set<Int>,
+        monetizationTypes: Set<WatchMonetizationType>,
+    ): Result<Unit>
 
 }

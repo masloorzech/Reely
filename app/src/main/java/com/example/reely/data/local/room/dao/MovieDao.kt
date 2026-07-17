@@ -24,6 +24,15 @@ interface MovieDao {
 
     @Query(
         """
+    SELECT id
+    FROM movies
+    ORDER BY id
+    """
+    )
+    suspend fun getAllIds(): List<Int>
+
+    @Query(
+        """
         SELECT *
         FROM movies
         WHERE id = :movieId

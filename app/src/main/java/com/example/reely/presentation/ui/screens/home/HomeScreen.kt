@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,73 +42,160 @@ fun HomeScreen(
         mutableStateOf(false)
     }
 
-    var lastRandomMovieId by rememberSaveable {
-        mutableStateOf<Int?>(null)
+    /*
+     * Informuje, że kliknięto losowanie i po otrzymaniu
+     * wyniku należy otworzyć sheet.
+     */
+    var waitingForRandomMovie by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    /*
+     * Otwieramy sheet dopiero po zakończeniu losowania
+     * w ViewModelu.
+     */
+    LaunchedEffect(
+        waitingForRandomMovie,
+        state.isRandomizingMovie,
+        state.randomMovie,
+        state.randomMovieError,
+    ) {
+        if (!waitingForRandomMovie) {
+            return@LaunchedEffect
+        }
+
+        when {
+            state.isRandomizingMovie -> Unit
+
+            state.randomMovie != null -> {
+                waitingForRandomMovie = false
+                showRandomMovieSheet = true
+            }
+
+            state.randomMovieError != null -> {
+                waitingForRandomMovie = false
+            }
+        }
     }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(
+                MaterialTheme.colorScheme.background
+            )
             .padding(horizontal = 16.dp),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(
+                    rememberScrollState()
+                ),
         ) {
             HelloSection(
                 firstAvatarPath =
-                    state.profiles.firstOrNull()?.avatarPath,
+                    state.profiles
+                        .firstOrNull()
+                        ?.avatarPath,
+
                 secondAvatarPath =
-                    state.profiles.getOrNull(1)?.avatarPath,
+                    state.profiles
+                        .getOrNull(1)
+                        ?.avatarPath,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
 
             RandomFilmCard(
                 onClick = {
-                    showRandomMovieSheet = true
+                    if (!state.isRandomizingMovie) {
+                        waitingForRandomMovie = true
+                        viewModel.randomizeMovie()
+                    }
                 },
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LastSeenSection(
-                lastSeenMoviesList = state.recentSeenMovies.distinctBy{it.movieId},
-                onMovieClick = { movie ->
-                    onMovieClick(movie.id)
-                },
-                onSeeMoreClick = onSeeMoreClick,
-            )
-
-            state.error?.let { message ->
-                Spacer(modifier = Modifier.height(16.dp))
+            state.randomMovieError?.let { message ->
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
                 Text(
                     text = message,
-                    color = MaterialTheme.colorScheme.error,
+                    style =
+                        MaterialTheme.typography.bodySmall,
+                    color =
+                        MaterialTheme.colorScheme.error,
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
+            LastSeenSection(
+                lastSeenMoviesList =
+                    state.recentSeenMovies
+                        .distinctBy { movie ->
+                            movie.movieId
+                        },
+
+                onMovieClick = { movie ->
+                    onMovieClick(movie.id)
+                },
+
+                onSeeMoreClick =
+                    onSeeMoreClick,
+            )
+
+            state.error?.let { message ->
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
+
+                Text(
+                    text = message,
+                    color =
+                        MaterialTheme.colorScheme.error,
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
 
             WatchedMoviesCalendarSection(
-                month = state.calendarMonth,
-                moviesByDate = state.watchedMoviesByDate,
+                month =
+                    state.calendarMonth,
+
+                moviesByDate =
+                    state.watchedMoviesByDate,
             )
         }
-        if (showRandomMovieSheet) {
+
+        val randomMovie =
+            state.randomMovie
+
+        if (
+            showRandomMovieSheet &&
+            randomMovie != null
+        ) {
             RandomMovieSheet(
-                moviesToRoll = state.watchlist,
-                previousMovieId = lastRandomMovieId,
-                onMovieDrawn = { selectedEntry ->
-                    lastRandomMovieId = selectedEntry.movie.id
-                },
+
+                moviesToRoll =
+                    state.watchlist,
+
+                targetMovie =
+                    randomMovie,
+
                 onMovieClick = { movieId ->
                     showRandomMovieSheet = false
                     onMovieClick(movieId)
                 },
+
                 onDismiss = {
                     showRandomMovieSheet = false
                 },
@@ -116,10 +204,9 @@ fun HomeScreen(
     }
 }
 
-
 @Preview(
     showBackground = true,
-    backgroundColor = 0xFF0B0E14
+    backgroundColor = 0xFF0B0E14,
 )
 @Composable
 fun HomeScreenPreview() {

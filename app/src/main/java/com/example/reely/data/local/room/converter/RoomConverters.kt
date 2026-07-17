@@ -2,6 +2,7 @@ package com.example.reely.data.local.room.converter
 
 import androidx.room.TypeConverter
 import com.example.reely.domain.model.ProfilePosition
+import com.example.reely.domain.model.WatchMonetizationType
 import java.time.Instant
 import java.time.LocalDate
 
@@ -32,4 +33,18 @@ class RoomConverters {
     fun stringToProfilePosition(
         value: String?,
     ): ProfilePosition? = value?.let(ProfilePosition::valueOf)
+
+    @TypeConverter
+    fun monetizationTypeToString(
+        value: WatchMonetizationType?,
+    ): String? {
+        return value?.name
+    }
+
+    @TypeConverter
+    fun stringToMonetizationType(
+        value: String?,
+    ): WatchMonetizationType? {
+        return value?.let(WatchMonetizationType::valueOf)
+    }
 }

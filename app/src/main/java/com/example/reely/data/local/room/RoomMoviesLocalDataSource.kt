@@ -31,6 +31,10 @@ class RoomMovieLocalDataSource @Inject constructor(
     private val movieTransactions: RoomMovieTransactions,
 ) : MovieLocalDataSource {
 
+    override suspend fun getAllMovieIds(): List<Int> {
+        return movieDao.getAllIds()
+    }
+
     override suspend fun getMovie(
         movieId: Int,
     ): MovieEntity? {
