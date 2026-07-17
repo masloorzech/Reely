@@ -8,7 +8,6 @@ import com.example.reely.domain.usecase.movie.ObserveRecentSearchesUseCase
 import com.example.reely.domain.usecase.movie.RefreshPopularMoviesUseCase
 import com.example.reely.domain.usecase.movie.SearchMovieUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 enum class SearchSection(
     val title: String,

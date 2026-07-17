@@ -12,8 +12,8 @@ import com.example.reely.data.local.room.entity.SelectedWatchProviderEntity
 import com.example.reely.data.local.room.entity.SelectedWatchProviderTypeEntity
 import com.example.reely.data.local.room.entity.WatchProviderEntity
 import com.example.reely.domain.model.WatchMonetizationType
-import java.time.Instant
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 @Dao
 interface WatchProviderDao {

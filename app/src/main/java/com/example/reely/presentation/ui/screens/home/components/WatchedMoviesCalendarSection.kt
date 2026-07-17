@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.example.reely.domain.model.MoviePreview
 import com.example.reely.domain.model.RecentWatchedMovie
 import com.example.reely.presentation.ui.components.SmallSectionHeader
 import java.time.LocalDate

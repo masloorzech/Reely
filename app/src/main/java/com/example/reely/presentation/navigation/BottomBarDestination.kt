@@ -6,9 +6,7 @@ import com.composables.icons.lucide.ChartBar
 import com.composables.icons.lucide.House
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Search
-import com.composables.icons.lucide.User
 import com.composables.icons.lucide.Users
-import com.google.android.material.bottomnavigation.BottomNavigationMenuView
 
 interface BottomBarDestination {
     val route: Any

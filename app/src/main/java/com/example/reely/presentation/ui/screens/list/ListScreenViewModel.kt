@@ -11,19 +11,19 @@ import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.usecase.movie.ObserveCachedMovieProvidersUseCase
 import com.example.reely.domain.usecase.movie.ObserveSelectedWatchProviderIdsUseCase
 import com.example.reely.domain.usecase.movie.ObserveSelectedWatchProviderTypesUseCase
-import com.example.reely.domain.usecase.movie.ObserveWatchedMoviesUseCase
 import com.example.reely.domain.usecase.movie.ObserveWatchProviderCatalogUseCase
+import com.example.reely.domain.usecase.movie.ObserveWatchedMoviesUseCase
 import com.example.reely.domain.usecase.movie.ObserveWatchlistUseCase
 import com.example.reely.domain.usecase.movie.RefreshLibraryWatchProvidersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.ZoneOffset
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.ZoneOffset
+import javax.inject.Inject
 
 data class ListScreenUiState(
     val selectedSort: MovieSortOption =

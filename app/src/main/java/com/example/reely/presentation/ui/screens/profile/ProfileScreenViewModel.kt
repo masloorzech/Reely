@@ -4,15 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.reely.domain.model.Profile
 import com.example.reely.domain.model.ProfileId
-import com.example.reely.domain.usecase.user.ObserveProfilesUseCase
-import com.example.reely.domain.usecase.user.UpdateProfileUseCase
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import com.example.reely.domain.model.WatchMonetizationType
 import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.usecase.movie.ObserveSelectedWatchProviderIdsUseCase
@@ -21,9 +12,18 @@ import com.example.reely.domain.usecase.movie.ObserveWatchProviderCatalogUseCase
 import com.example.reely.domain.usecase.movie.RefreshLibraryWatchProvidersUseCase
 import com.example.reely.domain.usecase.movie.RefreshWatchProviderCatalogUseCase
 import com.example.reely.domain.usecase.movie.UpdateWatchProviderPreferencesUseCase
+import com.example.reely.domain.usecase.user.ObserveProfilesUseCase
+import com.example.reely.domain.usecase.user.UpdateProfileUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import javax.inject.Inject
 
 data class ProfileScreenState(
     val profiles: List<Profile> = emptyList(),

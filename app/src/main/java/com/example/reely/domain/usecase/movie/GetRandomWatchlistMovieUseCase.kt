@@ -5,8 +5,8 @@ import com.example.reely.domain.model.ProviderFilterScope
 import com.example.reely.domain.model.WatchMonetizationType
 import com.example.reely.domain.model.WatchlistEntry
 import com.example.reely.domain.repository.MovieRepository
-import javax.inject.Inject
 import kotlinx.coroutines.flow.first
+import javax.inject.Inject
 
 class GetRandomWatchlistMovieUseCase @Inject constructor(
     private val repository: MovieRepository,

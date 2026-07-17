@@ -66,11 +66,11 @@ import com.composables.icons.lucide.Lucide
 import com.example.reely.R
 import com.example.reely.domain.model.WatchlistEntry
 import com.example.reely.presentation.ui.components.ReelyButton
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlinx.coroutines.delay
 
 private enum class RandomMoviePhase {
     PREPARING,

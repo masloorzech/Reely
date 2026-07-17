@@ -8,7 +8,6 @@ import com.example.reely.data.local.room.dao.WatchlistDao
 import com.example.reely.data.local.room.entity.MovieEntity
 import com.example.reely.data.local.room.entity.MovieRatingEntity
 import com.example.reely.data.local.room.entity.MovieViewingEntity
-import com.example.reely.data.local.room.entity.WatchlistEntryEntity
 import com.example.reely.data.local.room.mapper.toDomain
 import com.example.reely.data.local.room.model.RecentWatchedMovieRow
 import com.example.reely.data.local.room.model.WatchlistEntryRow

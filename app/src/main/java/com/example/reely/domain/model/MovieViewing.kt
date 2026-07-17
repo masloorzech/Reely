@@ -1,7 +1,7 @@
 package com.example.reely.domain.model
 
-import java.time.LocalDate
 import java.time.Instant
+import java.time.LocalDate
 
 data class MovieViewing(
     val id: Long,

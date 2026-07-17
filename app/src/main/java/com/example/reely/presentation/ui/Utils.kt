@@ -1,9 +1,9 @@
 package com.example.reely.presentation.ui
 
+import com.example.reely.domain.model.MovieDetails
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import com.example.reely.domain.model.MovieDetails
 
 fun String?.formatWatchedDate(): String {
     if (this.isNullOrBlank()) return "Data nieznana"

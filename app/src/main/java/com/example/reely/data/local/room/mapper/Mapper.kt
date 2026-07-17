@@ -7,7 +7,6 @@ import com.example.reely.data.local.room.entity.MovieViewingEntity
 import com.example.reely.data.local.room.entity.PopularMovieCacheEntity
 import com.example.reely.data.local.room.entity.ProfileEntity
 import com.example.reely.data.local.room.entity.WatchProviderEntity
-import com.example.reely.data.local.room.entity.WatchlistEntryEntity
 import com.example.reely.data.local.room.model.RecentWatchedMovieRow
 import com.example.reely.data.local.room.model.WatchlistEntryRow
 import com.example.reely.domain.model.Genre

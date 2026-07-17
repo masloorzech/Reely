@@ -1,6 +1,7 @@
 package com.example.reely.data.local.recentSearches
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.example.reely.data.local.RecentSearchesLocalDataSource
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -8,7 +9,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.json.JSONArray
 import javax.inject.Inject
-import androidx.core.content.edit
 
 class SharedPrefsRecentSearchesLocalDataSource @Inject constructor(
     private val sharedPreferences: SharedPreferences

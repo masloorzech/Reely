@@ -1,8 +1,6 @@
 package com.example.reely.domain.usecase.movie
 
-import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieDetails
-import com.example.reely.domain.model.MoviePreview
 import com.example.reely.domain.repository.MovieRepository
 import javax.inject.Inject
 

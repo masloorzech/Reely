@@ -27,12 +27,12 @@ import com.example.reely.domain.usecase.movie.UpdateMovieRatingsUseCase
 import com.example.reely.domain.usecase.user.ObserveProfilesUseCase
 import com.example.reely.presentation.navigation.MovieDetailsRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.time.LocalDate
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import javax.inject.Inject
 
 enum class ProviderSectionType(
     val text: String,

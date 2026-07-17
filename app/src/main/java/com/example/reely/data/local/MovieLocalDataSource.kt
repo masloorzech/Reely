@@ -3,7 +3,6 @@ package com.example.reely.data.local
 import com.example.reely.data.local.room.entity.MovieEntity
 import com.example.reely.data.local.room.entity.MovieRatingEntity
 import com.example.reely.data.local.room.entity.MovieViewingEntity
-import com.example.reely.data.local.room.entity.WatchlistEntryEntity
 import com.example.reely.data.local.room.model.RecentWatchedMovieRow
 import com.example.reely.data.local.room.model.WatchlistEntryRow
 import com.example.reely.domain.model.MovieDetails

@@ -3,10 +3,9 @@ package com.example.reely.data.local.room
 import com.example.reely.data.local.PopularMovieCacheLocalDataSource
 import com.example.reely.data.local.room.dao.PopularMovieCacheDao
 import com.example.reely.data.local.room.entity.PopularMovieCacheEntity
-import com.example.reely.data.local.room.model.RecentWatchedMovieRow
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.Flow
 
 @Singleton
 class RoomPopularMovieCacheLocalDataSource @Inject constructor(

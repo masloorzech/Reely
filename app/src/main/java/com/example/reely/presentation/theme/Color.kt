@@ -1,6 +1,5 @@
 package com.example.reely.presentation.theme
 
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val Background = Color(0xFF090B10)

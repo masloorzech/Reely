@@ -12,8 +12,8 @@ import com.example.reely.domain.model.RecentWatchedMovie
 import com.example.reely.domain.model.WatchMonetizationType
 import com.example.reely.domain.model.WatchProvider
 import com.example.reely.domain.model.WatchlistEntry
-import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
 
 interface MovieRepository {
 

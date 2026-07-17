@@ -18,11 +18,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.reely.BuildConfig
 import com.example.reely.presentation.ui.components.TopBar
-import com.example.reely.presentation.ui.screens.profile.components.WatchProvidersSection
 import com.example.reely.presentation.ui.screens.profile.components.AboutApplicationSection
 import com.example.reely.presentation.ui.screens.profile.components.ProfileFormDialog
 import com.example.reely.presentation.ui.screens.profile.components.ProfileSettingsSection
 import com.example.reely.presentation.ui.screens.profile.components.ProfileUsersSection
+import com.example.reely.presentation.ui.screens.profile.components.WatchProvidersSection
 
 @Composable
 fun ProfileScreen(

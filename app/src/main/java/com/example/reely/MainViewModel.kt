@@ -2,7 +2,6 @@ package com.example.reely
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.reely.domain.usecase.user.CheckProfilesConfiguredUseCase
 import com.example.reely.domain.usecase.user.EnsureProfilesExistUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject

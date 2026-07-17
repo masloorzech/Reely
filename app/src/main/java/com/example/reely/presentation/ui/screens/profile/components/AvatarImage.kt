@@ -1,8 +1,5 @@
 package com.example.reely.presentation.ui.screens.profile.components
 
-import coil3.compose.AsyncImage
-import com.composables.icons.lucide.Lucide
-import com.composables.icons.lucide.User
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -21,6 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.composables.icons.lucide.Lucide
+import com.composables.icons.lucide.User
 
 
 @Composable

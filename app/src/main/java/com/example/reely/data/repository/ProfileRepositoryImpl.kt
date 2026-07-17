@@ -6,10 +6,10 @@ import com.example.reely.data.local.room.mapper.toDomain
 import com.example.reely.domain.model.Profile
 import com.example.reely.domain.model.ProfileId
 import com.example.reely.domain.repository.ProfileRepository
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class ProfileRepositoryImpl @Inject constructor(

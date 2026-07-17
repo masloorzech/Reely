@@ -27,7 +27,6 @@ import com.composables.icons.lucide.ArrowRight
 import com.composables.icons.lucide.Lucide
 import com.composables.icons.lucide.Search
 import com.example.reely.presentation.theme.InputBackground
-import com.example.reely.presentation.theme.InputBorder
 import com.example.reely.presentation.theme.InputFocused
 
 @Composable
