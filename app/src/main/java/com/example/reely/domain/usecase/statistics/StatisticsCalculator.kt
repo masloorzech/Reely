@@ -442,72 +442,258 @@ class StatisticsCalculator @Inject constructor() {
     private fun buildWatchedTimeFunFact(
         totalMinutes: Long,
     ): TimeFunFact {
+        if (totalMinutes <= 0L) {
+            return TimeFunFact(
+                headline = "Wasza filmowa podróż dopiero się zaczyna",
+                description = "Obejrzyjcie pierwszy film, a Reely przeliczy wspólny czas.",
+            )
+        }
+
         val polishLocale = Locale.forLanguageTag("pl-PL")
 
-        return when {
-            totalMinutes <= 0L -> {
+        val coffeeBreaks = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = COFFEE_BREAK_MINUTES,
+        )
+
+        val seriesEpisodes = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = SERIES_EPISODE_MINUTES,
+        )
+
+        val podcasts = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = PODCAST_EPISODE_MINUTES,
+        )
+
+        val footballMatches = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = FOOTBALL_MATCH_MINUTES,
+        )
+
+        val classicMovies = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = CLASSIC_MOVIE_MINUTES,
+        )
+
+        val movieEvenings = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = MOVIE_EVENING_MINUTES,
+        )
+
+        val miniSeries = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = MINI_SERIES_MINUTES,
+        )
+
+        val workdays = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = WORKDAY_MINUTES,
+        )
+
+        val sleepNights = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = SLEEP_NIGHT_MINUTES,
+        )
+
+        val audiobooks = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = AUDIOBOOK_MINUTES,
+        )
+
+        val weekendMarathons = approximateCount(
+            totalMinutes = totalMinutes,
+            unitMinutes = WEEKEND_MARATHON_MINUTES,
+        )
+
+        val candidates = buildList {
+            add(
                 TimeFunFact(
-                    headline = "Wasza filmowa podróż dopiero się zaczyna",
-                    description = "Obejrzyjcie pierwszy film, a Reely przeliczy wspólny czas.",
-                )
-            }
+                    headline = "To około $coffeeBreaks przerw kawowych",
+                    description = "Licząc po 15 minut na kawę. Popcorn nadal wygrywa.",
+                ),
+            )
 
-            totalMinutes >= MOON_TRIP_MINUTES -> {
-                val moonTrips = totalMinutes.toDouble() / MOON_TRIP_MINUTES
-
-                val formattedTrips = String.format(
-                    polishLocale,
-                    "%.1f",
-                    moonTrips,
-                )
-
+            add(
                 TimeFunFact(
-                    headline = "To około $formattedTrips podróży na Księżyc",
-                    description = "Licząc około 3 dni lotu w jedną stronę — bez przesiadek i napisów końcowych.",
-                )
-            }
+                    headline = "To około $seriesEpisodes odcinków serialu",
+                    description = "Przy założeniu, że jeden odcinek trwa około 45 minut.",
+                ),
+            )
 
-            totalMinutes >= FULL_DAY_MINUTES -> {
-                val days = totalMinutes.toDouble() / FULL_DAY_MINUTES
-
-                val formattedDays = String.format(
-                    polishLocale,
-                    "%.1f",
-                    days,
-                )
-
+            add(
                 TimeFunFact(
-                    headline = "$formattedDays dnia oglądania bez przerwy",
-                    description = "Tyle czasu spędziliście razem w filmowych światach.",
-                )
-            }
+                    headline = "To około $podcasts godzinnych podcastów",
+                    description = "Tylko tutaj przez większość czasu mówią aktorzy.",
+                ),
+            )
 
-            totalMinutes >= WORKDAY_MINUTES -> {
-                val workdays = (
-                        totalMinutes.toDouble() / WORKDAY_MINUTES
-                        ).roundToInt()
-
+            add(
                 TimeFunFact(
-                    headline = "To prawie $workdays ośmiogodzinnych dni pracy",
-                    description = "Tylko zdecydowanie przyjemniejszych i z większą ilością popcornu.",
-                )
-            }
+                    headline = "To około $footballMatches meczów piłkarskich",
+                    description = "Licząc po 90 minut i bez doliczonego czasu gry.",
+                ),
+            )
 
-            else -> {
-                val evenings = max(
-                    (
-                            totalMinutes.toDouble() /
-                                    MOVIE_EVENING_MINUTES
-                            ).roundToInt(),
-                    1,
-                )
-
+            add(
                 TimeFunFact(
-                    headline = "To około $evenings filmowych wieczorów",
+                    headline = "To około $classicMovies klasycznych filmów",
+                    description = "Przyjmując po 90 minut na jeden film.",
+                ),
+            )
+
+            add(
+                TimeFunFact(
+                    headline = "To około $movieEvenings filmowych wieczorów",
                     description = "Licząc po dwie godziny na jeden wspólny seans.",
+                ),
+            )
+
+            if (totalMinutes >= MINI_SERIES_MINUTES) {
+                add(
+                    TimeFunFact(
+                        headline = "To około $miniSeries krótkich sezonów serialu",
+                        description = "Każdy po osiem odcinków trwających około 45 minut.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= WORKDAY_MINUTES) {
+                add(
+                    TimeFunFact(
+                        headline = "To około $workdays ośmiogodzinnych dni pracy",
+                        description = "Zdecydowanie przyjemniejszych i z większą ilością popcornu.",
+                    ),
+                )
+
+                add(
+                    TimeFunFact(
+                        headline = "To około $sleepNights pełnych nocy snu",
+                        description = "Choć maraton filmowy prawdopodobnie nie pozwoliłby zasnąć.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= AUDIOBOOK_MINUTES) {
+                add(
+                    TimeFunFact(
+                        headline = "To około $audiobooks dziesięciogodzinnych audiobooków",
+                        description = "W filmach przynajmniej nie trzeba wyobrażać sobie efektów specjalnych.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= WEEKEND_MARATHON_MINUTES) {
+                add(
+                    TimeFunFact(
+                        headline = "To około $weekendMarathons weekendowych maratonów",
+                        description = "Licząc po 16 godzin oglądania na każdy maraton.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= FULL_DAY_MINUTES) {
+                val days = formatDecimal(
+                    value = totalMinutes.toDouble() / FULL_DAY_MINUTES,
+                    locale = polishLocale,
+                )
+
+                add(
+                    TimeFunFact(
+                        headline = "To $days dnia oglądania bez przerwy",
+                        description = "Bez snu, pauzy i zastanawiania się, co obejrzeć dalej.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= MOON_TRIP_MINUTES) {
+                val moonTrips = formatDecimal(
+                    value = totalMinutes.toDouble() / MOON_TRIP_MINUTES,
+                    locale = polishLocale,
+                )
+
+                add(
+                    TimeFunFact(
+                        headline = "To około $moonTrips podróży na Księżyc",
+                        description = "Licząc około trzech dni lotu w jedną stronę.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= FULL_WEEK_MINUTES) {
+                val weeks = formatDecimal(
+                    value = totalMinutes.toDouble() / FULL_WEEK_MINUTES,
+                    locale = polishLocale,
+                )
+
+                add(
+                    TimeFunFact(
+                        headline = "To $weeks tygodnia oglądania bez przerwy",
+                        description = "Tydzień, w którym każdy dzień byłby filmowym wieczorem.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= FULL_MONTH_MINUTES) {
+                val months = formatDecimal(
+                    value = totalMinutes.toDouble() / FULL_MONTH_MINUTES,
+                    locale = polishLocale,
+                )
+
+                add(
+                    TimeFunFact(
+                        headline = "To $months miesiąca nieprzerwanego oglądania",
+                        description = "Cały kalendarz wypełniony napisami początkowymi i końcowymi.",
+                    ),
+                )
+            }
+
+            if (totalMinutes >= FULL_YEAR_MINUTES) {
+                val years = formatDecimal(
+                    value = totalMinutes.toDouble() / FULL_YEAR_MINUTES,
+                    locale = polishLocale,
+                )
+
+                add(
+                    TimeFunFact(
+                        headline = "To $years roku oglądania bez przerwy",
+                        description = "Na tym etapie kanapa oficjalnie staje się członkiem rodziny.",
+                    ),
                 )
             }
         }
+
+        /*
+         * Wybór jest deterministyczny:
+         * ten sam łączny czas zawsze daje ten sam tekst,
+         * więc fakt nie skacze podczas rekompozycji.
+         */
+        val selectedIndex = (
+                totalMinutes / FUN_FACT_CHANGE_INTERVAL_MINUTES
+                ).mod(candidates.size.toLong()).toInt()
+
+        return candidates[selectedIndex]
+    }
+
+    private fun approximateCount(
+        totalMinutes: Long,
+        unitMinutes: Double,
+    ): Int {
+        return max(
+            (totalMinutes.toDouble() / unitMinutes).roundToInt(),
+            1,
+        )
+    }
+
+    private fun formatDecimal(
+        value: Double,
+        locale: Locale,
+    ): String {
+        return String.format(
+            locale,
+            "%.1f",
+            value,
+        )
     }
 
     private companion object {
@@ -516,10 +702,26 @@ class StatisticsCalculator @Inject constructor() {
         const val DISAGREEMENTS_LIMIT = 5
         const val MONTHS_VISIBLE = 12
 
+        const val COFFEE_BREAK_MINUTES = 15.0
+        const val SERIES_EPISODE_MINUTES = 45.0
+        const val PODCAST_EPISODE_MINUTES = 60.0
+        const val FOOTBALL_MATCH_MINUTES = 90.0
+        const val CLASSIC_MOVIE_MINUTES = 90.0
         const val MOVIE_EVENING_MINUTES = 120.0
-        const val WORKDAY_MINUTES = 8.0 * 60.0
-        const val FULL_DAY_MINUTES = 24.0 * 60.0
 
-        const val MOON_TRIP_MINUTES = 3.0 * 24.0 * 60.0
+        const val MINI_SERIES_MINUTES = 8.0 * 45.0
+
+        const val WORKDAY_MINUTES = 8.0 * 60.0
+        const val SLEEP_NIGHT_MINUTES = 8.0 * 60.0
+        const val AUDIOBOOK_MINUTES = 10.0 * 60.0
+
+        const val WEEKEND_MARATHON_MINUTES = 16.0 * 60.0
+
+        const val FULL_DAY_MINUTES = 24.0 * 60.0
+        const val MOON_TRIP_MINUTES = 3.0 * FULL_DAY_MINUTES
+        const val FULL_WEEK_MINUTES = 7.0 * FULL_DAY_MINUTES
+        const val FULL_MONTH_MINUTES = 30.0 * FULL_DAY_MINUTES
+        const val FULL_YEAR_MINUTES = 365.0 * FULL_DAY_MINUTES
+        const val FUN_FACT_CHANGE_INTERVAL_MINUTES = 30L
     }
 }
