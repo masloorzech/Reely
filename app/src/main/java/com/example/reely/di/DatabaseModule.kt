@@ -9,6 +9,7 @@ import com.example.reely.data.local.room.dao.MovieRatingDao
 import com.example.reely.data.local.room.dao.MovieViewingDao
 import com.example.reely.data.local.room.dao.PopularMovieCacheDao
 import com.example.reely.data.local.room.dao.ProfileDao
+import com.example.reely.data.local.room.dao.WatchProviderDao
 import com.example.reely.data.local.room.dao.WatchlistDao
 import dagger.Module
 import dagger.Provides
@@ -31,7 +32,9 @@ object DatabaseModule {
             context,
             ReelyDatabase::class.java,
             "reely_database_v2",
-        ).build()
+        )
+            .fallbackToDestructiveMigration(true)
+            .build()
     }
 
     @Provides
@@ -69,6 +72,13 @@ object DatabaseModule {
         database: ReelyDatabase,
     ): PopularMovieCacheDao =
         database.popularMovieCacheDao()
+
+    @Provides
+    fun provideWatchProviderDao(
+        database: ReelyDatabase,
+    ): WatchProviderDao {
+        return database.watchProviderDao()
+    }
 
     @Provides
     @Singleton

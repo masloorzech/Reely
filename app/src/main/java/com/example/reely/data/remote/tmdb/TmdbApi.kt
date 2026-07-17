@@ -4,6 +4,7 @@ import com.example.reely.data.remote.tmdb.dto.TmdbMovieCreditsDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMovieDetailsDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMovieWatchProvidersDto
 import com.example.reely.data.remote.tmdb.dto.TmdbMoviesResponseDto
+import com.example.reely.data.remote.tmdb.dto.TmdbWatchProviderCatalogDto
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -40,5 +41,14 @@ interface TmdbApi {
     suspend fun getMovieWatchProviders(
         @Path("movie_id") movieId: Int
     ): TmdbMovieWatchProvidersDto
+
+    @GET("watch/providers/movie")
+    suspend fun getMovieWatchProviderCatalog(
+        @Query("language")
+        language: String = "pl-PL",
+
+        @Query("watch_region")
+        watchRegion: String = "PL",
+    ): TmdbWatchProviderCatalogDto
 
 }

@@ -6,9 +6,11 @@ import com.example.reely.data.local.LocalMediaDataSource
 import com.example.reely.data.local.MovieLocalDataSource
 import com.example.reely.data.local.PopularMovieCacheLocalDataSource
 import com.example.reely.data.local.RecentSearchesLocalDataSource
+import com.example.reely.data.local.WatchProviderLocalDataSource
 import com.example.reely.data.local.recentSearches.SharedPrefsRecentSearchesLocalDataSource
 import com.example.reely.data.local.room.RoomMovieLocalDataSource
 import com.example.reely.data.local.room.RoomPopularMovieCacheLocalDataSource
+import com.example.reely.data.local.room.RoomWatchProviderLocalDataSource
 import com.example.reely.data.local.storage.AndroidLocalMediaDataSource
 import com.example.reely.data.remote.MoviesRemoteDataSource
 import com.example.reely.data.remote.tmdb.TmdbMoviesRemoteDataSource
@@ -61,6 +63,12 @@ abstract class MoviesModule {
     abstract fun bindRecentSearchesDataSource(
         impl: SharedPrefsRecentSearchesLocalDataSource
     ): RecentSearchesLocalDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindWatchProviderLocalDataSource(
+        implementation: RoomWatchProviderLocalDataSource,
+    ): WatchProviderLocalDataSource
 
     companion object {
 

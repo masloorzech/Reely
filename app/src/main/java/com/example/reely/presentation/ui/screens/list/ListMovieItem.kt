@@ -2,6 +2,7 @@ package com.example.reely.presentation.ui.screens.list
 
 import com.example.reely.domain.model.Genre
 import com.example.reely.domain.model.MoviePreview
+import com.example.reely.domain.model.MovieProviderOffer
 import com.example.reely.domain.model.RecentWatchedMovie
 import com.example.reely.domain.model.WatchlistEntry
 import java.time.Instant
@@ -19,6 +20,11 @@ data class ListMovieItem(
     val userRating: Double?,
     val addedAt: Instant?,
     val watchedAt: LocalDate?,
+
+    val providerOffers: Set<MovieProviderOffer> =
+        emptySet(),
+
+    val providersSyncedAt: Instant? = null,
 ) {
     val displayedRating: Double?
         get() = userRating ?: publicRating

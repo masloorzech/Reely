@@ -1,11 +1,20 @@
 package com.example.reely.presentation.ui.screens.list
 
-import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.reely.domain.model.CachedMovieWatchProviders
 import com.example.reely.domain.model.Genre
+import com.example.reely.domain.model.MovieProviderFilter
+import com.example.reely.domain.model.ProviderFilterScope
+import com.example.reely.domain.model.WatchMonetizationType
+import com.example.reely.domain.model.WatchProvider
+import com.example.reely.domain.usecase.movie.ObserveCachedMovieProvidersUseCase
+import com.example.reely.domain.usecase.movie.ObserveSelectedWatchProviderIdsUseCase
+import com.example.reely.domain.usecase.movie.ObserveSelectedWatchProviderTypesUseCase
 import com.example.reely.domain.usecase.movie.ObserveWatchedMoviesUseCase
+import com.example.reely.domain.usecase.movie.ObserveWatchProviderCatalogUseCase
 import com.example.reely.domain.usecase.movie.ObserveWatchlistUseCase
+import com.example.reely.domain.usecase.movie.RefreshLibraryWatchProvidersUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.ZoneOffset
 import javax.inject.Inject
@@ -15,32 +24,95 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.plus
 
 data class ListScreenUiState(
-    val selectedSort: MovieSortOption = MovieSortOption.RATING_DESC,
-    val selectedTab: MovieListTab = MovieListTab.WATCHLIST,
-    val displayStyle: MovieDisplayStyle = MovieDisplayStyle.LIST,
-    val selectedGenreIds: Set<Int> = emptySet(),
-    val genres: List<Genre> = emptyList(),
-    val searchQuery: String = "",
-    val moviesList: List<ListMovieItem> = emptyList(),
-    val isLoading: Boolean = true,
-    val error: String? = null,
+    val selectedSort: MovieSortOption =
+        MovieSortOption.RATING_DESC,
+
+    val selectedTab: MovieListTab =
+        MovieListTab.WATCHLIST,
+
+    val displayStyle: MovieDisplayStyle =
+        MovieDisplayStyle.LIST,
+
+    val selectedGenreIds: Set<Int> =
+        emptySet(),
+
+    val genres: List<Genre> =
+        emptyList(),
+
+    val searchQuery: String =
+        "",
+
+    val moviesList: List<ListMovieItem> =
+        emptyList(),
+
+    val availableProviders: List<WatchProvider> =
+        emptyList(),
+
+    val myProviderIds: Set<Int> =
+        emptySet(),
+
+    val providerFilter: MovieProviderFilter =
+        MovieProviderFilter(),
+
+    val isProviderFilterDialogVisible: Boolean =
+        false,
+
+    val unsyncedMoviesCount: Int =
+        0,
+
+    val isRefreshingProviders: Boolean =
+        false,
+
+    val providerMessage: String? =
+        null,
+
+    val isLoading: Boolean =
+        true,
+
+    val error: String? =
+        null,
 )
 
 @HiltViewModel
 class ListScreenViewModel @Inject constructor(
     private val observeWatchlistUseCase:
     ObserveWatchlistUseCase,
-    private val observeWatchedMoviesUseCase: ObserveWatchedMoviesUseCase,
+
+    private val observeWatchedMoviesUseCase:
+    ObserveWatchedMoviesUseCase,
+
+    private val observeWatchProviderCatalogUseCase:
+    ObserveWatchProviderCatalogUseCase,
+
+    private val observeSelectedWatchProviderIdsUseCase:
+    ObserveSelectedWatchProviderIdsUseCase,
+
+    private val observeSelectedWatchProviderTypesUseCase:
+    ObserveSelectedWatchProviderTypesUseCase,
+
+    private val observeCachedMovieProvidersUseCase:
+    ObserveCachedMovieProvidersUseCase,
+
+    private val refreshLibraryWatchProvidersUseCase:
+    RefreshLibraryWatchProvidersUseCase,
 ) : ViewModel() {
 
-    private var watchlistMovies: List<ListMovieItem> = emptyList()
+    private var watchlistMovies:
+            List<ListMovieItem> = emptyList()
 
-    private var watchedMovies: List<ListMovieItem> = emptyList()
+    private var watchedMovies:
+            List<ListMovieItem> = emptyList()
 
-    private val _state = MutableStateFlow(ListScreenUiState())
+    private var defaultProviderTypes:
+            Set<WatchMonetizationType> =
+        setOf(WatchMonetizationType.FLATRATE)
+
+    private var filterTypesCustomized = false
+
+    private val _state =
+        MutableStateFlow(ListScreenUiState())
 
     val state = _state.asStateFlow()
 
@@ -48,20 +120,66 @@ class ListScreenViewModel @Inject constructor(
         observeMovies()
     }
 
-
     private fun observeMovies() {
+        val providerSources = combine(
+            observeWatchProviderCatalogUseCase(),
+            observeSelectedWatchProviderIdsUseCase(),
+            observeSelectedWatchProviderTypesUseCase(),
+            observeCachedMovieProvidersUseCase(),
+        ) {
+                catalog,
+                myProviderIds,
+                selectedTypes,
+                cachedProviders,
+            ->
+
+            ProviderSources(
+                catalog = catalog,
+                myProviderIds = myProviderIds,
+                defaultTypes = selectedTypes.ifEmpty {
+                    setOf(
+                        WatchMonetizationType.FLATRATE
+                    )
+                },
+                cachedProviders = cachedProviders,
+            )
+        }
+
         viewModelScope.launch {
             combine(
                 observeWatchlistUseCase(),
                 observeWatchedMoviesUseCase(),
-            ) { watchlist, watched ->
+                providerSources,
+            ) {
+                    watchlist,
+                    watched,
+                    providers,
+                ->
+
+                val providersByMovieId =
+                    providers.cachedProviders.associateBy {
+                            cached ->
+                        cached.movieId
+                    }
+
                 MovieSources(
                     watchlist = watchlist.map { entry ->
-                        entry.toListMovieItem()
+                        val item =
+                            entry.toListMovieItem()
+
+                        item.withProviderCache(
+                            providersByMovieId[item.id]
+                        )
                     },
                     watched = watched.map { movie ->
-                        movie.toListMovieItem()
+                        val item =
+                            movie.toListMovieItem()
+
+                        item.withProviderCache(
+                            providersByMovieId[item.id]
+                        )
                     },
+                    providers = providers,
                 )
             }
                 .catch { error ->
@@ -74,32 +192,102 @@ class ListScreenViewModel @Inject constructor(
                     }
                 }
                 .collect { sources ->
-                    watchlistMovies = sources.watchlist
-                    watchedMovies = sources.watched
+                    watchlistMovies =
+                        sources.watchlist
+
+                    watchedMovies =
+                        sources.watched
+
+                    defaultProviderTypes =
+                        sources.providers.defaultTypes
 
                     _state.update { currentState ->
-                        val sourceMovies = getMoviesForTab(
-                            tab = currentState.selectedTab,
-                        )
+                        val providerFilter = if (
+                            filterTypesCustomized
+                        ) {
+                            currentState.providerFilter
+                        } else {
+                            currentState.providerFilter.copy(
+                                monetizationTypes =
+                                    defaultProviderTypes,
+                            )
+                        }
 
-                        val availableGenres = sourceMovies
-                            .flatMap { movie -> movie.genres }
-                            .distinctBy { genre -> genre.id }
-                            .sortedBy { genre -> genre.name }
+                        recalculateState(
+                            currentState.copy(
+                                availableProviders =
+                                    sources.providers.catalog,
 
-                        val stateWithGenres = currentState.copy(
-                            genres = availableGenres,
-                        )
+                                myProviderIds =
+                                    sources.providers.myProviderIds,
 
-                        stateWithGenres.copy(
-                            moviesList = getVisibleMovies(
-                                state = stateWithGenres,
-                            ),
-                            isLoading = false,
-                            error = null,
+                                providerFilter =
+                                    providerFilter,
+
+                                isLoading = false,
+                                error = null,
+                            )
                         )
                     }
                 }
+        }
+    }
+
+
+    private fun recalculateState(
+        state: ListScreenUiState,
+    ): ListScreenUiState {
+        val sourceMovies =
+            getMoviesForTab(state.selectedTab)
+
+        val availableGenres = sourceMovies
+            .flatMap { movie ->
+                movie.genres
+            }
+            .distinctBy { genre ->
+                genre.id
+            }
+            .sortedBy { genre ->
+                genre.name.lowercase()
+            }
+
+        val availableGenreIds =
+            availableGenres
+                .mapTo(mutableSetOf()) { genre ->
+                    genre.id
+                }
+
+
+        val validSelectedGenreIds =
+            state.selectedGenreIds
+                .intersect(availableGenreIds)
+
+        val updatedState = state.copy(
+            genres = availableGenres,
+            selectedGenreIds =
+                validSelectedGenreIds,
+        )
+
+        return updatedState.copy(
+            moviesList =
+                getVisibleMovies(updatedState),
+
+            unsyncedMoviesCount =
+                getUnsyncedMoviesCount(
+                    tab = updatedState.selectedTab,
+                ),
+        )
+    }
+
+    private fun updateVisibleState(
+        transform: (
+            ListScreenUiState
+        ) -> ListScreenUiState,
+    ) {
+        _state.update { currentState ->
+            recalculateState(
+                transform(currentState)
+            )
         }
     }
 
@@ -107,38 +295,53 @@ class ListScreenViewModel @Inject constructor(
         tab: MovieListTab,
     ): List<ListMovieItem> {
         return when (tab) {
-            MovieListTab.WATCHLIST -> watchlistMovies
-            MovieListTab.WATCHED -> watchedMovies
+            MovieListTab.WATCHLIST ->
+                watchlistMovies
+
+            MovieListTab.WATCHED ->
+                watchedMovies
         }
     }
 
     fun clearFilters() {
-        _state.update { currentState ->
-            val updatedState = currentState.copy(
-                selectedGenreIds = emptySet(),
-            )
+        filterTypesCustomized = false
 
-            updatedState.copy(
-                moviesList = getVisibleMovies(updatedState),
+        updateVisibleState { currentState ->
+            currentState.copy(
+                selectedGenreIds =
+                    emptySet(),
+
+                providerFilter =
+                    MovieProviderFilter(
+                        monetizationTypes =
+                            defaultProviderTypes,
+                    ),
             )
         }
     }
 
-    fun toggleGenre(genre: Genre) {
-        _state.update { currentState ->
-            val updatedSelectedGenreIds =
-                if (genre.id in currentState.selectedGenreIds) {
-                    currentState.selectedGenreIds - genre.id
-                } else {
-                    currentState.selectedGenreIds + genre.id
-                }
 
-            val updatedState = currentState.copy(
-                selectedGenreIds = updatedSelectedGenreIds,
+    fun clearGenreFilters() {
+        updateVisibleState { currentState ->
+            currentState.copy(
+                selectedGenreIds =
+                    emptySet(),
             )
+        }
+    }
 
-            updatedState.copy(
-                moviesList = getVisibleMovies(updatedState),
+    fun toggleGenre(
+        genre: Genre,
+    ) {
+        updateVisibleState { currentState ->
+            val updatedSelectedGenreIds =
+                currentState
+                    .selectedGenreIds
+                    .toggle(genre.id)
+
+            currentState.copy(
+                selectedGenreIds =
+                    updatedSelectedGenreIds,
             )
         }
     }
@@ -162,15 +365,9 @@ class ListScreenViewModel @Inject constructor(
     fun switchTab(
         tab: MovieListTab,
     ) {
-        _state.update { currentState ->
-            val updatedState = currentState.copy(
+        updateVisibleState { currentState ->
+            currentState.copy(
                 selectedTab = tab,
-            )
-
-            updatedState.copy(
-                moviesList = getVisibleMovies(
-                    state = updatedState,
-                ),
             )
         }
     }
@@ -178,15 +375,9 @@ class ListScreenViewModel @Inject constructor(
     fun switchSort(
         sortOption: MovieSortOption,
     ) {
-        _state.update { currentState ->
-            val updatedState = currentState.copy(
+        updateVisibleState { currentState ->
+            currentState.copy(
                 selectedSort = sortOption,
-            )
-
-            updatedState.copy(
-                moviesList = getVisibleMovies(
-                    state = updatedState,
-                ),
             )
         }
     }
@@ -194,15 +385,179 @@ class ListScreenViewModel @Inject constructor(
     fun changeSearchQuery(
         query: String,
     ) {
-        _state.update { currentState ->
-            val updatedState = currentState.copy(
+        updateVisibleState { currentState ->
+            currentState.copy(
                 searchQuery = query,
             )
+        }
+    }
 
-            updatedState.copy(
-                moviesList = getVisibleMovies(
-                    state = updatedState,
-                ),
+    fun showProviderFilters() {
+        _state.update { currentState ->
+            currentState.copy(
+                isProviderFilterDialogVisible =
+                    true,
+
+                providerMessage =
+                    null,
+            )
+        }
+    }
+
+    fun dismissProviderFilters() {
+        _state.update { currentState ->
+            currentState.copy(
+                isProviderFilterDialogVisible =
+                    false,
+            )
+        }
+    }
+
+    fun setProviderFilterEnabled(
+        enabled: Boolean,
+    ) {
+        updateVisibleState { currentState ->
+            currentState.copy(
+                providerFilter =
+                    currentState.providerFilter.copy(
+                        isEnabled = enabled,
+                    ),
+            )
+        }
+    }
+
+    fun selectProviderScope(
+        scope: ProviderFilterScope,
+    ) {
+        updateVisibleState { currentState ->
+            currentState.copy(
+                providerFilter =
+                    currentState.providerFilter.copy(
+                        scope = scope,
+                    ),
+            )
+        }
+    }
+
+    fun toggleFilterProvider(
+        providerId: Int,
+    ) {
+        updateVisibleState { currentState ->
+            val selectedProviderIds =
+                currentState
+                    .providerFilter
+                    .selectedProviderIds
+                    .toggle(providerId)
+
+            currentState.copy(
+                providerFilter =
+                    currentState.providerFilter.copy(
+                        selectedProviderIds =
+                            selectedProviderIds,
+                    ),
+            )
+        }
+    }
+
+    fun toggleFilterMonetizationType(
+        type: WatchMonetizationType,
+    ) {
+        filterTypesCustomized = true
+
+        updateVisibleState { currentState ->
+            val selectedTypes =
+                currentState
+                    .providerFilter
+                    .monetizationTypes
+                    .toggle(type)
+
+            currentState.copy(
+                providerFilter =
+                    currentState.providerFilter.copy(
+                        monetizationTypes =
+                            selectedTypes,
+                    ),
+            )
+        }
+    }
+
+    fun clearProviderFilter() {
+        filterTypesCustomized = false
+
+        updateVisibleState { currentState ->
+            currentState.copy(
+                providerFilter =
+                    MovieProviderFilter(
+                        monetizationTypes =
+                            defaultProviderTypes,
+                    ),
+            )
+        }
+    }
+
+    fun refreshProviders() {
+        if (_state.value.isRefreshingProviders) {
+            return
+        }
+
+        viewModelScope.launch {
+            _state.update { currentState ->
+                currentState.copy(
+                    isRefreshingProviders = true,
+                    providerMessage = null,
+                )
+            }
+
+            refreshLibraryWatchProvidersUseCase(
+                forceRefresh = true,
+            )
+                .onSuccess { result ->
+                    val message = when {
+                        result.totalMovies == 0 -> {
+                            "Brak lokalnych filmów do odświeżenia."
+                        }
+
+                        result.failedMovieIds.isEmpty() -> {
+                            "Zaktualizowano dostępność dla " +
+                                    "${result.refreshedMovies} filmów."
+                        }
+
+                        else -> {
+                            "Zaktualizowano " +
+                                    "${result.refreshedMovies} z " +
+                                    "${result.totalMovies} filmów."
+                        }
+                    }
+
+                    _state.update { currentState ->
+                        currentState.copy(
+                            isRefreshingProviders =
+                                false,
+
+                            providerMessage =
+                                message,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _state.update { currentState ->
+                        currentState.copy(
+                            isRefreshingProviders =
+                                false,
+
+                            providerMessage =
+                                error.message
+                                    ?: "Nie udało się odświeżyć dostępności.",
+                        )
+                    }
+                }
+        }
+    }
+
+    fun clearProviderMessage() {
+        _state.update { currentState ->
+            currentState.copy(
+                providerMessage = null,
             )
         }
     }
@@ -210,22 +565,69 @@ class ListScreenViewModel @Inject constructor(
     private fun getVisibleMovies(
         state: ListScreenUiState,
     ): List<ListMovieItem> {
-        return getMoviesForTab(state.selectedTab)
-            .filterByGenres(state.selectedGenreIds)
-            .filterBySearch(state.searchQuery)
-            .sortByOption(state.selectedSort)
+        return getMoviesForTab(
+            state.selectedTab
+        )
+            .filterByGenres(
+                state.selectedGenreIds
+            )
+            .filterBySearch(
+                state.searchQuery
+            )
+            .filterByProviders(
+                providerFilter =
+                    state.providerFilter,
+
+                myProviderIds =
+                    state.myProviderIds,
+            )
+            .sortByOption(
+                state.selectedSort
+            )
+    }
+
+    private fun getUnsyncedMoviesCount(
+        tab: MovieListTab,
+    ): Int {
+        return getMoviesForTab(tab)
+            .count { movie ->
+                movie.providersSyncedAt == null
+            }
     }
 }
 
 private data class MovieSources(
     val watchlist: List<ListMovieItem>,
     val watched: List<ListMovieItem>,
+    val providers: ProviderSources,
 )
+
+private data class ProviderSources(
+    val catalog: List<WatchProvider>,
+    val myProviderIds: Set<Int>,
+    val defaultTypes:
+    Set<WatchMonetizationType>,
+    val cachedProviders:
+    List<CachedMovieWatchProviders>,
+)
+
+private fun ListMovieItem.withProviderCache(
+    cached: CachedMovieWatchProviders?,
+): ListMovieItem {
+    return copy(
+        providerOffers =
+            cached?.offers.orEmpty(),
+
+        providersSyncedAt =
+            cached?.syncedAt,
+    )
+}
 
 private fun List<ListMovieItem>.filterBySearch(
     query: String,
 ): List<ListMovieItem> {
-    val normalizedQuery = query.trim()
+    val normalizedQuery =
+        query.trim()
 
     if (normalizedQuery.isBlank()) {
         return this
@@ -240,6 +642,36 @@ private fun List<ListMovieItem>.filterBySearch(
                 other = normalizedQuery,
                 ignoreCase = true,
             )
+        }
+    }
+}
+
+private fun List<ListMovieItem>.filterByProviders(
+    providerFilter: MovieProviderFilter,
+    myProviderIds: Set<Int>,
+): List<ListMovieItem> {
+    if (!providerFilter.isEnabled) {
+        return this
+    }
+
+    return filter { movie ->
+        providerFilter.matches(
+            offers = movie.providerOffers,
+            myProviderIds = myProviderIds,
+        )
+    }
+}
+
+private fun List<ListMovieItem>.filterByGenres(
+    selectedGenreIds: Set<Int>,
+): List<ListMovieItem> {
+    if (selectedGenreIds.isEmpty()) {
+        return this
+    }
+
+    return filter { movie ->
+        movie.genres.any { genre ->
+            genre.id in selectedGenreIds
         }
     }
 }
@@ -310,16 +742,12 @@ private fun ListMovieItem.activityTimeMillis(): Long {
         ?: Long.MIN_VALUE
 }
 
-private fun List<ListMovieItem>.filterByGenres(
-    selectedGenreIds: Set<Int>,
-): List<ListMovieItem> {
-    if (selectedGenreIds.isEmpty()) {
-        return this
-    }
-
-    return filter { movie ->
-        movie.genres.any { genre ->
-            genre.id in selectedGenreIds
-        }
+private fun <T> Set<T>.toggle(
+    value: T,
+): Set<T> {
+    return if (value in this) {
+        this - value
+    } else {
+        this + value
     }
 }

@@ -121,7 +121,7 @@ fun TmdbMovieWatchProvidersDto.toMovieWatchProviders(
     )
 }
 
-private fun TmdbWatchProviderDto.toWatchProvider(): WatchProvider {
+fun TmdbWatchProviderDto.toWatchProvider(): WatchProvider {
     return WatchProvider(
         providerId = providerId,
         providerName = providerName.orEmpty(),

@@ -5,10 +5,12 @@ import com.example.reely.data.remote.tmdb.mapper.toMovieCredits
 import com.example.reely.data.remote.tmdb.mapper.toMovieDetails
 import com.example.reely.data.remote.tmdb.mapper.toMoviePreview
 import com.example.reely.data.remote.tmdb.mapper.toMovieWatchProviders
+import com.example.reely.data.remote.tmdb.mapper.toWatchProvider
 import com.example.reely.domain.model.MovieCredits
 import com.example.reely.domain.model.MovieDetails
 import com.example.reely.domain.model.MoviePreview
 import com.example.reely.domain.model.MovieWatchProviders
+import com.example.reely.domain.model.WatchProvider
 import javax.inject.Inject
 
 class TmdbMoviesRemoteDataSource @Inject constructor(
@@ -54,6 +56,21 @@ class TmdbMoviesRemoteDataSource @Inject constructor(
             .toMovieWatchProviders(
                 countryCode = POLAND_COUNTRY_CODE,
             )
+    }
+
+    override suspend fun getMovieProviderCatalog(
+        countryCode: String,
+    ): List<WatchProvider> {
+        return api.getMovieWatchProviderCatalog(
+            watchRegion = countryCode,
+        )
+            .results
+            .map { dto ->
+                dto.toWatchProvider()
+            }
+            .sortedBy { provider ->
+                provider.displayPriority ?: Int.MAX_VALUE
+            }
     }
 
     private companion object {

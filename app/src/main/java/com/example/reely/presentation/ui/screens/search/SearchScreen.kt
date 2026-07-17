@@ -53,7 +53,7 @@ fun SearchScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp),
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -94,7 +94,6 @@ fun SearchScreen(
                 onMovieClick = viewModel::onMovieSelected,
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
         state.error?.let { error ->
