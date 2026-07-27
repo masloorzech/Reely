@@ -38,7 +38,7 @@
 <p align="center">
 <b>Ekran główny</b>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<b>Wyszukiwnaie</b>
+<b>Wyszukiwanie</b>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <b>Lista</b>
 </p>
@@ -92,7 +92,7 @@
 ### 1. Sklonuj repozytorium
 
 ```bash
-git clone https://github.com/TWOJ_LOGIN/Reely.git
+git clone https://github.com/masloorzech/Reely.git
 ```
 
 ### 2. Pobierz token TMDB
