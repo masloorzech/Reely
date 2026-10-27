@@ -11,11 +11,10 @@ import com.example.reely.domain.usecase.movie.ObserveWatchlistUseCase
 import com.example.reely.domain.usecase.user.ObserveProfilesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -25,34 +24,26 @@ import javax.inject.Inject
 data class HomeScreenUiState(
     val profiles: List<Profile> = emptyList(),
 
-    val recentSeenMovies:
-    List<RecentWatchedMovie> = emptyList(),
+    val recentSeenMovies: List<RecentWatchedMovie> = emptyList(),
 
-    val watchlist:
-    List<WatchlistEntry> = emptyList(),
+    val watchlist: List<WatchlistEntry> = emptyList(),
 
-    val calendarMonth:
-    YearMonth = YearMonth.now(),
+    val calendarMonth: YearMonth = YearMonth.now(),
 
-    val watchedMoviesByDate:
-    Map<LocalDate, List<RecentWatchedMovie>> =
-        emptyMap(),
+    val viewingHistory: List<RecentWatchedMovie> = emptyList(),
 
-    val randomMovie:
-    WatchlistEntry? = null,
+    val randomMovie: WatchlistEntry? = null,
 
-    val isRandomizingMovie:
-    Boolean = false,
+    val isRandomizingMovie: Boolean = false,
 
-    val randomMovieError:
-    String? = null,
+    val randomMovieError: String? = null,
 
-    val isLoading:
-    Boolean = true,
+    val isLoading: Boolean = true,
 
-    val error:
-    String? = null,
-)
+    val error: String? = null,
+){
+    val watchedMoviesByDate: Map<LocalDate, List<RecentWatchedMovie>> = viewingHistory.groupBy { it.watchedAt }
+}
 
 private data class RandomMovieUiState(
     val movie: WatchlistEntry? = null,
@@ -75,76 +66,43 @@ class HomeScreenViewModel @Inject constructor(
     GetRandomWatchlistMovieUseCase,
 ) : ViewModel() {
 
-    private val randomMovieState =
-        MutableStateFlow(RandomMovieUiState())
+    private val randomMovieState = MutableStateFlow(RandomMovieUiState())
+    private val _state = MutableStateFlow(HomeScreenUiState())
+    val state = _state.asStateFlow()
 
-    val state: StateFlow<HomeScreenUiState> =
+    init {
         combine(
             observeProfilesUseCase(),
-            observeRecentWatchedMoviesUseCase(
-                limit = 10,
-            ),
-            observeRecentWatchedMoviesUseCase(
-                limit = Int.MAX_VALUE,
-            ),
+            observeRecentWatchedMoviesUseCase(limit = 10),
+            observeRecentWatchedMoviesUseCase(limit = Int.MAX_VALUE),
             observeWatchlistUseCase(),
             randomMovieState,
-        ) {
-                profiles,
-                recentMovies,
-                viewingHistory,
-                watchlist,
-                randomState,
-            ->
+        ) { profiles, recentMovies, history, watchlist, randomState ->
 
-            val calendarMonth =
-                YearMonth.now()
-
-            HomeScreenUiState(
-                profiles = profiles,
-                recentSeenMovies = recentMovies,
-                calendarMonth = calendarMonth,
-                watchlist = watchlist,
-                watchedMoviesByDate =
-                    viewingHistory
-                        .filter { movie ->
-                            YearMonth.from(
-                                movie.watchedAt
-                            ) == calendarMonth
-                        }
-                        .groupBy { movie ->
-                            movie.watchedAt
-                        },
-
-                randomMovie =
-                    randomState.movie,
-
-                isRandomizingMovie =
-                    randomState.isLoading,
-
-                randomMovieError =
-                    randomState.error,
-
-                isLoading = false,
-            )
-        }
-            .catch { exception ->
-                emit(
-                    HomeScreenUiState(
-                        isLoading = false,
-                        error = exception.message
-                            ?: "Nie udało się wczytać ekranu głównego",
-                    )
+            _state.update { current ->
+                current.copy(
+                    profiles = profiles,
+                    recentSeenMovies = recentMovies,
+                    viewingHistory = history,
+                    watchlist = watchlist,
+                    randomMovie = randomState.movie,
+                    isRandomizingMovie = randomState.isLoading,
+                    randomMovieError = randomState.error,
+                    isLoading = false,
                 )
             }
-            .stateIn(
-                scope = viewModelScope,
-                started =
-                    SharingStarted
-                        .WhileSubscribed(5_000),
-                initialValue =
-                    HomeScreenUiState(),
-            )
+        }.catch { exception ->
+            _state.update {
+                it.copy(
+                    isLoading = false,
+                    error = exception.message
+                        ?: "Nie udało się wczytać ekranu głównego"
+                )
+            }
+        }.launchIn(viewModelScope)
+    }
+
+
 
     fun randomizeMovie() {
         if (randomMovieState.value.isLoading) {
@@ -193,4 +151,11 @@ class HomeScreenViewModel @Inject constructor(
                 }
         }
     }
+
+    fun selectMonth(month: YearMonth) {
+        _state.update {
+            it.copy(calendarMonth = month)
+        }
+    }
+
 }

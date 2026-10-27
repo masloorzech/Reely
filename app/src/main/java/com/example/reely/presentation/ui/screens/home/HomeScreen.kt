@@ -160,11 +160,9 @@ fun HomeScreen(
             )
 
             WatchedMoviesCalendarSection(
-                month =
-                    state.calendarMonth,
-
-                moviesByDate =
-                    state.watchedMoviesByDate,
+                month = state.calendarMonth,
+                moviesByDate = state.watchedMoviesByDate,
+                onMonthChange = viewModel::selectMonth,
             )
         }
 

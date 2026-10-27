@@ -22,8 +22,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import java.time.temporal.ChronoUnit
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.example.reely.domain.model.RecentWatchedMovie
@@ -43,72 +51,157 @@ private val WEEKDAY_NAMES = listOf(
     "Nd"
 )
 
+private const val CENTER_PAGE = 1200
+private const val PAGE_COUNT = 2401
+
 @Composable
 fun WatchedMoviesCalendarSection(
     month: YearMonth,
     moviesByDate: Map<LocalDate, List<RecentWatchedMovie>>,
+    onMonthChange: (YearMonth) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val calendarCells = remember(month) {
-        buildCalendarCells(month)
+
+    val initialMonthString = rememberSaveable {
+        month.toString()
+    }
+
+    val initialMonth = remember(initialMonthString) {
+        YearMonth.parse(initialMonthString)
+    }
+
+    val pagerState = rememberPagerState(
+        initialPage = CENTER_PAGE,
+        pageCount = { PAGE_COUNT }
+    )
+    val currentMonth by rememberUpdatedState(month)
+    val currentOnMonthChange by rememberUpdatedState(onMonthChange)
+
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                val selectedMonth = initialMonth.plusMonths(
+                    (page - CENTER_PAGE).toLong()
+                )
+
+                if (selectedMonth != currentMonth) {
+                    currentOnMonthChange(selectedMonth)
+                }
+            }
+    }
+
+    LaunchedEffect(month) {
+        val offset = ChronoUnit.MONTHS.between(
+            initialMonth,
+            month
+        )
+
+        val targetPage = CENTER_PAGE.toLong() + offset
+
+        if (
+            targetPage in 0L until PAGE_COUNT.toLong() &&
+            pagerState.currentPage != targetPage.toInt()
+        ) {
+            pagerState.animateScrollToPage(targetPage.toInt())
+        }
     }
 
     Column(
         modifier = modifier.fillMaxWidth()
     ) {
+        val displayedMonth = initialMonth.plusMonths(
+            (pagerState.currentPage - CENTER_PAGE).toLong()
+        )
+
         SmallSectionHeader(
-            sectionName = "Obejrzane w ${month.toPolishTitle()}:"
+            sectionName = "Obejrzane w ${displayedMonth.toPolishTitle()}:"
         )
 
         Spacer(Modifier.size(12.dp))
 
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth(),
+            pageSpacing = 12.dp
+        ) { page ->
+            val pageMonth = initialMonth.plusMonths(
+                (page - CENTER_PAGE).toLong()
+            )
+
+            CalendarMonthContent(
+                month = pageMonth,
+                moviesByDate = moviesByDate,
+                modifier = Modifier.padding(horizontal = 6.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarMonthContent(
+    month: YearMonth,
+    moviesByDate: Map<LocalDate, List<RecentWatchedMovie>>,
+    modifier: Modifier = Modifier
+) {
+    val calendarCells = remember(month) {
+        val cells = buildCalendarCells(month)
+        cells + List(42 - cells.size) { null }
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             WEEKDAY_NAMES.forEach { weekday ->
-                Text(
-                    text = weekday,
+                Box(
                     modifier = Modifier.weight(1f),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(
-                        alpha = 0.55f
-                    ),
-                    textAlign = TextAlign.Center
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = weekday,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = 0.55f
+                        )
+                    )
+                }
             }
         }
 
         Spacer(Modifier.size(6.dp))
 
-        calendarCells
-            .chunked(7)
-            .forEach { week ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    week.forEach { date ->
-                        Box(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            if (date == null) {
-                                Spacer(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .aspectRatio(0.72f)
-                                )
-                            } else {
-                                WatchedCalendarDay(
-                                    date = date,
-                                    movies = moviesByDate[date].orEmpty()
-                                )
-                            }
+        calendarCells.chunked(7).forEach { week ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                week.forEach { date ->
+                    Box(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        if (date == null) {
+                            Spacer(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(0.72f)
+                            )
+                        } else {
+                            WatchedCalendarDay(
+                                date = date,
+                                movies = moviesByDate[date].orEmpty()
+                            )
                         }
                     }
                 }
-
-                Spacer(Modifier.size(4.dp))
             }
+
+            Spacer(Modifier.size(4.dp))
+        }
     }
 }
 
