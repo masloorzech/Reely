@@ -9,12 +9,13 @@
         </item>
 
         <item name="windowSplashScreenAnimatedIcon">
-            @drawable/popcorn_splash
+            @mipmap/ic_launcher
         </item>
 
         <item name="postSplashScreenTheme">
             @style/Theme.Reely
         </item>
+
     </style>
 
 
